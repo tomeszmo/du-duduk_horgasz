@@ -47,8 +47,9 @@ body {
 #hud {
     position:absolute;
     top:8px; left:14px;
-    display:flex; gap:10px; z-index:10;
+    display:flex; flex-direction:column; gap:5px; z-index:10;
 }
+#hud-row1, #hud-row2 { display:flex; gap:6px; align-items:center; }
 .hud-box {
     background:rgba(0,0,0,0.52);
     border:1px solid rgba(255,255,255,0.18);
@@ -129,13 +130,32 @@ body {
 
 /* ── BOTTOM PANEL (tabs) ── */
 #bottom-panel {
-    height:202px;
+    height:218px;
     background:linear-gradient(180deg,#091520,#060d14);
-    border-top:3px solid #1a6090;
+    border-top:none;
     flex-shrink:0;
     display:flex;
     flex-direction:column;
 }
+/* Drag handle */
+#panel-drag-handle {
+    flex-shrink:0;
+    height:11px;
+    cursor:ns-resize;
+    background:linear-gradient(180deg,#1a6090,#0d2a3c);
+    display:flex; align-items:center; justify-content:center;
+    touch-action:none;
+    transition:background 0.18s;
+}
+#panel-drag-handle:hover { background:linear-gradient(180deg,#2a80b0,#1a3a54); }
+#panel-drag-handle::after {
+    content:'';
+    width:38px; height:3.5px;
+    background:rgba(74,176,232,0.55);
+    border-radius:2px;
+    transition:width 0.18s, background 0.18s;
+}
+#panel-drag-handle:hover::after { width:58px; background:rgba(74,176,232,0.9); }
 #tab-bar {
     display:flex;
     flex-shrink:0;
@@ -539,6 +559,184 @@ body {
 /* Merge hint arrows */
 .slot.can-merge { border-color:#00ff99 !important; box-shadow:0 0 8px rgba(0,255,150,0.5); }
 
+/* ── TIMING BAR ── */
+#timing-bar-wrap {
+    position:fixed; left:50%; transform:translateX(-50%);
+    display:flex; flex-direction:column; align-items:center;
+    z-index:80; pointer-events:none;
+    animation:tbIn 0.2s cubic-bezier(.36,1.4,.64,1);
+}
+@keyframes tbIn {
+    from { opacity:0; transform:translateX(-50%) translateY(12px) scale(0.9); }
+    to   { opacity:1; transform:translateX(-50%) translateY(0) scale(1); }
+}
+#timing-bar-track {
+    width:290px; height:32px;
+    background:rgba(40,44,50,0.95);
+    border-radius:16px; overflow:hidden; position:relative;
+    border:2px solid rgba(255,255,255,0.12);
+    box-shadow:0 4px 22px rgba(0,0,0,0.7);
+}
+#timing-bar-yellow {
+    position:absolute; top:0; height:100%;
+    background:rgba(255,205,30,0.80); border-radius:10px;
+}
+#timing-bar-red {
+    position:absolute; top:0; height:100%;
+    background:rgba(255,55,55,0.92); border-radius:8px;
+    animation:redPulse 0.75s ease-in-out infinite;
+}
+@keyframes redPulse {
+    0%,100% { filter:brightness(1);   box-shadow:none; }
+    50%     { filter:brightness(1.35); box-shadow:0 0 10px rgba(255,100,100,0.5); }
+}
+#timing-bar-cursor {
+    position:absolute; top:-1px; height:calc(100% + 2px);
+    width:5px; margin-left:-2.5px;
+    background:#fff; border-radius:3px;
+    box-shadow:0 0 12px rgba(255,255,255,0.95), 0 0 4px #fff;
+}
+/* Bar flash */
+#timing-bar-track.flash-red    { animation:tbFlashR 0.36s ease-out forwards; }
+#timing-bar-track.flash-yellow { animation:tbFlashY 0.36s ease-out forwards; }
+#timing-bar-track.flash-grey   { animation:tbFlashG 0.25s ease-out forwards; }
+@keyframes tbFlashR { 0%{box-shadow:0 0 0 5px rgba(255,70,70,0.85),0 4px 22px rgba(0,0,0,.7);} 100%{box-shadow:0 4px 22px rgba(0,0,0,.7);} }
+@keyframes tbFlashY { 0%{box-shadow:0 0 0 5px rgba(255,205,0,0.85),0 4px 22px rgba(0,0,0,.7);}  100%{box-shadow:0 4px 22px rgba(0,0,0,.7);} }
+@keyframes tbFlashG { 0%{box-shadow:0 0 0 3px rgba(160,160,160,0.5),0 4px 22px rgba(0,0,0,.7);} 100%{box-shadow:0 4px 22px rgba(0,0,0,.7);} }
+
+/* Lebegő találat szöveg */
+#timing-hit-text {
+    position:fixed; left:50%; transform:translateX(-50%);
+    font-size:26px; font-weight:900; letter-spacing:1px;
+    pointer-events:none; z-index:82; opacity:0;
+    white-space:nowrap; text-align:center;
+}
+#timing-hit-text.pop { animation:hitPop 0.85s ease-out forwards; }
+@keyframes hitPop {
+    0%   { opacity:1; transform:translateX(-50%) scale(0.65) translateY(0); }
+    20%  { opacity:1; transform:translateX(-50%) scale(1.2)  translateY(-8px); }
+    65%  { opacity:1; transform:translateX(-50%) scale(1.0)  translateY(-22px); }
+    100% { opacity:0; transform:translateX(-50%) scale(0.9)  translateY(-40px); }
+}
+
+/* Képernyő flash */
+#screen-flash {
+    position:fixed; inset:0; pointer-events:none; z-index:79; opacity:0;
+}
+#screen-flash.flash-red    { animation:sfR 0.4s ease-out forwards; }
+#screen-flash.flash-yellow { animation:sfY 0.4s ease-out forwards; }
+@keyframes sfR { 0%{opacity:1;background:radial-gradient(ellipse at 50% 50%,transparent 25%,rgba(255,40,40,0.55));} 100%{opacity:0;} }
+@keyframes sfY { 0%{opacity:1;background:radial-gradient(ellipse at 50% 50%,transparent 25%,rgba(255,190,0,0.45));}  100%{opacity:0;} }
+
+/* Háttér elsötétítés */
+#ocean-dim {
+    position:fixed; inset:0; background:rgba(0,0,0,0);
+    pointer-events:none; z-index:16;
+    transition:background 0.28s ease;
+}
+#ocean-dim.active { background:rgba(0,5,15,0.42); }
+
+@media (max-width:640px) {
+    #timing-bar-track  { width:240px; height:27px; }
+    #timing-hit-text   { font-size:22px; }
+}
+
+/* ── GOLD COIN HUD ── */
+#coin-display { color:#ffd700; border-color:rgba(255,200,0,0.35) !important; background:rgba(60,40,0,0.52) !important; }
+
+/* ── BOLT TAB ── */
+#tab-shop { background:rgba(30,18,0,0.92); }
+#shop-coming-soon {
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    height:100%; gap:7px; padding:14px; text-align:center;
+}
+#shop-icon    { font-size:36px; opacity:0.75; }
+#shop-title   { font-size:15px; font-weight:bold; color:#ffd700; letter-spacing:.5px; }
+#shop-desc    { font-size:11px; color:#c8a060; line-height:1.5; max-width:280px; }
+#shop-balance { font-size:12px; color:#ffd700; font-weight:bold; margin-top:4px; }
+
+/* ── QUEST TAB ── */
+#tab-quests { padding:5px 8px 10px; }
+#quest-list {
+    display:flex; flex-direction:column; gap:5px;
+}
+.quest-card {
+    background:rgba(8,25,45,0.75);
+    border:1px solid #1a3d5a;
+    border-radius:9px; padding:6px 9px;
+    display:flex; flex-direction:column; gap:4px;
+    flex-shrink:0; transition:border-color 0.25s, opacity 0.25s;
+}
+.quest-card.completed { border-color:#2a7a40; opacity:0.7; }
+.quest-desc { font-size:11px; color:#bbc; line-height:1.3; }
+.quest-progress-bar {
+    height:5px; background:rgba(255,255,255,0.08);
+    border-radius:3px; overflow:hidden;
+}
+.quest-progress-fill {
+    height:100%;
+    background:linear-gradient(90deg,#1a5080,#4ab0e8);
+    border-radius:3px; transition:width 0.35s ease;
+}
+.quest-card.completed .quest-progress-fill { background:linear-gradient(90deg,#1a5030,#4ae880); }
+.quest-footer {
+    display:flex; justify-content:space-between; align-items:center;
+}
+.quest-prog-text { font-size:9px; color:#3a5a7a; }
+.quest-reward { font-size:9.5px; font-weight:bold; }
+.quest-reward.pts  { color:#4ab0e8; }
+.quest-reward.buff { color:#8ae060; }
+.quest-reward.deco { color:#e0a030; }
+.quest-reward.gold { color:#ffd700; font-weight:900; }
+.quest-done { font-size:9px; color:#4ae880; text-align:right; }
+/* Napi quest kártya */
+.quest-section-label {
+    font-size:8.5px; color:#554; letter-spacing:1.8px;
+    text-transform:uppercase; font-weight:bold;
+    padding:2px 0 3px; flex-shrink:0;
+}
+.quest-section-label.daily { color:#8a6a00; }
+.quest-card.daily {
+    border-color:rgba(180,130,0,0.5);
+    background:rgba(30,18,0,0.82);
+}
+.quest-card.daily.completed { border-color:rgba(180,130,0,0.25); }
+.quest-card.daily .quest-progress-fill {
+    background:linear-gradient(90deg,#7a4a00,#ffd700);
+}
+.quest-divider {
+    height:1px; background:rgba(60,50,0,0.4);
+    margin:3px 0; flex-shrink:0;
+}
+.quest-card.placeholder {
+    opacity:0.38; border-color:#223; background:rgba(5,8,15,0.6);
+    cursor:default;
+}
+.quest-card.placeholder .quest-desc { color:#334; font-style:italic; }
+
+/* ── BUFF HUD ── */
+#buff-hud {
+    position:fixed;
+    top:42px; left:14px;
+    display:flex; gap:5px; flex-wrap:wrap;
+    z-index:11; pointer-events:none;
+    max-width:65vw;
+}
+.buff-badge {
+    background:rgba(5,30,12,0.88);
+    border:1px solid #2a6830;
+    border-radius:12px; color:#7ae070;
+    font-size:10px; padding:2px 8px;
+    white-space:nowrap; line-height:1.6;
+}
+.buff-badge .buff-timer { color:#4ae860; font-weight:bold; margin-left:4px; }
+
+@media (max-width:640px){
+    .quest-desc { font-size:10px; }
+    #buff-hud   { top:36px; left:7px; max-width:55vw; }
+    .buff-badge { font-size:9px; padding:2px 6px; }
+}
+
 /* ── FELSZERELÉS PANEL ── */
 #equip-overlay {
     position:fixed; inset:0;
@@ -734,7 +932,7 @@ body {
     background:linear-gradient(160deg,#0a2438,#061420);
     border:2px solid #1a6090;
     border-radius:18px;
-    width:min(540px,95vw);
+    width:min(620px,96vw);
     max-height:88vh;
     display:flex; flex-direction:column;
     box-shadow:0 0 50px rgba(0,100,200,0.28), 0 10px 40px rgba(0,0,0,0.8);
@@ -766,9 +964,9 @@ body {
     flex-shrink:0;
     background:transparent; border:none;
     border-bottom:2.5px solid transparent;
-    color:#4a7a9a; font-size:11.5px; font-weight:bold;
+    color:#4a7a9a; font-size:10.5px; font-weight:bold;
     font-family:inherit; cursor:pointer;
-    padding:8px 13px;
+    padding:7px 10px;
     transition:color .18s, border-color .18s, background .18s;
     white-space:nowrap;
 }
@@ -957,12 +1155,16 @@ body {
 
 <div id="dock">
     <div id="hud">
-        <div class="hud-box">🎣 Pont: <span id="sv">0</span></div>
-        <div class="hud-box">🦐 Fogott: <span id="cc">0</span></div>
-        <div class="hud-box">🌟 Max: <span id="mt">Szürke</span></div>
-        <button id="reset-save-btn" title="Mentés törlése">🗑️</button>
-        <button id="bgm-btn"  title="Zene be/ki">🔊</button>
-        <button id="info-btn" title="Játék súgó">❓ Súgó</button>
+        <div id="hud-row1">
+            <div class="hud-box" id="coin-display">🪙 <span id="gc">0</span></div>
+            <div class="hud-box">🎣 EXP: <span id="sv">0</span></div>
+            <div class="hud-box">🦐 KIFOGVA: <span id="cc">0</span></div>
+        </div>
+        <div id="hud-row2">
+            <button id="reset-save-btn" title="Mentés törlése">🗑️</button>
+            <button id="bgm-btn"  title="Zene be/ki">🔊</button>
+            <button id="info-btn" title="Játék súgó">❓ Súgó</button>
+        </div>
     </div>
     <div id="status-msg">Kattints a vízre a horgászáshoz!</div>
     <div id="fisherman-body-wrap">
@@ -1011,9 +1213,12 @@ body {
 <canvas id="ocean"></canvas>
 
 <div id="bottom-panel">
+    <div id="panel-drag-handle" title="Húzd fel/le az ablak átméretezéséhez"></div>
     <div id="tab-bar">
         <button id="tab-btn-collection" class="tab-btn active">🦐 Gyűjtemény</button>
         <button id="tab-btn-aquarium"   class="tab-btn">🐠 Akvárium</button>
+        <button id="tab-btn-shop"       class="tab-btn">🏪 Bolt <i>(hamarosan)</i></button>
+        <button id="tab-btn-quests"     class="tab-btn">📋 Küldetések</button>
     </div>
     <div id="tab-collection" class="tab-content visible">
         <div id="inv-title">2× kattintás = összevon &nbsp;·&nbsp; hosszan nyomj = elnevez 🔒</div>
@@ -1023,9 +1228,33 @@ body {
         <canvas id="aquarium-canvas"></canvas>
         <div id="aquarium-empty-msg">🐠 Az akvárium üres.<br>Nevezz el egy garnélát, majd az elnevezési ablakban tedd be!</div>
     </div>
+    <div id="tab-shop" class="tab-content">
+        <div id="shop-coming-soon">
+            <div id="shop-icon">🏪</div>
+            <div id="shop-title">Bolt — Hamarosan!</div>
+            <div id="shop-desc">Gold Coinért vásárolhatsz majd buffokat és egyedi akvárium dekorációkat</div>
+            <div id="shop-balance">🪙 <span id="gc2">0</span> Gold Coin az egyenleged</div>
+        </div>
+    </div>
+    <div id="tab-quests" class="tab-content">
+        <div id="quest-list"></div>
+    </div>
 </div>
 
+<div id="buff-hud"></div>
+
 <div id="float-label"></div>
+
+<div id="timing-bar-wrap" style="display:none;">
+    <div id="timing-bar-track">
+        <div id="timing-bar-yellow"></div>
+        <div id="timing-bar-red"></div>
+        <div id="timing-bar-cursor"></div>
+    </div>
+</div>
+<div id="timing-hit-text"></div>
+<div id="screen-flash"></div>
+<div id="ocean-dim"></div>
 
 <!-- ── NAMING POPUP OVERLAY ── -->
 <div id="name-overlay" style="display:none;">
@@ -1137,6 +1366,8 @@ body {
             <button class="info-tab" data-tab="shrimp">🦐 Garnélák</button>
             <button class="info-tab" data-tab="boss">⚡ Boss</button>
             <button class="info-tab" data-tab="aquarium">🐠 Akvárium</button>
+            <button class="info-tab" data-tab="equip">⚙️ Felszerelés</button>
+            <button class="info-tab" data-tab="quests">📋 Küldetések</button>
             <button class="info-tab" data-tab="other">💾 Egyéb</button>
         </div>
         <div id="info-content">
@@ -1145,8 +1376,13 @@ body {
             <div class="info-section active" id="info-sec-controls">
                 <h3>Horgászás</h3>
                 <div class="info-row"><span class="info-key">Kattintás / Tap</span><span>Horog bedobása — kattints arra a helyre, ahova dobni szeretnéd</span></div>
-                <div class="info-row"><span class="info-key">2. kattintás</span><span>Horog behúzása — harapás után rántsd be azonnal!</span></div>
+                <div class="info-row"><span class="info-key">2. kattintás</span><span>Harapásnál megjelenik a célzó sáv — kattints a piros/sárga zónában a bónuszért, majd a horog behúzódik</span></div>
                 <div class="info-row"><span class="info-key">Korai húzás</span><span>Ha harapás előtt húzod be, semmi sem kerül a gyűjteménybe</span></div>
+                <h3>Időzítéses behúzás</h3>
+                <div class="info-row"><span class="info-key">🔴 Piros zóna</span><span>+8% T3+ garnéla esély erre a fogásra — a sárga belsejében, legnehezebb eltalálni</span></div>
+                <div class="info-row"><span class="info-key">🟡 Sárga zóna</span><span>+4% T3+ esély — közepes célterület</span></div>
+                <div class="info-row"><span class="info-key">⬜ Szürke</span><span>Nincs bónusz — ha nem kattintasz, 2 átfutás után automatikusan szürke</span></div>
+                <div class="info-row"><span class="info-key">Bot trinket</span><span>Jobb horgászbot = lassabb csúszka = könnyebb pontos célzás</span></div>
                 <h3>Gyűjtemény</h3>
                 <div class="info-row"><span class="info-key">1× kattintás</span><span>Garnéla kijelölése összevonáshoz (arany keret jelzi)</span></div>
                 <div class="info-row"><span class="info-key">2× kattintás</span><span>Azonos szintű kijelölt + kattintott garnéla összevonása — újabb szintet kapsz, +3× pont bónusz</span></div>
@@ -1155,8 +1391,11 @@ body {
                 <div class="info-row"><span class="info-key">← ↑ ↓ →</span><span>Nyisd le a megjelenő nyilakat sorban — billentyűzetről vagy az érintőgombokkal</span></div>
                 <div class="info-row"><span class="info-key">5 másodperc</span><span>Ennyi idő áll rendelkezésre mind az 5 nyíl helyes megnyomásához</span></div>
                 <h3>Egyéb gombok</h3>
+                <div class="info-row"><span class="info-key">🔊 Zene</span><span>Háttérzene némítása / bekapcsolása — az első kattintásra indul el automatikusan</span></div>
+                <div class="info-row"><span class="info-key">⚙️ Horgász</span><span>Kattints a horgász fejére a felszerelés panelhez</span></div>
                 <div class="info-row"><span class="info-key">🗑️ HUD</span><span>Mentés törlése — megerősítéshez írd be TÖRLÉS (nagybetűkkel)</span></div>
                 <div class="info-row"><span class="info-key">❓ Súgó</span><span>Ez az ablak — bármikor elérhető játék közben is</span></div>
+                <div class="info-row"><span class="info-key">Kék csík</span><span>Az alsó panel és az óceán közti kék húzósávot fel-le húzva átméretezheted a panelt — egészen a stégig</span></div>
                 <div class="info-row"><span class="info-key">Du-Duduk 🦐</span><span>Kattints a jobb alsó sarokfigurára egy véletlenszerű garnéla tippért!</span></div>
             </div>
 
@@ -1181,7 +1420,8 @@ body {
                 <h3>Megjelenés</h3>
                 <div class="info-row"><span class="info-key">2% / harapás</span><span>Minden harapásnál 2% eséllyel jelenik meg boss garnéla a normál hal helyett</span></div>
                 <div class="info-row"><span class="info-key">5× pont</span><span>Sikeres elfogás esetén az adott tier pontjainak ötszöröse jár</span></div>
-                <div class="info-row"><span class="info-key">Egyedi név</span><span>Minden boss garnéla saját nevet kap a 41 elemű névkészletből (körkörösen)</span></div>
+                <div class="info-row"><span class="info-key">Egyedi név</span><span>Mind a 41 boss névből csak egyszer kaphatod meg — permanensen jegyezzük melyiket fogtad el már</span></div>
+                <div class="info-row"><span class="info-key">Gyűjtés</span><span>Ha minden egyedi nevet elfogsz, a ruha slot T5 trinkete (Legendás Öltöny) is jár — ez a játék legnagyobb mérföldköve</span></div>
                 <h3>Boss szinteloszlás</h3>
                 <div class="boss-tier-grid" id="info-boss-tiers"></div>
                 <h3>QTE szabályok</h3>
@@ -1201,10 +1441,57 @@ body {
                 <div class="info-row"><span class="info-key">Kattints rá</span><span>Az akváriumban úszkáló garnélára kattintva előjön a kivételi ablak</span></div>
                 <div class="info-row"><span class="info-key">Visszahelyezés</span><span>„Gyűjteménybe" gomb — ha a gyűjtemény tele van (32), a legalacsonyabb szintű névtelen kiesik</span></div>
                 <div class="info-row"><span class="info-key">Animáció</span><span>Az akvárium csak az „Akvárium" fülön aktív — garnélák úsznak, hínár mozog</span></div>
+                <h3>Dekorációk</h3>
+                <div class="info-row"><span class="info-key">Szerzés</span><span>Nehezebb küldetések teljesítésekor kapsz akvárium dekorációt jutalmul (korall, tengericsillag, kincsesláda, csiga, búvárfigura, horgony)</span></div>
+                <div class="info-row"><span class="info-key">Megjelenés</span><span>A dekorációk automatikusan az akvárium aljára kerülnek — enyhén himbálóznak a vízben</span></div>
                 <p class="info-note">Az akváriumban lévő garnélák sosem vonhatók össze és nem vesznek el automatikusan. Névcímkéjük az állat fölött látható.</p>
             </div>
 
-            <!-- Tab 5: Egyéb -->
+            <!-- Tab 5: Felszerelés -->
+            <div class="info-section" id="info-sec-equip">
+                <h3>A felszerelés megnyitása</h3>
+                <div class="info-row"><span class="info-key">Horgász feje</span><span>Kattints a horgász fejére (a stégen) a felszerelés ablakhoz — ⚙️ ikon jelzi hogy kattintható</span></div>
+                <div class="info-row"><span class="info-key">4 slot</span><span>Fej, Bot, Csali és Ruha — mindegyikbe 1 trinketet szerelhetsz fel egyszerre</span></div>
+                <div class="info-row"><span class="info-key">Csere</span><span>Kattints egy feloldott tárgyra a felszereléshez — ismét kattintva leveszi</span></div>
+                <div class="info-row"><span class="info-key">Zárolva 🔒</span><span>A még meg nem szerzett tárgyakon látszik az unlock feltétel és a jelenlegi haladásod (pl. 87/400 fogás)</span></div>
+                <h3>Slot bónuszok</h3>
+                <div class="info-row"><span class="info-key">🎩 Fej</span><span>T3+ és T4+ garnéla esélyek növelése — jobb fej = ritkább garnéla valószínűbb</span></div>
+                <div class="info-row"><span class="info-key">🎣 Bot</span><span>Harapási várakozás csökkentése + behúzás gyorsítás — és a célzó sáv csúszkája lassabb lesz!</span></div>
+                <div class="info-row"><span class="info-key">🪱 Csali</span><span>T2–T5+ esélyek és extra boss esély — egyre ritkább garnélák kerülnek horogra</span></div>
+                <div class="info-row"><span class="info-key">👕 Ruha</span><span>Fogásonkénti pont szorzó és összevonási pont bónusz — ugyanannyiból több pontot szerzel</span></div>
+                <h3>Mérföldkövek (unlock feltételek)</h3>
+                <div class="info-row"><span class="info-key">🎩 Fej</span><span>Fogás darabszám láncok: 30 → 150 → 400 → 800 → 1500</span></div>
+                <div class="info-row"><span class="info-key">🎣 Bot</span><span>Összevonás szám: 5 → 30 → 100 → 250 → 500</span></div>
+                <div class="info-row"><span class="info-key">🪱 Csali</span><span>Elért pontszám: 5e3 → 40e3 → 200e3 → 600e3 → 2.000.000</span></div>
+                <div class="info-row"><span class="info-key">👕 Ruha</span><span>Egyedi boss nevek: 1 → 5 → 15 → 35 → 41 (mind)</span></div>
+                <p class="info-note">Mérföldkő elérésekor arany popup jelenik meg, és az első üres slotba automatikusan felszerelődik az új tárgy.</p>
+            </div>
+
+            <!-- Tab 6: Küldetések -->
+            <div class="info-section" id="info-sec-quests">
+                <h3>Küldetés rendszer</h3>
+                <div class="info-row"><span class="info-key">3 aktív</span><span>Mindig 3 küldetés fut egyszerre — teljesítés után 3 másodperccel új generálódik a helyére</span></div>
+                <div class="info-row"><span class="info-key">📋 Fül</span><span>Az alsó panel „Küldetések" fülén látod a haladásodat és a jutalmakat</span></div>
+                <h3>Quest típusok</h3>
+                <div class="info-row"><span class="info-key">Fogás</span><span>Fogj el X garnélát (bármilyen) · Fogj X db adott tierűt</span></div>
+                <div class="info-row"><span class="info-key">Összevonás</span><span>Vonj össze X-szer</span></div>
+                <div class="info-row"><span class="info-key">Pont</span><span>Gyűjts X pontot (az adott küldetés indulása óta)</span></div>
+                <div class="info-row"><span class="info-key">Boss / Akvárium</span><span>Kapj el X boss garnélát · Legyen egyszerre X garnéla az akváriumban</span></div>
+                <div class="info-row"><span class="info-key">Névadás / Equip</span><span>Nevezz el X garnélát · Töltsd fel mind a 4 trinket slotot</span></div>
+                <h3>Jutalmak</h3>
+                <div class="info-row"><span class="info-key">💰 Pont</span><span>Könnyű quests — azonnali pontbónusz a score-hoz</span></div>
+                <div class="info-row"><span class="info-key">⚡ Buff</span><span>Közepes quests — ideiglenes bónusz, HUD-ban visszaszámlálóval jelenik meg</span></div>
+                <div class="info-row"><span class="info-key">🎁 Dekoráció</span><span>Nehéz quests — akvárium dekoráció, az Akvárium fülön látható</span></div>
+                <h3>Buff típusok</h3>
+                <div class="info-row"><span class="info-key">🍀 Szerencsés Víz</span><span>+15% T3+ esély · 5 percig</span></div>
+                <div class="info-row"><span class="info-key">⚡ Gyors Kezű</span><span>-30% harapási várakozás · 5 percig</span></div>
+                <div class="info-row"><span class="info-key">🪝 Arany Horog</span><span>+25% fogási pont szorzó · 10 percig</span></div>
+                <div class="info-row"><span class="info-key">👑 Boss Varázslat</span><span>+3% boss esély · 5 percig</span></div>
+                <div class="info-row"><span class="info-key">✨ Összevonó Erő</span><span>+30% összevonási pont · 8 percig</span></div>
+                <p class="info-note">Aktív buffok és trinket bónuszok összeadódnak egymással. A HUD-ban a buff badge-ek jelzik a visszaszámlálást — oldalfrissítés után is folytatódnak.</p>
+            </div>
+
+            <!-- Tab 7: Egyéb -->
             <div class="info-section" id="info-sec-other">
                 <h3>Mentési rendszer</h3>
                 <div class="info-row"><span class="info-key">Automatikus</span><span>Minden fogás, összevonás, elnevezés és mozgatás után azonnal elmenti a böngésző local storage-ba</span></div>
@@ -1246,6 +1533,7 @@ body {
 
 <style>
 /* dudukBob animáció eltávolítva — a karakter most nyugodtan áll */
+#duduk-corner { transition:opacity 0.3s ease; }
 
 /* ── DUDUK TIPP BUBORÉK ── */
 #duduk-bubble {
@@ -1336,17 +1624,18 @@ body {
     }
 
     /* ── HUD ── */
-    #hud { gap:4px; flex-wrap:wrap; max-width:56vw; top:5px; left:7px; }
-    .hud-box       { font-size:10px; padding:3px 7px; }
-    #reset-save-btn{ font-size:12px; padding:3px 7px; }
-    #bgm-btn       { font-size:12px; padding:3px 7px; }
-    #info-btn      { font-size:12px; padding:3px 7px; }
+    #hud { gap:3px; top:5px; left:7px; }
+    #hud-row1, #hud-row2 { gap:3px; }
+    .hud-box       { font-size:9.5px; padding:3px 6px; }
+    #reset-save-btn{ font-size:11px; padding:3px 6px; }
+    #bgm-btn       { font-size:11px; padding:3px 6px; }
+    #info-btn      { font-size:11px; padding:3px 6px; }
 
     /* ── Státusz üzenet ── */
     #status-msg { font-size:10.5px; max-width:165px; padding:3px 8px; top:5px; right:7px; }
 
     /* ── Bottom panel / tabs ── */
-    #bottom-panel   { height:160px; }
+    #bottom-panel   { height:186px; }
     #tab-bar        { height:30px; }
     .tab-btn        { font-size:11px; }
     #tab-collection { padding:3px 6px 4px; }
@@ -1392,10 +1681,11 @@ const WEIGHTS=[50,26,14,7,3.5,1.6,0.7,0.25,0.1,0.04];
 
 function pickTier(){
     const b=getActiveBonuses();
+    const tb=window._timingBoost||0; // egyszer felhasználható timing bónusz
     const w=WEIGHTS.map((wt,i)=>{
         let m=1;
         if(i>=1) m+=b.tierBoost2/100;
-        if(i>=2) m+=b.tierBoost3/100;
+        if(i>=2) m+=(b.tierBoost3+tb)/100;
         if(i>=3) m+=b.tierBoost4/100;
         if(i>=4) m+=b.tierBoost5/100;
         return wt*m;
@@ -1405,6 +1695,66 @@ function pickTier(){
     for(let i=0;i<w.length;i++){r-=w[i];if(r<=0)return i;}
     return 0;
 }
+
+// ══════════════════════════════════════════════
+//  BUFF, DEKORÁCIÓ, QUEST DEFINÍCIÓK
+// ══════════════════════════════════════════════
+const BUFF_TYPES=[
+    {id:'lucky',  name:'Szerencsés Víz',  icon:'🍀', dur:5*60,  bonus:{tierBoost3:15}},
+    {id:'quick',  name:'Gyors Kezű',      icon:'⚡', dur:5*60,  bonus:{nibbleSpeed:30}},
+    {id:'golden', name:'Arany Horog',     icon:'🪝', dur:10*60, bonus:{catchMult:25}},
+    {id:'boss',   name:'Boss Varázslat',  icon:'👑', dur:5*60,  bonus:{bossChance:3}},
+    {id:'merge',  name:'Összevonó Erő',   icon:'✨', dur:8*60,  bonus:{mergeMult:30}},
+];
+const DECORATION_TYPES=[
+    {id:'coral',    name:'Korall',         icon:'🪸'},
+    {id:'starfish', name:'Tengericsillag', icon:'⭐'},
+    {id:'chest',    name:'Kincsesláda',    icon:'📦'},
+    {id:'shell',    name:'Csiga',          icon:'🐚'},
+    {id:'diver',    name:'Búvárfigura',    icon:'🤿'},
+    {id:'anchor',   name:'Horgony',        icon:'⚓'},
+];
+
+function _rndFrom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+const QUEST_TEMPLATES=[
+    // ── Könnyű — pont jutalom ──
+    {w:3, make:()=>{
+        const t=_rndFrom([15,25,40]);
+        return {type:'catchAny', desc:`Fogj el ${t} garnélát`, stat:'catchAny', target:t,
+            reward:{type:'points', val:t*80, label:`+${(t*80).toLocaleString()} pont`}};
+    }},
+    {w:3, make:()=>{
+        const ti=_rndFrom([0,1,2]), t=_rndFrom([5,10,15]);
+        return {type:'catchTier', desc:`Fogj el ${t} db ${TIERS[ti].name} garnélát`,
+            stat:'catchTier', tierIdx:ti, target:t,
+            reward:{type:'points', val:TIERS[ti].pts*t*15, label:`+${(TIERS[ti].pts*t*15).toLocaleString()} pont`}};
+    }},
+    {w:2, make:()=>{
+        const t=_rndFrom([3,5,8]);
+        return {type:'merge', desc:`Vonj össze ${t}×`, stat:'merge', target:t,
+            reward:{type:'points', val:t*350, label:`+${(t*350).toLocaleString()} pont`}};
+    }},
+    // ── Közepes — buff jutalom ──
+    {w:2, make:()=>{
+        const t=_rndFrom([4000,10000,20000]), buff=_rndFrom(BUFF_TYPES);
+        return {type:'scoreGain', desc:`Gyűjts ${t.toLocaleString()} pontot`, stat:'scoreGain', target:t,
+            reward:{type:'buff', val:buff, label:`${buff.icon} ${buff.name}`}};
+    }},
+    {w:2, make:()=>{
+        const ti=_rndFrom([3,4,5]), t=_rndFrom([2,4,6]), buff=_rndFrom(BUFF_TYPES);
+        return {type:'catchTier', desc:`Fogj el ${t} db ${TIERS[ti].name} garnélát`,
+            stat:'catchTier', tierIdx:ti, target:t,
+            reward:{type:'buff', val:buff, label:`${buff.icon} ${buff.name}`}};
+    }},
+    {w:1, make:()=>{
+        const t=_rndFrom([10,18,28]), buff=_rndFrom(BUFF_TYPES);
+        return {type:'merge', desc:`Vonj össze ${t}×`, stat:'merge', target:t,
+            reward:{type:'buff', val:buff, label:`${buff.icon} ${buff.name}`}};
+    }},
+    // ── Dekoráció questek — hamarosan (nem generálódnak aktívan) ──
+    {w:0, deco:true, make:()=>({ desc:'Boss quest deko', stat:'boss', target:1, reward:{type:'decoration', val:DECORATION_TYPES[0], label:'🪸'} })},
+];
 
 // ══════════════════════════════════════════════
 //  TRINKET & MILESTONE DEFINÍCIÓK
@@ -1577,6 +1927,16 @@ let bossCount=0;
 let equipped={head:null,rod:null,bait:null,outfit:null};
 let unlockedTrinkets=[];    // trinket ID-k tömbje
 let completedMilestones=[]; // milestone ID-k tömbje
+// Quest / buff / dekoráció állapot
+let activeQuests=[];
+let questSeed=0;
+let activeBuffs=[];           // [{buff, endTime}]
+let unlockedDecorations=[];   // decoration ID-k
+let aquariumDecorations=[];   // [{id, xFrac, scale}]
+// Napi quest + gold coin
+let goldCoins=0;
+let dailyQuests=[];
+let lastDailyDate='';
 
 // ══════════════════════════════════════════════
 //  MENTÉS / BETÖLTÉS  (localStorage)
@@ -1590,7 +1950,10 @@ function saveGame(){
             inventory, aquarium,
             mergeCount, bossCount,
             equipped, unlockedTrinkets, completedMilestones,
-            usedBossNames
+            usedBossNames,
+            activeQuests, questSeed,
+            activeBuffs, unlockedDecorations, aquariumDecorations,
+            goldCoins, dailyQuests, lastDailyDate
         }));
     }catch(e){ console.warn('Mentés sikertelen:',e); }
 }
@@ -1622,7 +1985,15 @@ function loadGame(){
         equipped            = Object.assign({head:null,rod:null,bait:null,outfit:null}, d.equipped ?? {});
         unlockedTrinkets    = d.unlockedTrinkets    ?? [];
         completedMilestones = d.completedMilestones ?? [];
-        usedBossNames       = d.usedBossNames       ?? [];
+        usedBossNames        = d.usedBossNames        ?? [];
+        activeQuests         = d.activeQuests         ?? [];
+        questSeed            = d.questSeed            ?? 0;
+        activeBuffs          = (d.activeBuffs         ?? []).filter(ab=>ab.endTime>Date.now());
+        unlockedDecorations  = d.unlockedDecorations  ?? [];
+        aquariumDecorations  = d.aquariumDecorations  ?? [];
+        goldCoins            = d.goldCoins            ?? 0;
+        dailyQuests          = d.dailyQuests          ?? [];
+        lastDailyDate        = d.lastDailyDate        ?? '';
     }catch(e){ console.warn('Betöltés sikertelen:',e); }
 }
 
@@ -1630,11 +2001,17 @@ function loadGame(){
 function getActiveBonuses(){
     const b={tierBoost2:0,tierBoost3:0,tierBoost4:0,tierBoost5:0,
              bossChance:0,nibbleSpeed:0,reelSpeed:0,catchMult:0,mergeMult:0};
+    // Trinket bónuszok
     Object.values(equipped).forEach(id=>{
         if(!id) return;
         const t=getTrinket(id);
         if(!t) return;
         Object.entries(t.bonus).forEach(([k,v])=>{ b[k]=(b[k]||0)+v; });
+    });
+    // Aktív buff bónuszok (lejártak kizárva)
+    const now=Date.now();
+    activeBuffs.filter(ab=>ab.endTime>now).forEach(ab=>{
+        Object.entries(ab.buff.bonus).forEach(([k,v])=>{ b[k]=(b[k]||0)+v; });
     });
     return b;
 }
@@ -1645,6 +2022,10 @@ let hookX=W/2,hookY=0,hookTargetY=H*0.5;
 let caughtTier=null;
 let nibbleTimer=null;
 let nibbled=false;
+// Timing bar
+let tbActive=false, tbPos=0, tbDir=1, tbSpeed=0.5, tbBounceCount=0;
+let tbYX=0, tbYW=0, tbRX=0, tbRW=0;
+let tbRaf=null, tbLastT=0;
 
 // Fisher cursor-follow
 let fisherAngle=0, targetFisherAngle=0;
@@ -1739,6 +2120,7 @@ document.addEventListener('DOMContentLoaded',()=>{}, false); // no-op guard
         }
         inventory[namePopupIdx].name=nm;
         saveGame(); renderInv(); closeNamePopup();
+        updateQuestProgress('name', 1);
     });
 
     document.getElementById('name-delete-btn').addEventListener('click',()=>{
@@ -2183,11 +2565,11 @@ function loop(){
                     startBossMinigame(bTier);
                     return;
                 }
-                caughtTier=pickTier();
                 nibbled=true;
                 SFX.nibble();
-                setMsg(`⚡ HARAPÁS! ${TIERS[caughtTier].name} garnéla! Kattints a behúzáshoz!`);
-                setTimeout(()=>{nibbled=false;},800);
+                setMsg('⚡ HARAPÁS! Kattints a zsinórra!');
+                setTimeout(()=>{nibbled=false;},600);
+                showTimingBar();
             },delay);
         }
     } else if(fishState===FS.REELING){
@@ -2208,6 +2590,11 @@ function loop(){
                 updateHUD();
                 saveGame();
                 checkMilestones();
+                // Quest progress
+                updateQuestProgress('catchAny', 1);
+                updateQuestProgress('catchTier', 1, t);
+                if(isBoss) updateQuestProgress('boss', 1);
+                updateQuestProgress('scoreGain', Math.round(TIERS[t].pts*(isBoss?5:1)*(1+getActiveBonuses().catchMult/100)));
                 addToInventory(t,isBoss,bossName);
                 showFloat(isBoss?`👑 ${bossName}!`:`+${TIERS[t].pts} 🦐 ${TIERS[t].name}`,hookX);
                 // Tier 3+ → good catch hang (erősítve)
@@ -2254,9 +2641,13 @@ function doFishAction(clientX, clientY){
         SFX.cast();
         setMsg('🎣 Horgász a vízbe...');
     } else if(fishState===FS.WAITING){
-        clearTimeout(nibbleTimer);
-        fishState=FS.REELING;
-        setMsg(caughtTier!==null ? '💪 Behúzás...' : '😅 Semmi sem harapott még... behúzás!');
+        if(tbActive){
+            resolveTimingBar(false); // kattintás = manuális befejezés
+        } else {
+            clearTimeout(nibbleTimer);
+            fishState=FS.REELING;
+            setMsg('😅 Semmi sem harapott... behúzás!');
+        }
     }
     // ignore during CASTING / REELING
 }
@@ -2284,7 +2675,6 @@ function setMsg(t){document.getElementById('status-msg').textContent=t;}
 function updateHUD(){
     document.getElementById('sv').textContent=score.toLocaleString();
     document.getElementById('cc').textContent=catches;
-    document.getElementById('mt').textContent=TIERS[maxTierIdx].name;
 }
 
 // Float label
@@ -2475,6 +2865,10 @@ function onSlotClick(i){
     updateHUD();
     saveGame();
     checkMilestones();
+    updateQuestProgress('merge', 1);
+    // Teli felszerelés check
+    const _equippedCount=Object.values(equipped).filter(Boolean).length;
+    updateQuestProgress('fullEquip', _equippedCount>=4?1:0);
 
     selIdx=null;
     if(newTier===TIERS.length-1)SFX.max();
@@ -2509,13 +2903,20 @@ let aqActionUid      = null;
 // ── Tab váltás ────────────────────────────────
 function switchTab(tab){
     currentTab = tab;
-    document.getElementById('tab-collection').classList.toggle('visible', tab==='collection');
-    document.getElementById('tab-aquarium'  ).classList.toggle('visible', tab==='aquarium');
-    document.getElementById('tab-btn-collection').classList.toggle('active', tab==='collection');
-    document.getElementById('tab-btn-aquarium'  ).classList.toggle('active', tab==='aquarium');
+    ['collection','aquarium','shop','quests'].forEach(t=>{
+        document.getElementById('tab-'+t).classList.toggle('visible', tab===t);
+        document.getElementById('tab-btn-'+t).classList.toggle('active', tab===t);
+    });
+    if(tab==='quests') renderQuestTab();
+    // Duduk elrejtése quest és bolt fülön
+    const hideDuduk = tab==='quests' || tab==='shop';
+    document.getElementById('duduk-corner').style.opacity = hideDuduk ? '0' : '1';
+    document.getElementById('duduk-corner').style.pointerEvents = hideDuduk ? 'none' : 'auto';
+    if(hideDuduk) document.getElementById('duduk-bubble').classList.remove('show');
 }
 document.getElementById('tab-btn-collection').addEventListener('click', ()=>switchTab('collection'));
 document.getElementById('tab-btn-aquarium'  ).addEventListener('click', ()=>switchTab('aquarium'));
+document.getElementById('tab-btn-shop'      ).addEventListener('click', ()=>switchTab('shop'));
 
 // ── Garnéla mozgatás ──────────────────────────
 function moveToAquarium(idx){
@@ -2525,6 +2926,7 @@ function moveToAquarium(idx){
     inventory.splice(idx,1);
     saveGame(); renderInv();
     setMsg(`🐠 "${item.name}" az akváriumba került!`);
+    updateQuestProgress('aquariumCount', aquarium.length);
 }
 
 function removeFromAquarium(uid){
@@ -2689,6 +3091,23 @@ function renderAquariumCanvas(){
 
     // Hínárok
     [0.1,0.88,0.46].forEach((px,idx)=>drawSeaweed(ac,W*px,H-16,idx));
+
+    // Dekorációk (emoji az aljára)
+    if(aquariumDecorations.length>0){
+        ac.save();
+        aquariumDecorations.forEach(dec=>{
+            const dt=DECORATION_TYPES.find(d=>d.id===dec.id);
+            if(!dt) return;
+            const sz=Math.round(16*dec.scale);
+            ac.font=`${sz}px serif`;
+            ac.textAlign='center'; ac.textBaseline='bottom';
+            ac.globalAlpha=0.92;
+            const t2=Date.now()*0.0006;
+            const sway=Math.sin(t2+dec.xFrac*8)*2;
+            ac.fillText(dt.icon, W*dec.xFrac+sway, H-17);
+        });
+        ac.restore();
+    }
 
     // Buborékok
     drawAquariumBubbles(ac,W,H);
@@ -2902,6 +3321,7 @@ let dudukTipIdx = -1;
 let dudukBubbleHideTimer = null;
 
 function showDudukTip() {
+    if(currentTab==='quests' || currentTab==='shop') return;
     const bubble = document.getElementById('duduk-bubble');
     const textEl = document.getElementById('duduk-tip-text');
     if(!bubble || !textEl) return;
@@ -2927,6 +3347,431 @@ setTimeout(() => { showDudukTip(); setInterval(showDudukTip, 20000); }, 7000);
 
 // Kattintásra is azonnal mutat egyet
 document.getElementById('duduk-corner').addEventListener('click', showDudukTip);
+
+// ══════════════════════════════════════════════
+//  TIMING BAR
+// ══════════════════════════════════════════════
+function showTimingBar(){
+    const track = document.getElementById('timing-bar-track');
+    if(!track) return;
+    const trackW = track.offsetWidth || 290;
+
+    // Sárga zóna: 18-26% szélességű, random pozíció
+    tbYW = 0.18 + Math.random() * 0.08;
+    tbYX = 0.06 + Math.random() * (0.88 - tbYW);
+    // Piros zóna: a sárga közepén, 38%-a a sárgának
+    tbRW = tbYW * 0.38;
+    tbRX = tbYX + (tbYW - tbRW) / 2;
+
+    // Zónák pozicionálása
+    const yEl = document.getElementById('timing-bar-yellow');
+    const rEl = document.getElementById('timing-bar-red');
+    yEl.style.left  = (tbYX * trackW) + 'px';  yEl.style.width = (tbYW * trackW) + 'px';
+    rEl.style.left  = (tbRX * trackW) + 'px';  rEl.style.width = (tbRW * trackW) + 'px';
+
+    // Sebesség — jobb bot = lassabb csúszka
+    const b = getActiveBonuses();
+    tbSpeed = 0.7 * Math.max(0.6, 1 - b.nibbleSpeed / 100);
+
+    // Mutató mindig balról indul jobbra
+    tbPos = 0; tbDir = 1; tbBounceCount = 0; tbLastT = 0; tbActive = true;
+    // Háttér elsötétítés
+    document.getElementById('ocean-dim').classList.add('active');
+
+    // Pozícionálás a panel fölé
+    const wrap = document.getElementById('timing-bar-wrap');
+    const panelH = document.getElementById('bottom-panel').offsetHeight;
+    wrap.style.bottom = (panelH + 18) + 'px';
+    wrap.style.display = 'flex';
+    // Animáció újraindítása
+    wrap.style.animation = 'none';
+    requestAnimationFrame(()=>{ wrap.style.animation = ''; });
+
+    cancelAnimationFrame(tbRaf);
+    tbRaf = requestAnimationFrame(animateTimingBar);
+    // Nincs timeout — 2 átfutás után automatikusan szürke
+}
+
+function animateTimingBar(ts){
+    if(!tbActive) return;
+    const dt = tbLastT ? Math.min((ts - tbLastT) / 1000, 0.05) : 0.016;
+    tbLastT = ts;
+    tbPos += tbDir * tbSpeed * dt;
+    if(tbPos >= 1){
+        tbPos = 1; tbDir = -1; tbBounceCount++;
+        if(tbBounceCount >= 2){ resolveTimingBar(true); return; }
+    }
+    if(tbPos <= 0){
+        tbPos = 0; tbDir = 1; tbBounceCount++;
+        if(tbBounceCount >= 2){ resolveTimingBar(true); return; }
+    }
+    const cursor = document.getElementById('timing-bar-cursor');
+    const track  = document.getElementById('timing-bar-track');
+    if(cursor && track) cursor.style.left = (tbPos * track.offsetWidth) + 'px';
+    tbRaf = requestAnimationFrame(animateTimingBar);
+}
+
+function resolveTimingBar(timeout){
+    if(!tbActive) return;
+    tbActive = false;
+    cancelAnimationFrame(tbRaf);
+
+    // Melyik zónában van a mutató?
+    let result = 'grey';
+    if(!timeout){
+        if(tbPos >= tbRX && tbPos <= tbRX + tbRW)       result = 'red';
+        else if(tbPos >= tbYX && tbPos <= tbYX + tbYW)  result = 'yellow';
+    }
+
+    // Háttér dim levétele
+    document.getElementById('ocean-dim').classList.remove('active');
+
+    // Bar flash
+    const track = document.getElementById('timing-bar-track');
+    if(track){
+        track.classList.remove('flash-red','flash-yellow','flash-grey');
+        void track.offsetWidth;
+        track.classList.add('flash-'+result);
+    }
+
+    // Képernyő flash (csak piros/sárga találatnál)
+    if(result!=='grey'){
+        const sf = document.getElementById('screen-flash');
+        sf.className=''; void sf.offsetWidth;
+        sf.className='flash-'+result;
+    }
+
+    // Hang
+    if(result==='red')         { initAC(); SFX.merge(); }
+    else if(result==='yellow') { initAC(); SFX.catch(); }
+
+    // Timing bónusz → tier meghatározás
+    window._timingBoost = result==='red' ? 8 : result==='yellow' ? 4 : 0;
+    caughtTier = pickTier();
+    window._timingBoost = 0;
+
+    // Lebegő találat szöveg
+    const hitEl = document.getElementById('timing-hit-text');
+    const panelH = document.getElementById('bottom-panel').offsetHeight;
+    const hitTexts = { red:'🎯 TÖKÉLETES!', yellow:'⭐ JÓ!', grey:'' };
+    const hitColors = { red:'#ff5555', yellow:'#ffcc00' };
+    if(hitEl && hitTexts[result]){
+        hitEl.textContent = hitTexts[result];
+        hitEl.style.color = hitColors[result];
+        hitEl.style.bottom = (panelH + 58) + 'px';
+        hitEl.className=''; void hitEl.offsetWidth;
+        hitEl.className='pop';
+    }
+
+    // Bar elrejtése
+    setTimeout(()=>{
+        const wrap = document.getElementById('timing-bar-wrap');
+        if(wrap) wrap.style.display = 'none';
+    }, 360);
+
+    // Reel indítása
+    clearTimeout(nibbleTimer);
+    fishState = FS.REELING;
+    const msgs = {
+        red:    `🎯 TÖKÉLETES! ${TIERS[caughtTier].name} — jobb esély volt!`,
+        yellow: `⭐ Jó fogás! ${TIERS[caughtTier].name} — kis bónusszal!`,
+        grey:   `💪 Behúzás... ${TIERS[caughtTier].name} garnéla!`,
+    };
+    setMsg(msgs[result]);
+}
+
+// ══════════════════════════════════════════════
+//  NAPI QUEST RENDSZER
+// ══════════════════════════════════════════════
+const DAILY_TEMPLATES=[
+    {make:()=>{ const t=_rndFrom([80,120,150]); return {desc:`Fogj el ${t} garnélát`,          stat:'catchAny',    target:t,  coins:2}; }},
+    {make:()=>{ const t=_rndFrom([30,40,50]);   return {desc:`Vonj össze ${t}×`,                stat:'merge',       target:t,  coins:2}; }},
+    {make:()=>{ const t=_rndFrom([30000,50000,80000]); return {desc:`Gyűjts ${t.toLocaleString()} pontot`, stat:'scoreGain', target:t, coins:3}; }},
+    {make:()=>{ const ti=_rndFrom([4,5,6]), t=_rndFrom([5,8,12]); return {desc:`Fogj el ${t} db ${TIERS[ti].name} garnélát`, stat:'catchTier', tierIdx:ti, target:t, coins:3}; }},
+    {make:()=>{ const t=_rndFrom([2,3,4]);      return {desc:`Kapj el ${t} boss garnélát`,      stat:'boss',        target:t,  coins:3}; }},
+    {make:()=>{ const t=_rndFrom([5,7,8]);      return {desc:`Legyen egyszerre ${t} garnéla az akváriumban`, stat:'aquariumCount', target:t, coins:2}; }},
+    {make:()=>{ const t=_rndFrom([4,6,8]);      return {desc:`Nevezz el ${t} garnélát`,          stat:'name',        target:t,  coins:2}; }},
+    {make:()=>{ return                                 {desc:`Töltsd fel mind a 4 trinket slotot`, stat:'fullEquip', target:1,  coins:3}; }},
+    {make:()=>{ const t=_rndFrom([15,20,25]);   return {desc:`Fogj el ${t} db T4+ garnélát`,     stat:'catchTier',   target:t, tierIdx:3, coins:2}; }},
+    {make:()=>{ const t=_rndFrom([60,80,100]);  return {desc:`Vonj össze ${t}×`,                 stat:'merge',       target:t,  coins:3}; }},
+];
+
+function getDailyDateStr(){
+    const d=new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function seededRnd(s){ let x=Math.sin(s+1)*10000; return x-Math.floor(x); }
+
+function generateDailyQuests(){
+    const seed = getDailyDateStr().split('-').reduce((s,n,i)=>s+parseInt(n)*(i+1)*37, 0);
+    const total = DAILY_TEMPLATES.length;
+    const i1 = Math.floor(seededRnd(seed)   * total);
+    let   i2 = Math.floor(seededRnd(seed+7) * total);
+    if(i2===i1) i2=(i2+1)%total;
+    dailyQuests=[
+        {...DAILY_TEMPLATES[i1].make(), uid:'daily_0', progress:0, completed:false, isDaily:true},
+        {...DAILY_TEMPLATES[i2].make(), uid:'daily_1', progress:0, completed:false, isDaily:true},
+    ];
+}
+
+function checkDailyReset(){
+    const today=getDailyDateStr();
+    if(lastDailyDate!==today){
+        lastDailyDate=today;
+        generateDailyQuests();
+        saveGame();
+        renderQuestTab();
+    }
+}
+
+function updateGoldCoins(){
+    const val=goldCoins.toLocaleString();
+    const el=document.getElementById('gc');   if(el) el.textContent=val;
+    const el2=document.getElementById('gc2'); if(el2) el2.textContent=val;
+}
+
+// Éjfélkor és percenként ellenőrzés
+setInterval(checkDailyReset, 60000);
+
+// ══════════════════════════════════════════════
+//  QUEST RENDSZER
+// ══════════════════════════════════════════════
+function generateQuest(){
+    const eligible=QUEST_TEMPLATES.filter(t=>t.w>0&&!t.deco);
+    const total=eligible.reduce((s,t)=>s+t.w,0);
+    let r=Math.random()*total;
+    let tmpl=eligible[eligible.length-1];
+    for(const t of eligible){r-=t.w;if(r<=0){tmpl=t;break;}}
+    const q=tmpl.make();
+    q.uid=questSeed++;
+    q.progress=0;
+    q.completed=false;
+    return q;
+}
+
+function initQuests(){
+    while(activeQuests.length<3) activeQuests.push(generateQuest());
+    saveGame();
+    renderQuestTab();
+}
+
+function updateQuestProgress(stat, val, tierIdx){
+    let changed=false;
+    [...activeQuests, ...dailyQuests].forEach(q=>{
+        if(q.completed) return;
+        if(q.stat!==stat) return;
+        if(stat==='catchTier'&&q.tierIdx!==tierIdx) return;
+        if(stat==='aquariumCount'||stat==='fullEquip'){
+            q.progress=val; // abszolút érték
+        } else {
+            q.progress=Math.min(q.target,q.progress+val);
+        }
+        if(q.progress>=q.target){
+            q.completed=true; changed=true;
+            if(q.isDaily) completeDailyQuest(q);
+            else          completeQuest(q);
+        }
+    });
+    if(changed) saveGame();
+    renderQuestTab();
+}
+
+function completeDailyQuest(q){
+    goldCoins += q.coins;
+    updateGoldCoins();
+    saveGame();
+    showFloat(`🪙 +${q.coins} Gold Coin!`, W/2);
+    setMsg(`🌟 Napi küldetés teljesítve! +${q.coins} 🪙 Gold Coin`);
+    SFX.max();
+}
+
+function completeQuest(q){
+    // Jutalom
+    if(q.reward.type==='points'){
+        score+=q.reward.val; updateHUD();
+        showFloat(`+${q.reward.val.toLocaleString()} 📋`,W/2);
+    } else if(q.reward.type==='buff'){
+        activateBuff(q.reward.val);
+    } else if(q.reward.type==='decoration'){
+        unlockDecoration(q.reward.val.id);
+    }
+    setMsg(`✅ Küldetés teljesítve! Jutalom: ${q.reward.label}`);
+    // 3 másodperc után újat generál
+    setTimeout(()=>{
+        const idx=activeQuests.findIndex(x=>x.uid===q.uid);
+        if(idx>=0){ activeQuests[idx]=generateQuest(); saveGame(); renderQuestTab(); }
+    },3000);
+}
+
+function makeQuestCard(q){
+    const pct=Math.min(100,Math.round(q.progress/q.target*100));
+    const card=document.createElement('div');
+    const isDaily=q.isDaily||false;
+    card.className='quest-card'+(isDaily?' daily':'')+(q.completed?' completed':'');
+    let rewardHtml;
+    if(isDaily){
+        rewardHtml=`<span class="quest-reward gold">🪙 +${q.coins} coin</span>`;
+    } else {
+        const rClass=q.reward.type==='points'?'pts':q.reward.type==='buff'?'buff':'deco';
+        rewardHtml=`<span class="quest-reward ${rClass}">${q.reward.label}</span>`;
+    }
+    card.innerHTML=
+        `<div class="quest-desc">${q.desc}</div>`+
+        `<div class="quest-progress-bar"><div class="quest-progress-fill" style="width:${pct}%"></div></div>`+
+        `<div class="quest-footer">`+
+            `<span class="quest-prog-text">${q.progress.toLocaleString()} / ${q.target.toLocaleString()}</span>`+
+            rewardHtml+
+            (q.completed?'<span class="quest-done">✅</span>':'')+
+        `</div>`;
+    return card;
+}
+
+function renderQuestTab(){
+    const list=document.getElementById('quest-list');
+    if(!list) return;
+    list.innerHTML='';
+
+    // ── Napi küldetések ──
+    const dailyLbl=document.createElement('div');
+    dailyLbl.className='quest-section-label daily';
+    dailyLbl.textContent='🌟 Napi küldetések — éjfélkor reset';
+    list.appendChild(dailyLbl);
+    dailyQuests.forEach(q=>list.appendChild(makeQuestCard(q)));
+
+    // Elválasztó
+    const div=document.createElement('div'); div.className='quest-divider';
+    list.appendChild(div);
+
+    // ── Aktív küldetések ──
+    const regLbl=document.createElement('div');
+    regLbl.className='quest-section-label';
+    regLbl.textContent='📋 Aktív küldetések';
+    list.appendChild(regLbl);
+    activeQuests.forEach(q=>list.appendChild(makeQuestCard(q)));
+
+    // Dekoráció placeholder
+    const ph=document.createElement('div');
+    ph.className='quest-card placeholder';
+    ph.innerHTML=
+        `<div class="quest-desc">🎁 Dekoráció küldetések — hamarosan érkezik</div>`+
+        `<div class="quest-progress-bar"><div class="quest-progress-fill" style="width:0%"></div></div>`+
+        `<div class="quest-footer"><span class="quest-prog-text">—</span><span class="quest-reward" style="color:#334">Hamarosan...</span></div>`;
+    list.appendChild(ph);
+    // Panel minimum magassága = kártyák valódi magassága + 10px buffer
+    requestAnimationFrame(()=>{
+        const panel  = document.getElementById('bottom-panel');
+        if(!panel) return;
+        const handle = document.getElementById('panel-drag-handle').offsetHeight||11;
+        const tabBar = document.getElementById('tab-bar').offsetHeight||34;
+        const tabEl  = document.getElementById('tab-quests');
+        const needed = handle + tabBar + (tabEl ? tabEl.scrollHeight : list.scrollHeight+10);
+        const base   = window.innerWidth<=640 ? 186 : 218;
+        const minH   = Math.max(base, needed);
+        if(panel.offsetHeight < minH) panel.style.height = minH+'px';
+    });
+}
+
+// ── Buff rendszer ─────────────────────────────
+function activateBuff(buff){
+    activeBuffs=activeBuffs.filter(ab=>ab.buff.id!==buff.id); // ne duplikáljon
+    activeBuffs.push({buff, endTime:Date.now()+buff.dur*1000});
+    saveGame();
+    renderBuffHUD();
+    showFloat(`${buff.icon} ${buff.name}!`, W/2);
+    setMsg(`${buff.icon} Buff aktív: ${buff.name} — ${Math.round(buff.dur/60)} percig!`);
+}
+
+function renderBuffHUD(){
+    const el=document.getElementById('buff-hud');
+    if(!el) return;
+    const now=Date.now();
+    activeBuffs=activeBuffs.filter(ab=>ab.endTime>now);
+    el.innerHTML='';
+    activeBuffs.forEach(ab=>{
+        const rem=Math.max(0,Math.ceil((ab.endTime-now)/1000));
+        const min=Math.floor(rem/60), sec=rem%60;
+        const div=document.createElement('div');
+        div.className='buff-badge';
+        div.innerHTML=`${ab.buff.icon} ${ab.buff.name}<span class="buff-timer">${min}:${sec.toString().padStart(2,'0')}</span>`;
+        el.appendChild(div);
+    });
+}
+setInterval(renderBuffHUD, 1000);
+
+// ── Dekoráció rendszer ────────────────────────
+function unlockDecoration(id){
+    if(!unlockedDecorations.includes(id)) unlockedDecorations.push(id);
+    if(!aquariumDecorations.find(d=>d.id===id)){
+        aquariumDecorations.push({id, xFrac:0.08+Math.random()*0.84, scale:0.85+Math.random()*0.3});
+    }
+    saveGame();
+    showFloat(`${DECORATION_TYPES.find(d=>d.id===id)?.icon||'🎁'} Dekoráció!`, W/2);
+    setMsg(`🎁 Új akvárium dekoráció nyílt meg! Nézd meg az Akvárium fülön!`);
+}
+
+// ── Tab kapcsolás kiterjesztve ─────────────────
+document.getElementById('tab-btn-quests').addEventListener('click', ()=>switchTab('quests'));
+
+// ── switchTab és quest tab ─────────────────────────────────────────────────────────────────────
+
+// ══════════════════════════════════════════════
+//  BOTTOM PANEL ÁTMÉRETEZÉS
+// ══════════════════════════════════════════════
+(function wirePanelResize(){
+    const panel  = document.getElementById('bottom-panel');
+    const handle = document.getElementById('panel-drag-handle');
+    if(!panel||!handle) return;
+
+    function getMinH(){
+        const base = window.innerWidth<=640 ? 186 : 218;
+        // Quest lista tényleges magasságából számolja a minimumot
+        const ql = document.getElementById('quest-list');
+        if(ql && ql.children.length>0){
+            const handle  = document.getElementById('panel-drag-handle').offsetHeight;
+            const tabBar  = document.getElementById('tab-bar').offsetHeight;
+            const tabPad  = 10; // #tab-quests padding top+bottom
+            const buffer  = 10; // kért 10px üres tér az utolsó kártya alatt
+            const needed  = handle + tabBar + tabPad + ql.scrollHeight + buffer;
+            return Math.max(base, needed);
+        }
+        return base;
+    }
+    function getMaxH(){
+        const dockH = document.getElementById('dock').offsetHeight;
+        return window.innerHeight - dockH - 3; // egészen a stég aljáig
+    }
+
+    let dragging=false, startY=0, startH=0;
+
+    function startDrag(y){
+        dragging=true;
+        startY=y;
+        startH=panel.offsetHeight;
+        document.body.style.userSelect='none';
+        document.body.style.cursor='ns-resize';
+    }
+    function moveDrag(y){
+        if(!dragging) return;
+        const delta=startY-y;  // felfelé húzás = nagyobb panel
+        const newH=Math.max(getMinH(), Math.min(getMaxH(), startH+delta));
+        panel.style.height=newH+'px';
+        // Canvas magasság azonnal frissítve
+        H=canvas.height=Math.max(50, canvas.offsetHeight);
+    }
+    function endDrag(){
+        if(!dragging) return;
+        dragging=false;
+        document.body.style.userSelect='';
+        document.body.style.cursor='';
+    }
+
+    handle.addEventListener('mousedown', e=>{ startDrag(e.clientY); e.preventDefault(); });
+    handle.addEventListener('touchstart', e=>{ startDrag(e.touches[0].clientY); e.preventDefault(); },{passive:false});
+    document.addEventListener('mousemove', e=>{ if(dragging) moveDrag(e.clientY); });
+    document.addEventListener('touchmove', e=>{ if(dragging){ moveDrag(e.touches[0].clientY); e.preventDefault(); } },{passive:false});
+    document.addEventListener('mouseup',  endDrag);
+    document.addEventListener('touchend', endDrag);
+})();
 
 // ══════════════════════════════════════════════
 //  FELSZERELÉS PANEL
@@ -3258,6 +4103,10 @@ document.getElementById('milestone-overlay').addEventListener('click', e=>{
 loadGame();
 renderInv();
 updateHUD();
+updateGoldCoins();
+checkDailyReset();
+initQuests();
+renderBuffHUD();
 </script>
 </body>
 </html>
