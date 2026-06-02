@@ -539,7 +539,176 @@ body {
 /* Merge hint arrows */
 .slot.can-merge { border-color:#00ff99 !important; box-shadow:0 0 8px rgba(0,255,150,0.5); }
 
+/* ── FELSZERELÉS PANEL ── */
+#equip-overlay {
+    position:fixed; inset:0;
+    background:rgba(0,10,22,0.82);
+    z-index:200;
+    display:flex; align-items:center; justify-content:center;
+    backdrop-filter:blur(4px);
+}
+#equip-panel {
+    background:linear-gradient(160deg,#0c1e10,#060f08);
+    border:2px solid #2a7a40;
+    border-radius:18px;
+    width:min(480px,96vw);
+    max-height:90vh;
+    display:flex; flex-direction:column;
+    box-shadow:0 0 50px rgba(0,180,80,0.18), 0 10px 40px rgba(0,0,0,0.85);
+    overflow:hidden;
+    animation:popupIn 0.22s cubic-bezier(.36,1.56,.64,1);
+}
+#equip-header {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:13px 18px 9px; border-bottom:1px solid #183520; flex-shrink:0;
+}
+#equip-title { font-size:16px; font-weight:bold; color:#4ae880; letter-spacing:.5px; }
+#equip-close-btn {
+    background:transparent; border:none; color:#446; font-size:20px;
+    cursor:pointer; padding:2px 6px; border-radius:6px;
+    transition:color .18s, background .18s;
+}
+#equip-close-btn:hover { color:#fff; background:rgba(255,255,255,0.08); }
+/* Aktív bónuszok összefoglaló */
+#equip-active-bonuses {
+    padding:8px 16px; font-size:11px; color:#4a9860;
+    border-bottom:1px solid #183520; flex-shrink:0;
+    line-height:1.7; min-height:32px;
+}
+#equip-active-bonuses span { margin-right:8px; white-space:nowrap; }
+/* Slot tartalom */
+#equip-content {
+    flex:1; overflow-y:auto; padding:12px 14px 6px;
+    display:flex; flex-direction:column; gap:12px;
+    scrollbar-width:thin; scrollbar-color:#1a4030 transparent;
+}
+#equip-content::-webkit-scrollbar { width:4px; }
+#equip-content::-webkit-scrollbar-thumb { background:#1a4030; border-radius:3px; }
+.equip-slot-section { display:flex; flex-direction:column; gap:7px; }
+.equip-slot-label {
+    font-size:10px; color:#2a6040; letter-spacing:1.8px;
+    text-transform:uppercase; font-weight:bold;
+    border-bottom:1px solid #152a1e; padding-bottom:3px;
+}
+.equip-slot-items { display:flex; gap:7px; flex-wrap:wrap; }
+.trinket-btn {
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    width:76px; padding:9px 5px 7px;
+    background:rgba(8,28,16,0.7);
+    border:1.5px solid #1a3828;
+    border-radius:13px; cursor:pointer;
+    transition:transform 0.12s, border-color 0.15s, background 0.15s, box-shadow 0.15s;
+    position:relative; user-select:none;
+}
+.trinket-btn:not(.locked):hover { transform:scale(1.08); border-color:#3a9060; background:rgba(15,50,30,0.85); }
+.trinket-btn.equipped {
+    border-color:#4ae880; background:rgba(8,60,28,0.85);
+    box-shadow:0 0 14px rgba(74,232,128,0.35);
+}
+.trinket-btn.locked { opacity:0.36; cursor:default; filter:grayscale(0.5); }
+.trinket-btn .t-icon { font-size:28px; line-height:1; }
+.trinket-btn .t-name {
+    font-size:8px; color:#5a9878; text-align:center;
+    line-height:1.3; max-width:68px;
+}
+.trinket-btn .t-mark {
+    position:absolute; top:3px; right:5px;
+    font-size:9px; font-weight:bold;
+}
+.trinket-btn.equipped .t-mark { color:#4ae880; }
+.trinket-btn.locked   .t-mark { color:#334; }
+/* Tooltip — fix magasság, nem ugrál */
+#equip-tooltip {
+    flex-shrink:0;
+    margin:4px 14px 12px;
+    height:56px;
+    overflow:hidden;
+    background:rgba(0,22,12,0.75); border:1px solid #1a3828;
+    border-radius:10px; padding:8px 12px;
+    font-size:11.5px; color:#7aaa90; line-height:1.6;
+}
+/* Karakter kattintható */
+#fisherman-head-clip { pointer-events:auto !important; cursor:pointer; }
+#fisherman-head-clip:hover #fisherman-head-img { filter:drop-shadow(2px 4px 14px rgba(0,0,0,0.9)) brightness(1.12); }
+/* Kis ⚙️ jelzés hogy kattintható */
+#equip-hint {
+    position:absolute; bottom:38px; left:50%;
+    transform:translateX(-50%);
+    font-size:13px; opacity:0.55; pointer-events:none;
+    z-index:15; animation:hintPulse 2.8s ease-in-out infinite;
+}
+@keyframes hintPulse {
+    0%,100% { opacity:0.3; transform:translateX(-50%) scale(1); }
+    50%      { opacity:0.7; transform:translateX(-50%) scale(1.15); }
+}
+@media (max-width:640px) {
+    .trinket-btn { width:64px; padding:7px 4px 6px; }
+    .trinket-btn .t-icon { font-size:24px; }
+    .trinket-btn .t-name { font-size:7.5px; }
+    #equip-active-bonuses { font-size:10px; }
+}
+
+/* ── MILESTONE POPUP ── */
+#milestone-overlay {
+    position:fixed; inset:0;
+    background:rgba(0,8,18,0.88);
+    z-index:400;
+    display:flex; align-items:center; justify-content:center;
+    backdrop-filter:blur(5px);
+}
+#milestone-popup {
+    background:linear-gradient(160deg,#1a1200,#0c0900);
+    border:2px solid #ffd700;
+    border-radius:20px;
+    padding:26px 30px 22px;
+    min-width:290px; max-width:370px; width:90%;
+    box-shadow:0 0 60px rgba(255,200,0,0.28), 0 10px 40px rgba(0,0,0,0.85);
+    display:flex; flex-direction:column; align-items:center; gap:11px;
+    animation:popupIn 0.28s cubic-bezier(.36,1.56,.64,1);
+    text-align:center;
+}
+#milestone-header {
+    font-size:11px; letter-spacing:2.5px; text-transform:uppercase;
+    color:#ffd700; font-weight:bold; opacity:0.85;
+}
+#milestone-title {
+    font-size:21px; font-weight:900; color:#fff;
+    text-shadow:0 0 22px rgba(255,200,0,0.5); line-height:1.2;
+}
+#milestone-cond { font-size:12px; color:#776633; margin-top:-4px; font-style:italic; }
+#milestone-trinket-display {
+    display:flex; align-items:center; gap:14px;
+    background:rgba(255,215,0,0.07); border:1px solid rgba(255,215,0,0.22);
+    border-radius:14px; padding:13px 18px; width:100%; text-align:left;
+}
+#milestone-trinket-icon { font-size:38px; flex-shrink:0; }
+#milestone-trinket-name { font-size:16px; font-weight:bold; color:#ffd700; }
+#milestone-trinket-slot { font-size:11px; color:#665522; margin-top:3px; }
+#milestone-equip-note   { font-size:12px; color:#7ab870; }
+#milestone-ok-btn {
+    background:linear-gradient(135deg,#6a4e00,#2e2000);
+    border:1.5px solid #ffd700; border-radius:12px;
+    color:#ffd700; font-size:14px; font-weight:bold;
+    font-family:inherit; padding:10px 30px; cursor:pointer;
+    transition:transform 0.12s, box-shadow 0.15s; margin-top:2px;
+}
+#milestone-ok-btn:hover { transform:scale(1.07); box-shadow:0 0 16px rgba(255,200,0,0.45); }
+
 /* ── INFO gomb ── */
+#bgm-btn {
+    background:rgba(10,50,100,0.55);
+    border:1px solid rgba(74,176,232,0.38);
+    border-radius:20px;
+    color:#4ab0e8;
+    font-size:14px;
+    padding:5px 10px;
+    cursor:pointer;
+    transition:background 0.15s, border-color 0.15s, transform 0.12s;
+    line-height:1;
+}
+#bgm-btn:hover { background:rgba(20,80,150,0.75); border-color:#4ab0e8; transform:scale(1.1); }
+#bgm-btn.muted { color:#556; border-color:rgba(74,176,232,0.18); background:rgba(10,20,40,0.45); }
+
 #info-btn {
     background:rgba(10,50,100,0.55);
     border:1px solid rgba(74,176,232,0.38);
@@ -792,6 +961,7 @@ body {
         <div class="hud-box">🦐 Fogott: <span id="cc">0</span></div>
         <div class="hud-box">🌟 Max: <span id="mt">Szürke</span></div>
         <button id="reset-save-btn" title="Mentés törlése">🗑️</button>
+        <button id="bgm-btn"  title="Zene be/ki">🔊</button>
         <button id="info-btn" title="Játék súgó">❓ Súgó</button>
     </div>
     <div id="status-msg">Kattints a vízre a horgászáshoz!</div>
@@ -835,6 +1005,7 @@ body {
         </div>
     </div>
     <div id="dock-planks"></div>
+    <div id="equip-hint">⚙️</div>
 </div>
 
 <canvas id="ocean"></canvas>
@@ -920,6 +1091,37 @@ body {
             <button id="reset-cancel-btn">✖ Mégsem</button>
         </div>
         <div id="reset-popup-hint"></div>
+    </div>
+</div>
+
+<!-- ── FELSZERELÉS OVERLAY ── -->
+<div id="equip-overlay" style="display:none;">
+    <div id="equip-panel">
+        <div id="equip-header">
+            <div id="equip-title">⚙️ Horgász felszerelése</div>
+            <button id="equip-close-btn">✕</button>
+        </div>
+        <div id="equip-active-bonuses"></div>
+        <div id="equip-content"></div>
+        <div id="equip-tooltip">Vidd rá az egeret egy tárgyra a részletekért!</div>
+    </div>
+</div>
+
+<!-- ── MILESTONE POPUP ── -->
+<div id="milestone-overlay" style="display:none;">
+    <div id="milestone-popup">
+        <div id="milestone-header">🏆 Mérföldkő elérve!</div>
+        <div id="milestone-title"></div>
+        <div id="milestone-cond"></div>
+        <div id="milestone-trinket-display">
+            <span id="milestone-trinket-icon"></span>
+            <div>
+                <div id="milestone-trinket-name"></div>
+                <div id="milestone-trinket-slot"></div>
+            </div>
+        </div>
+        <div id="milestone-equip-note"></div>
+        <button id="milestone-ok-btn">🎉 Szuper!</button>
     </div>
 </div>
 
@@ -1137,6 +1339,7 @@ body {
     #hud { gap:4px; flex-wrap:wrap; max-width:56vw; top:5px; left:7px; }
     .hud-box       { font-size:10px; padding:3px 7px; }
     #reset-save-btn{ font-size:12px; padding:3px 7px; }
+    #bgm-btn       { font-size:12px; padding:3px 7px; }
     #info-btn      { font-size:12px; padding:3px 7px; }
 
     /* ── Státusz üzenet ── */
@@ -1188,11 +1391,93 @@ const TIERS=[
 const WEIGHTS=[50,26,14,7,3.5,1.6,0.7,0.25,0.1,0.04];
 
 function pickTier(){
-    const s=WEIGHTS.reduce((a,b)=>a+b,0);
+    const b=getActiveBonuses();
+    const w=WEIGHTS.map((wt,i)=>{
+        let m=1;
+        if(i>=1) m+=b.tierBoost2/100;
+        if(i>=2) m+=b.tierBoost3/100;
+        if(i>=3) m+=b.tierBoost4/100;
+        if(i>=4) m+=b.tierBoost5/100;
+        return wt*m;
+    });
+    const s=w.reduce((a,c)=>a+c,0);
     let r=Math.random()*s;
-    for(let i=0;i<WEIGHTS.length;i++){r-=WEIGHTS[i];if(r<=0)return i;}
+    for(let i=0;i<w.length;i++){r-=w[i];if(r<=0)return i;}
     return 0;
 }
+
+// ══════════════════════════════════════════════
+//  TRINKET & MILESTONE DEFINÍCIÓK
+//  Bonus kulcsok:
+//   tierBoost2/3/4/5 = súlynövelés % az adott tier+ garnélákra
+//   bossChance       = extra boss esély %-pont
+//   nibbleSpeed      = harapási várakozás csökkentés %
+//   reelSpeed        = behúzás gyorsítás %
+//   catchMult        = fogási pont szorzó %
+//   mergeMult        = összevonási pont szorzó %
+// ══════════════════════════════════════════════
+const TRINKETS={
+    head:[
+        {id:'head_1',name:'Favágó Sapka',         icon:'🪵',bonus:{tierBoost3:4}},
+        {id:'head_2',name:'Horgász Kalap',         icon:'🎩',bonus:{tierBoost3:8}},
+        {id:'head_3',name:'Tengerész Sapka',       icon:'⚓',bonus:{tierBoost3:8,tierBoost4:6}},
+        {id:'head_4',name:'Kísérteties Fejpánt',   icon:'👻',bonus:{tierBoost4:12,bossChance:0.5}},
+        {id:'head_5',name:'Du-Duduk Korona',       icon:'👑',bonus:{tierBoost4:18,bossChance:1}},
+    ],
+    rod:[
+        {id:'rod_1',name:'Bambuszbot',             icon:'🎋',bonus:{nibbleSpeed:15}},
+        {id:'rod_2',name:'Üvegszálas Bot',         icon:'🎣',bonus:{nibbleSpeed:25}},
+        {id:'rod_3',name:'Karbon Bot',             icon:'⚡',bonus:{nibbleSpeed:35,reelSpeed:20}},
+        {id:'rod_4',name:'Mester Bot',             icon:'🔱',bonus:{nibbleSpeed:45,reelSpeed:30}},
+        {id:'rod_5',name:'Legendás Du-Duduk Bot',  icon:'✨',bonus:{nibbleSpeed:55,bossChance:0.5}},
+    ],
+    bait:[
+        {id:'bait_1',name:'Giliszta',              icon:'🪱',bonus:{tierBoost2:5}},
+        {id:'bait_2',name:'Garnéla Csali',         icon:'🦐',bonus:{tierBoost3:5}},
+        {id:'bait_3',name:'Ragyogó Csali',         icon:'⭐',bonus:{tierBoost4:5}},
+        {id:'bait_4',name:'Főnök Csali',           icon:'💀',bonus:{tierBoost5:4,bossChance:1}},
+        {id:'bait_5',name:'Szivárvány Csali',      icon:'🌈',bonus:{tierBoost5:6,bossChance:1.5}},
+    ],
+    outfit:[
+        {id:'outfit_1',name:'Horgász Mellény',     icon:'🦺',bonus:{catchMult:8}},
+        {id:'outfit_2',name:'Varázsköpeny',        icon:'🧙',bonus:{catchMult:15}},
+        {id:'outfit_3',name:'Tengerész Egyenruha', icon:'⛵',bonus:{catchMult:22,mergeMult:15}},
+        {id:'outfit_4',name:'Admirális Egyenruha', icon:'🎖',bonus:{catchMult:32,mergeMult:25}},
+        {id:'outfit_5',name:'Legendás Öltöny',     icon:'🌟',bonus:{catchMult:45,mergeMult:35}},
+    ],
+};
+function getTrinket(id){
+    for(const sl of Object.values(TRINKETS)){const t=sl.find(t=>t.id===id);if(t)return t;}
+    return null;
+}
+const SLOT_LABELS={head:'🎩 Fej',rod:'🎣 Bot',bait:'🪱 Csali',outfit:'👕 Ruha'};
+
+const MILESTONES=[
+    // Fej slot — fogás darabszám
+    {id:'m_head_1',slot:'head',  trinket:'head_1',  title:'Kezdő Horgász',      desc:'Fogj el 30 garnélát',              stat:'catches',    target:30},
+    {id:'m_head_2',slot:'head',  trinket:'head_2',  title:'Tapasztalt Horgász', desc:'Fogj el 150 garnélát',             stat:'catches',    target:150},
+    {id:'m_head_3',slot:'head',  trinket:'head_3',  title:'Veterán Horgász',    desc:'Fogj el 400 garnélát',             stat:'catches',    target:400},
+    {id:'m_head_4',slot:'head',  trinket:'head_4',  title:'Mester Horgász',     desc:'Fogj el 800 garnélát',             stat:'catches',    target:800},
+    {id:'m_head_5',slot:'head',  trinket:'head_5',  title:'Legendás Horgász',   desc:'Fogj el 1500 garnélát',            stat:'catches',    target:1500},
+    // Bot slot — összevonás
+    {id:'m_rod_1', slot:'rod',   trinket:'rod_1',   title:'Első Kombó',         desc:'Vonj össze 5-ször',                stat:'mergeCount', target:5},
+    {id:'m_rod_2', slot:'rod',   trinket:'rod_2',   title:'Kombinátor',         desc:'Vonj össze 30-szor',               stat:'mergeCount', target:30},
+    {id:'m_rod_3', slot:'rod',   trinket:'rod_3',   title:'Mester Kombinátor',  desc:'Vonj össze 100-szor',              stat:'mergeCount', target:100},
+    {id:'m_rod_4', slot:'rod',   trinket:'rod_4',   title:'Összevonás Király',  desc:'Vonj össze 250-szer',              stat:'mergeCount', target:250},
+    {id:'m_rod_5', slot:'rod',   trinket:'rod_5',   title:'Összevonás Legenda', desc:'Vonj össze 500-szor',              stat:'mergeCount', target:500},
+    // Csali slot — pontszám
+    {id:'m_bait_1',slot:'bait',  trinket:'bait_1',  title:'Kis Halász',         desc:'Érj el 5.000 pontot',              stat:'score',      target:5000},
+    {id:'m_bait_2',slot:'bait',  trinket:'bait_2',  title:'Közepes Halász',     desc:'Érj el 40.000 pontot',             stat:'score',      target:40000},
+    {id:'m_bait_3',slot:'bait',  trinket:'bait_3',  title:'Nagy Halász',        desc:'Érj el 200.000 pontot',            stat:'score',      target:200000},
+    {id:'m_bait_4',slot:'bait',  trinket:'bait_4',  title:'Óriás Halász',       desc:'Érj el 600.000 pontot',            stat:'score',      target:600000},
+    {id:'m_bait_5',slot:'bait',  trinket:'bait_5',  title:'Végtelen Halász',    desc:'Érj el 2.000.000 pontot',          stat:'score',      target:2000000},
+    // Ruha slot — egyedi boss nevek (max = BOSS_NAMES.length = 41)
+    {id:'m_outfit_1',slot:'outfit',trinket:'outfit_1',title:'Boss Vadász',      desc:'Kapj el 1 egyedi boss garnélát',   stat:'bossCount',  target:1},
+    {id:'m_outfit_2',slot:'outfit',trinket:'outfit_2',title:'Boss Gyilkos',     desc:'Kapj el 5 egyedi boss garnélát',   stat:'bossCount',  target:5},
+    {id:'m_outfit_3',slot:'outfit',trinket:'outfit_3',title:'Boss Mester',      desc:'Kapj el 15 egyedi boss garnélát',  stat:'bossCount',  target:15},
+    {id:'m_outfit_4',slot:'outfit',trinket:'outfit_4',title:'Admirális',        desc:'Kapj el 35 egyedi boss garnélát',  stat:'bossCount',  target:35},
+    {id:'m_outfit_5',slot:'outfit',trinket:'outfit_5',title:'Boss Lexikon',     desc:'Gyűjtsd össze mind a 41 egyedi Boss nevet!', stat:'bossCount', target:41},
+];
 
 // ══════════════════════════════════════════════
 //  AUDIO
@@ -1286,6 +1571,12 @@ let inventory=[];   // [{tier, uid, name, isBoss}]
 let aquarium=[];    // ugyanolyan schema — jövőbeli feature
 let uid=0;
 let selIdx=null;
+// Trinket / milestone állapot
+let mergeCount=0;
+let bossCount=0;
+let equipped={head:null,rod:null,bait:null,outfit:null};
+let unlockedTrinkets=[];    // trinket ID-k tömbje
+let completedMilestones=[]; // milestone ID-k tömbje
 
 // ══════════════════════════════════════════════
 //  MENTÉS / BETÖLTÉS  (localStorage)
@@ -1296,7 +1587,10 @@ function saveGame(){
     try{
         localStorage.setItem(SAVE_KEY, JSON.stringify({
             score, catches, maxTierIdx, uid,
-            inventory, aquarium
+            inventory, aquarium,
+            mergeCount, bossCount,
+            equipped, unlockedTrinkets, completedMilestones,
+            usedBossNames
         }));
     }catch(e){ console.warn('Mentés sikertelen:',e); }
 }
@@ -1323,7 +1617,26 @@ function loadGame(){
             name:   s.name   ?? null,
             isBoss: s.isBoss ?? false,
         }));
+        mergeCount          = d.mergeCount          ?? 0;
+        bossCount           = d.bossCount           ?? 0;
+        equipped            = Object.assign({head:null,rod:null,bait:null,outfit:null}, d.equipped ?? {});
+        unlockedTrinkets    = d.unlockedTrinkets    ?? [];
+        completedMilestones = d.completedMilestones ?? [];
+        usedBossNames       = d.usedBossNames       ?? [];
     }catch(e){ console.warn('Betöltés sikertelen:',e); }
+}
+
+// ── Aktív trinket bónuszok összesítve ────────────────────────────────────────
+function getActiveBonuses(){
+    const b={tierBoost2:0,tierBoost3:0,tierBoost4:0,tierBoost5:0,
+             bossChance:0,nibbleSpeed:0,reelSpeed:0,catchMult:0,mergeMult:0};
+    Object.values(equipped).forEach(id=>{
+        if(!id) return;
+        const t=getTrinket(id);
+        if(!t) return;
+        Object.entries(t.bonus).forEach(([k,v])=>{ b[k]=(b[k]||0)+v; });
+    });
+    return b;
 }
 
 const FS={IDLE:0,CASTING:1,WAITING:2,REELING:3,BOSS_GAME:4};
@@ -1860,10 +2173,11 @@ function loop(){
             SFX.splash();
             setMsg('🎣 A horog a vízben... várd a harapást, majd kattints!');
             nibbled=false;
-            const delay=900+Math.random()*2200;
+            const _b=getActiveBonuses();
+            const delay=(900+Math.random()*2200)*Math.max(0.25,1-_b.nibbleSpeed/100);
             nibbleTimer=setTimeout(()=>{
-                // 2% esély boss eseményre
-                if(Math.random()<0.02){
+                // Boss esély (alap 2% + trinket bónusz)
+                if(Math.random()<0.02+_b.bossChance/100){
                     const bRoll=Math.random();
                     const bTier=bRoll<0.40?5:bRoll<0.70?6:bRoll<0.90?7:bRoll<0.98?8:9;
                     startBossMinigame(bTier);
@@ -1886,11 +2200,14 @@ function loop(){
                 const isBoss=window._pendingBoss||false;
                 window._pendingBoss=false;
                 const bossName=isBoss?getNextBossName():null;
-                score+=TIERS[t].pts*(isBoss?5:1); // boss = 5x pont
+                // bossCount-ot a getNextBossName() frissíti (csak új egyedi névnél)
+                const _cb=getActiveBonuses();
+                score+=Math.round(TIERS[t].pts*(isBoss?5:1)*(1+_cb.catchMult/100));
                 catches++;
                 if(t>maxTierIdx)maxTierIdx=t;
                 updateHUD();
                 saveGame();
+                checkMilestones();
                 addToInventory(t,isBoss,bossName);
                 showFloat(isBoss?`👑 ${bossName}!`:`+${TIERS[t].pts} 🦐 ${TIERS[t].name}`,hookX);
                 // Tier 3+ → good catch hang (erősítve)
@@ -2150,11 +2467,14 @@ function onSlotClick(i){
     inventory.splice(lo,1);
     inventory.push({tier:newTier, uid:uid++, name:null, isBoss:false});
 
-    const pts=TIERS[newTier].pts*3;
+    const _mb=getActiveBonuses();
+    const pts=Math.round(TIERS[newTier].pts*3*(1+_mb.mergeMult/100));
     score+=pts;
+    mergeCount++;
     if(newTier>maxTierIdx)maxTierIdx=newTier;
     updateHUD();
     saveGame();
+    checkMilestones();
 
     selIdx=null;
     if(newTier===TIERS.length-1)SFX.max();
@@ -2440,13 +2760,17 @@ const BOSS_NAMES=[
     'Izmos Imi','Jajgató Jenő','Kövér Kornél','Lusta Lázár',
     'Mogorva Mátyás','Nyögdécselő Nándor','Ördögi Oszkár',
 ];
-let usedBossNames=[];
+let usedBossNames=[];  // permanensen tárolt — saveGame()-ban is mentjük
 
 function getNextBossName(){
-    let pool=BOSS_NAMES.filter(n=>!usedBossNames.includes(n));
-    if(pool.length===0){ usedBossNames=[]; pool=[...BOSS_NAMES]; }
+    const pool=BOSS_NAMES.filter(n=>!usedBossNames.includes(n));
+    if(pool.length===0){
+        // Mind megvan — rematch, nem számít új fogásnak
+        return BOSS_NAMES[Math.floor(Math.random()*BOSS_NAMES.length)];
+    }
     const name=pool[Math.floor(Math.random()*pool.length)];
-    usedBossNames.push(name);
+    usedBossNames.push(name);           // permanensen jegyezzük
+    bossCount=usedBossNames.length;     // egyedi boss count
     return name;
 }
 
@@ -2605,6 +2929,182 @@ setTimeout(() => { showDudukTip(); setInterval(showDudukTip, 20000); }, 7000);
 document.getElementById('duduk-corner').addEventListener('click', showDudukTip);
 
 // ══════════════════════════════════════════════
+//  FELSZERELÉS PANEL
+// ══════════════════════════════════════════════
+const BONUS_LABELS={
+    tierBoost2: v=>`+${v}% T2+ esély`,
+    tierBoost3: v=>`+${v}% T3+ esély`,
+    tierBoost4: v=>`+${v}% T4+ esély`,
+    tierBoost5: v=>`+${v}% T5+ esély`,
+    bossChance: v=>`+${v}% Boss esély`,
+    nibbleSpeed:v=>`-${v}% várakozás`,
+    reelSpeed:  v=>`+${v}% behúzás`,
+    catchMult:  v=>`+${v}% fogási pont`,
+    mergeMult:  v=>`+${v}% merge pont`,
+};
+
+function bonusText(bonus){
+    return Object.entries(bonus).map(([k,v])=>BONUS_LABELS[k]?BONUS_LABELS[k](v):'').filter(Boolean).join(' · ');
+}
+
+function renderActiveBonuses(){
+    const el=document.getElementById('equip-active-bonuses');
+    if(!el) return;
+    const b=getActiveBonuses();
+    const parts=Object.entries(b)
+        .filter(([,v])=>v>0)
+        .map(([k,v])=>`<span>${BONUS_LABELS[k]?BONUS_LABELS[k](v):''}</span>`);
+    el.innerHTML=parts.length
+        ? '✨ Aktív: '+parts.join('')
+        : '<span style="color:#2a4a38">Nincs felszerelt tárgy — öltöztesd fel a horgászt!</span>';
+}
+
+function renderEquipPanel(){
+    const content=document.getElementById('equip-content');
+    const tooltip=document.getElementById('equip-tooltip');
+    if(!content) return;
+    content.innerHTML='';
+    renderActiveBonuses();
+
+    Object.entries(TRINKETS).forEach(([slotKey,slotList])=>{
+        const section=document.createElement('div');
+        section.className='equip-slot-section';
+
+        const lbl=document.createElement('div');
+        lbl.className='equip-slot-label';
+        lbl.textContent=SLOT_LABELS[slotKey];
+        section.appendChild(lbl);
+
+        const items=document.createElement('div');
+        items.className='equip-slot-items';
+
+        slotList.forEach(trinket=>{
+            const isUnlocked=unlockedTrinkets.includes(trinket.id);
+            const isEquipped=equipped[slotKey]===trinket.id;
+            const ms=MILESTONES.find(m=>m.trinket===trinket.id);
+
+            const btn=document.createElement('div');
+            btn.className='trinket-btn'+(isEquipped?' equipped':'')+(isUnlocked?'':' locked');
+
+            btn.innerHTML=
+                `<span class="t-icon">${trinket.icon}</span>`+
+                `<span class="t-name">${trinket.name}</span>`+
+                `<span class="t-mark">${isEquipped?'✓':(!isUnlocked?'🔒':'')}</span>`;
+
+            // Tooltip megjelenítés
+            function showTip(){
+                if(!isUnlocked){
+                    const statMap={catches,score,mergeCount,bossCount};
+                    const cur = ms ? (statMap[ms.stat]??0) : 0;
+                    const pct = ms ? Math.min(100,Math.round(cur/ms.target*100)) : 0;
+                    const prog= ms ? ` · <span style="color:#3a7050">${cur.toLocaleString()} / ${ms.target.toLocaleString()} (${pct}%)</span>` : '';
+                    tooltip.innerHTML=`🔒 <strong>${trinket.name}</strong> — Zárolva<br>`+
+                        `<span style="color:#554">${ms?ms.desc:''}</span>${prog}`;
+                } else {
+                    tooltip.innerHTML=
+                        `<strong>${trinket.icon} ${trinket.name}</strong>`+
+                        (isEquipped?' <span style="color:#4ae880">(felszerelve)</span>':'')+
+                        `<br><span style="color:#5ab88a">${bonusText(trinket.bonus)}</span>`;
+                }
+            }
+
+            btn.addEventListener('mouseenter', showTip);
+            btn.addEventListener('touchstart', showTip, {passive:true});
+            btn.addEventListener('mouseleave', ()=>{
+                tooltip.textContent='Vidd rá az egeret egy tárgyra a részletekért!';
+            });
+
+            if(isUnlocked){
+                btn.addEventListener('click', ()=>{
+                    equipped[slotKey]=isEquipped?null:trinket.id;
+                    saveGame();
+                    renderEquipPanel();
+                    initAC(); SFX.catch();
+                });
+            }
+
+            items.appendChild(btn);
+        });
+
+        section.appendChild(items);
+        content.appendChild(section);
+    });
+}
+
+function openEquipPanel(){
+    renderEquipPanel();
+    const p=document.getElementById('equip-panel');
+    p.style.animation='none';
+    requestAnimationFrame(()=>{ p.style.animation=''; });
+    document.getElementById('equip-overlay').style.display='flex';
+}
+function closeEquipPanel(){
+    document.getElementById('equip-overlay').style.display='none';
+}
+
+// Karakterre kattintás → nyitja a panelt
+document.getElementById('fisherman-head-clip').addEventListener('click', openEquipPanel);
+document.getElementById('equip-close-btn').addEventListener('click', closeEquipPanel);
+document.getElementById('equip-overlay').addEventListener('click', e=>{
+    if(e.target===document.getElementById('equip-overlay')) closeEquipPanel();
+});
+document.addEventListener('keydown', e=>{
+    if(e.key==='Escape'&&document.getElementById('equip-overlay').style.display!=='none') closeEquipPanel();
+});
+
+// ══════════════════════════════════════════════
+//  MILESTONE RENDSZER
+// ══════════════════════════════════════════════
+let milestoneQueue=[], milestoneShowing=false;
+
+function checkMilestones(){
+    const stats={catches, score, mergeCount, bossCount};
+    MILESTONES.forEach(m=>{
+        if(completedMilestones.includes(m.id)) return;
+        if(stats[m.stat]<m.target) return;
+        completedMilestones.push(m.id);
+        if(!unlockedTrinkets.includes(m.trinket)) unlockedTrinkets.push(m.trinket);
+        // Auto-felszerelés ha a slot üres
+        if(!equipped[m.slot]) equipped[m.slot]=m.trinket;
+        saveGame();
+        milestoneQueue.push(m);
+    });
+    if(!milestoneShowing) showNextMilestone();
+}
+
+function showNextMilestone(){
+    if(milestoneQueue.length===0){ milestoneShowing=false; return; }
+    milestoneShowing=true;
+    const m=milestoneQueue.shift();
+    const t=getTrinket(m.trinket);
+    const autoEquip=(equipped[m.slot]===m.trinket);
+
+    document.getElementById('milestone-title').textContent=m.title;
+    document.getElementById('milestone-cond').textContent=m.desc;
+    document.getElementById('milestone-trinket-icon').textContent=t.icon;
+    document.getElementById('milestone-trinket-name').textContent=t.name;
+    document.getElementById('milestone-trinket-slot').textContent=SLOT_LABELS[m.slot]+' slot';
+    document.getElementById('milestone-equip-note').textContent=
+        autoEquip ? '✅ Automatikusan felszerelve!' : '💡 Felszerelheted a karakternél';
+
+    const popup=document.getElementById('milestone-popup');
+    popup.style.animation='none';
+    requestAnimationFrame(()=>{ popup.style.animation=''; });
+    document.getElementById('milestone-overlay').style.display='flex';
+    SFX.max(); // fanfár
+}
+
+function closeMilestonePopup(){
+    document.getElementById('milestone-overlay').style.display='none';
+    setTimeout(showNextMilestone, 400);
+}
+
+document.getElementById('milestone-ok-btn').addEventListener('click', closeMilestonePopup);
+document.getElementById('milestone-overlay').addEventListener('click', e=>{
+    if(e.target===document.getElementById('milestone-overlay')) closeMilestonePopup();
+});
+
+// ══════════════════════════════════════════════
 //  INFO PANEL
 // ══════════════════════════════════════════════
 (function wireInfoPanel(){
@@ -2713,20 +3213,43 @@ document.getElementById('duduk-corner').addEventListener('click', showDudukTip);
 // ══════════════════════════════════════════════
 (function wireBGM(){
     const bgm = document.getElementById('snd-bgm');
+    const btn = document.getElementById('bgm-btn');
     if(!bgm) return;
     bgm.volume = 0.055;  // nagyon halk háttér — alig hallatszik, de érezhető
 
     let bgmStarted = false;
+    let bgmMuted   = false;
+
+    function updateBtn(){
+        if(!btn) return;
+        btn.textContent = bgmMuted ? '🔇' : '🔊';
+        btn.classList.toggle('muted', bgmMuted);
+        btn.title = bgmMuted ? 'Zene bekapcsolása' : 'Zene kikapcsolása';
+    }
+
     function startBGM(){
         if(bgmStarted) return;
         bgmStarted = true;
-        bgm.play().catch(()=>{});
+        if(!bgmMuted) bgm.play().catch(()=>{});
     }
+
+    // Gomb: némítás / visszakapcsolás
+    if(btn) btn.addEventListener('click', ()=>{
+        bgmMuted = !bgmMuted;
+        if(bgmMuted){
+            bgm.pause();
+        } else {
+            if(bgmStarted) bgm.play().catch(()=>{});
+        }
+        updateBtn();
+    });
 
     // Az első felhasználói interakciónál indul (böngésző autoplay-szabály)
     ['click','touchstart','keydown'].forEach(ev=>{
         document.addEventListener(ev, startBGM, {once:true, passive:true});
     });
+
+    updateBtn();
 })();
 
 // ══════════════════════════════════════════════
