@@ -1,0 +1,2740 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>🦐 Du-Duduk Horgász</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; touch-action:manipulation; }
+body {
+    background:#071018;
+    font-family:'Segoe UI',Arial,sans-serif;
+    color:#fff;
+    height:100vh;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    user-select:none;
+    -webkit-tap-highlight-color:transparent;
+}
+#ocean { touch-action:none; }
+
+/* ── DOCK / SKY ── */
+#dock {
+    height:175px;
+    background:linear-gradient(180deg,#7ec8e3 0%,#4a9fc4 65%,#2a7a9a 100%);
+    position:relative;
+    flex-shrink:0;
+    overflow:visible;
+    z-index:1;
+}
+#dock-planks {
+    position:absolute;
+    bottom:0; left:0; right:0; height:34px;
+    background:repeating-linear-gradient(90deg,#8b5a14 0,#8b5a14 38px,#7a4c10 38px,#7a4c10 76px);
+    z-index:8;
+    box-shadow:0 -2px 8px rgba(0,0,0,0.4);
+}
+#dock-planks::after {
+    content:'';
+    position:absolute;
+    top:11px; left:0; right:0; height:2px;
+    background:rgba(255,200,120,0.28);
+}
+
+#hud {
+    position:absolute;
+    top:8px; left:14px;
+    display:flex; gap:10px; z-index:10;
+}
+.hud-box {
+    background:rgba(0,0,0,0.52);
+    border:1px solid rgba(255,255,255,0.18);
+    padding:5px 13px;
+    border-radius:20px;
+    font-size:14px;
+    font-weight:bold;
+    white-space:nowrap;
+}
+#status-msg {
+    position:absolute;
+    top:8px; right:14px;
+    background:rgba(0,0,0,0.55);
+    padding:5px 13px;
+    border-radius:20px;
+    font-size:13px;
+    max-width:340px;
+    text-align:right;
+    z-index:10;
+    line-height:1.4;
+}
+
+/* Fisherman head clip container */
+#fisherman-head-clip {
+    position:absolute;
+    bottom:34px;
+    left:50%;
+    transform:translateX(-50%);
+    width:160px;
+    height:160px;
+    overflow:hidden;
+    z-index:12;
+    pointer-events:none;
+}
+#fisherman-head-img {
+    position:absolute;
+    /* 1024×1446 kép, height=460px → scale=0.318
+       fej center: orig ~(358,289)px → rendered ~(114,92)px
+       container 160×160 center=80px → offset: left=-(114-80)=-34, top=-(92-80)=-12 */
+    height:460px;
+    width:auto;
+    top:-12px;
+    left:-34px;
+    filter:drop-shadow(2px 4px 14px rgba(0,0,0,0.9));
+}
+/* Fisherman body (behind planks) */
+#fisherman-body-wrap {
+    position:absolute;
+    bottom:34px;
+    left:50%;
+    transform:translateX(-50%);
+    z-index:4;
+    width:280px;
+    overflow:visible;
+    pointer-events:none;
+}
+#fisherman-body-svg { width:100%; height:85px; overflow:visible; }
+/* Forgáspont: talpak = az elem aljának közepe */
+#fisherman-body-wrap { transform-origin: center bottom !important; }
+#fisherman-head-clip { transform-origin: center bottom !important; }
+@keyframes rodCast {
+    0%,100% { transform:rotate(0deg); }
+    35%     { transform:rotate(-9deg); }
+    65%     { transform:rotate(4deg); }
+}
+#rod-anim-group {
+    transform-origin:248px 70px;
+    animation:rodCast 4.5s ease-in-out infinite;
+}
+
+/* ── OCEAN CANVAS ── */
+#ocean {
+    flex:1;
+    display:block;
+    cursor:crosshair;
+    min-height:0;
+}
+
+/* ── BOTTOM PANEL (tabs) ── */
+#bottom-panel {
+    height:202px;
+    background:linear-gradient(180deg,#091520,#060d14);
+    border-top:3px solid #1a6090;
+    flex-shrink:0;
+    display:flex;
+    flex-direction:column;
+}
+#tab-bar {
+    display:flex;
+    flex-shrink:0;
+    height:34px;
+    border-bottom:1px solid #12304a;
+}
+.tab-btn {
+    flex:1;
+    background:transparent;
+    border:none;
+    border-bottom:2.5px solid transparent;
+    color:#4a7a9a;
+    font-size:12.5px;
+    font-weight:bold;
+    font-family:inherit;
+    cursor:pointer;
+    letter-spacing:0.5px;
+    transition:color 0.18s, border-color 0.18s, background 0.18s;
+}
+.tab-btn:hover  { color:#7ab8d8; background:rgba(255,255,255,0.04); }
+.tab-btn.active { color:#4ab0e8; border-bottom-color:#4ab0e8; background:rgba(74,176,232,0.07); }
+
+/* Tab content panels */
+.tab-content { flex:1; display:none; flex-direction:column; min-height:0; overflow:hidden; }
+.tab-content.visible { display:flex; }
+
+/* ── Gyűjtemény tab ── */
+#tab-collection { padding:5px 10px 6px; }
+#inv-title {
+    text-align:center;
+    font-size:10.5px;
+    color:#4ab0e8;
+    letter-spacing:1.2px;
+    text-transform:uppercase;
+    margin-bottom:4px;
+    flex-shrink:0;
+}
+#shrimp-slots {
+    display:flex;
+    flex-wrap:wrap;
+    gap:4px;
+    justify-content:center;
+    overflow-y:auto;
+    flex:1;
+    align-content:flex-start;
+}
+
+/* ── Akvárium tab ── */
+#tab-aquarium { position:relative; }
+#aquarium-canvas { display:block; width:100%; height:100%; }
+#aquarium-empty-msg {
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; color:#2a6a58; text-align:center;
+    padding:14px; line-height:1.6; pointer-events:none;
+}
+
+/* Akvárium kivevő popup */
+#aq-action-overlay {
+    position:fixed; inset:0;
+    background:rgba(0,10,22,0.76);
+    z-index:200;
+    display:flex; align-items:center; justify-content:center;
+    backdrop-filter:blur(4px);
+}
+#aq-action-popup {
+    background:linear-gradient(160deg,#051e16,#020e0a);
+    border:2px solid #1a6050;
+    border-radius:18px;
+    padding:24px 28px 20px;
+    min-width:270px; max-width:340px; width:88%;
+    box-shadow:0 0 44px rgba(0,160,100,0.22), 0 8px 32px rgba(0,0,0,0.75);
+    display:flex; flex-direction:column; gap:12px;
+    animation:popupIn 0.22s cubic-bezier(.36,1.56,.64,1);
+}
+#aq-action-title { font-size:17px; font-weight:bold; color:#30d890; text-align:center; }
+#aq-action-info  { font-size:13px; color:#8ab8aa; text-align:center; }
+#aq-action-btns  { display:flex; gap:8px; justify-content:center; }
+#aq-action-btns button {
+    padding:8px 18px; border-radius:10px; border:1.5px solid transparent;
+    font-size:13px; font-family:inherit; font-weight:bold; cursor:pointer;
+    transition:transform 0.12s;
+}
+#aq-action-btns button:hover { transform:scale(1.08); }
+#aq-remove-btn { background:linear-gradient(135deg,#0b4a32,#051e14); border-color:#30d890; color:#fff; }
+#aq-cancel-btn { background:rgba(255,255,255,0.07); border-color:#334455; color:#aac; }
+.slot {
+    width:52px; height:52px;
+    background:rgba(20,50,80,0.65);
+    border:2px solid #1a3d5a;
+    border-radius:10px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition:transform 0.12s, border-color 0.12s, box-shadow 0.12s;
+    position:relative;
+    flex-shrink:0;
+}
+.slot:hover { transform:scale(1.1); border-color:#3a8abd; }
+.slot.selected {
+    border-color:#ffd700;
+    box-shadow:0 0 16px rgba(255,215,0,0.7);
+    background:rgba(50,40,0,0.7);
+}
+.slot .scircle {
+    width:28px; height:28px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:14px;
+    flex-shrink:0;
+}
+.slot .sname {
+    font-size:8px;
+    color:#99b;
+    text-align:center;
+    margin-top:2px;
+    line-height:1;
+}
+.slot .stier {
+    position:absolute;
+    top:1px; right:4px;
+    font-size:8px;
+    color:#ffd700;
+    font-weight:bold;
+}
+
+/* ── NAMING POPUP ── */
+#name-overlay {
+    position:fixed;
+    inset:0;
+    background:rgba(0,10,22,0.78);
+    z-index:200;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    backdrop-filter:blur(4px);
+}
+#name-popup {
+    background:linear-gradient(160deg,#0d2a42,#071828);
+    border:2px solid #1a6090;
+    border-radius:18px;
+    padding:26px 30px 22px;
+    min-width:290px;
+    max-width:360px;
+    width:90%;
+    box-shadow:0 0 48px rgba(0,100,200,0.35), 0 8px 36px rgba(0,0,0,0.75);
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    animation:popupIn 0.22s cubic-bezier(.36,1.56,.64,1);
+}
+@keyframes popupIn {
+    from { transform:scale(0.75); opacity:0; }
+    to   { transform:scale(1);    opacity:1; }
+}
+#name-popup-title {
+    font-size:18px;
+    font-weight:bold;
+    color:#4ab0e8;
+    text-align:center;
+    letter-spacing:1px;
+}
+#name-popup-tier {
+    text-align:center;
+    font-size:13px;
+    color:#8aaccc;
+    min-height:18px;
+}
+#name-input {
+    background:rgba(10,40,70,0.85);
+    border:1.5px solid #1a6090;
+    border-radius:10px;
+    color:#fff;
+    font-size:15px;
+    padding:9px 14px;
+    outline:none;
+    transition:border-color 0.2s, box-shadow 0.2s;
+    font-family:inherit;
+}
+#name-input:focus  { border-color:#4ab0e8; box-shadow:0 0 8px rgba(74,176,232,0.35); }
+#name-input:disabled { opacity:0.5; cursor:not-allowed; }
+#name-popup-btns {
+    display:flex;
+    gap:8px;
+    justify-content:center;
+    flex-wrap:wrap;
+}
+#name-popup-btns button {
+    padding:8px 16px;
+    border-radius:10px;
+    border:1.5px solid transparent;
+    font-size:13px;
+    font-family:inherit;
+    font-weight:bold;
+    cursor:pointer;
+    transition:transform 0.12s, box-shadow 0.12s, opacity 0.12s;
+}
+#name-popup-btns button:hover { transform:scale(1.08); }
+#name-save-btn   { background:linear-gradient(135deg,#1a6090,#0d3a5c); border-color:#4ab0e8; color:#fff; }
+#name-delete-btn { background:linear-gradient(135deg,#6b1a1a,#3a0c0c); border-color:#e84a4a; color:#fff; }
+#name-cancel-btn { background:rgba(255,255,255,0.07); border-color:#334455; color:#aac; }
+#name-popup-hint {
+    font-size:11px;
+    color:#556688;
+    text-align:center;
+    min-height:16px;
+}
+/* Reset save button in HUD */
+#reset-save-btn {
+    background:rgba(80,20,20,0.55);
+    border:1px solid rgba(220,80,80,0.4);
+    border-radius:20px;
+    color:#e88;
+    font-size:14px;
+    padding:5px 10px;
+    cursor:pointer;
+    transition:background 0.15s, border-color 0.15s, transform 0.12s;
+    line-height:1;
+}
+#reset-save-btn:hover { background:rgba(140,30,30,0.75); border-color:#e84a4a; transform:scale(1.1); }
+
+/* Reset confirmation popup */
+#reset-overlay {
+    position:fixed;
+    inset:0;
+    background:rgba(0,10,22,0.82);
+    z-index:210;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    backdrop-filter:blur(5px);
+}
+#reset-popup {
+    background:linear-gradient(160deg,#1a0808,#0a0404);
+    border:2px solid #7a2020;
+    border-radius:18px;
+    padding:28px 32px 24px;
+    min-width:300px;
+    max-width:380px;
+    width:90%;
+    box-shadow:0 0 50px rgba(200,20,20,0.3), 0 8px 36px rgba(0,0,0,0.8);
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    animation:popupIn 0.22s cubic-bezier(.36,1.56,.64,1);
+}
+#reset-popup-title {
+    font-size:18px;
+    font-weight:bold;
+    color:#e84a4a;
+    text-align:center;
+    letter-spacing:1px;
+}
+#reset-popup-desc {
+    font-size:13px;
+    color:#aaa;
+    text-align:center;
+    line-height:1.5;
+}
+#reset-popup-desc strong { color:#fff; }
+#reset-input {
+    background:rgba(60,10,10,0.85);
+    border:1.5px solid #7a2020;
+    border-radius:10px;
+    color:#ff6060;
+    font-size:15px;
+    font-weight:bold;
+    letter-spacing:2px;
+    padding:9px 14px;
+    outline:none;
+    transition:border-color 0.2s, box-shadow 0.2s;
+    font-family:inherit;
+    text-align:center;
+}
+#reset-input:focus { border-color:#e84a4a; box-shadow:0 0 10px rgba(232,74,74,0.35); }
+#reset-popup-btns { display:flex; gap:10px; justify-content:center; }
+#reset-popup-btns button {
+    padding:9px 20px;
+    border-radius:10px;
+    border:1.5px solid transparent;
+    font-size:13px;
+    font-family:inherit;
+    font-weight:bold;
+    cursor:pointer;
+    transition:transform 0.12s;
+}
+#reset-popup-btns button:hover { transform:scale(1.08); }
+#reset-confirm-btn { background:linear-gradient(135deg,#7a1a1a,#3a0808); border-color:#e84a4a; color:#fff; opacity:0.4; pointer-events:none; transition:opacity 0.2s, transform 0.12s; }
+#reset-confirm-btn.ready { opacity:1; pointer-events:auto; }
+#reset-cancel-btn  { background:rgba(255,255,255,0.07); border-color:#334455; color:#aac; }
+#reset-popup-hint  { font-size:11px; color:#663333; text-align:center; min-height:14px; }
+
+/* Named slot styles */
+.slot.named  { border-color:#ffd700 !important; box-shadow:0 0 10px rgba(255,215,0,0.45); background:rgba(40,35,0,0.72); }
+.slot.is-boss{ border-color:#cc44ff !important; box-shadow:0 0 12px rgba(180,0,255,0.45); background:rgba(28,0,48,0.78); }
+.slot .lock-icon {
+    position:absolute;
+    top:2px; left:4px;
+    font-size:9px;
+    opacity:0.85;
+    line-height:1;
+}
+
+/* ── ANGER EFFECTS ── */
+#anger-wrap {
+    position:absolute;
+    bottom:34px; left:50%;
+    transform:translateX(-50%);
+    transform-origin:center bottom;
+    width:160px; height:160px;
+    z-index:13;
+    pointer-events:none;
+    opacity:0;
+    transition:opacity 0.15s;
+    overflow:visible;
+}
+#anger-wrap.active { opacity:1; }
+
+/* Piros arc overlay */
+#anger-red {
+    position:absolute;
+    inset:0;
+    background:radial-gradient(ellipse at 50% 45%, rgba(255,50,0,0.5) 30%, transparent 72%);
+    border-radius:50%;
+    animation:angerPulse 0.22s ease-in-out infinite;
+}
+@keyframes angerPulse {
+    0%,100% { opacity:0.75; transform:scale(1); }
+    50%     { opacity:1;    transform:scale(1.06); }
+}
+
+/* Fejrázás */
+@keyframes headShake {
+    0%,100% { transform:translateX(-50%) rotate(0deg); }
+    15%     { transform:translateX(calc(-50% - 5px)) rotate(-3deg); }
+    40%     { transform:translateX(calc(-50% + 5px)) rotate(3deg); }
+    65%     { transform:translateX(calc(-50% - 4px)) rotate(-2deg); }
+    85%     { transform:translateX(calc(-50% + 3px)) rotate(2deg); }
+}
+#anger-wrap.active { animation:headShakeAnger 0.45s ease-in-out infinite; opacity:1; }
+@keyframes headShakeAnger {
+    0%,100% { opacity:1; }
+    50%     { opacity:0.95; }
+}
+
+/* Füst puffok */
+.steam-anchor { position:absolute; top:42%; width:0; height:0; }
+.steam-l { left:4px; }
+.steam-r { right:4px; }
+
+.puff {
+    position:absolute;
+    width:11px; height:11px;
+    border-radius:50%;
+    background:rgba(210,210,210,0.9);
+    opacity:0;
+}
+.steam-l .puff { animation:puffLeft 0.85s ease-out infinite; }
+.steam-r .puff { animation:puffRight 0.85s ease-out infinite; }
+.puff:nth-child(1) { animation-delay:0s;    width:11px; height:11px; }
+.puff:nth-child(2) { animation-delay:0.28s; width:9px;  height:9px; }
+.puff:nth-child(3) { animation-delay:0.56s; width:7px;  height:7px; }
+
+@keyframes puffLeft {
+    0%   { transform:translate(0,0) scale(0.3);   opacity:0.9; }
+    60%  { opacity:0.7; }
+    100% { transform:translate(-32px,-40px) scale(2); opacity:0; }
+}
+@keyframes puffRight {
+    0%   { transform:translate(0,0) scale(0.3);   opacity:0.9; }
+    60%  { opacity:0.7; }
+    100% { transform:translate(32px,-40px) scale(2); opacity:0; }
+}
+
+@keyframes popIn {
+    0%   { transform:scale(0.3) rotate(-15deg); opacity:0; }
+    65%  { transform:scale(1.25) rotate(5deg); }
+    100% { transform:scale(1) rotate(0deg); opacity:1; }
+}
+.slot.pop { animation:popIn 0.38s cubic-bezier(.36,1.56,.64,1); }
+@keyframes mergeGlow {
+    0%   { box-shadow:0 0 40px #fff; border-color:#fff; transform:scale(1.35); }
+    100% { transform:scale(1); }
+}
+.slot.merge-anim { animation:mergeGlow 0.5s ease-out; }
+
+/* Floating text */
+#float-label {
+    position:fixed;
+    pointer-events:none;
+    font-size:20px;
+    font-weight:bold;
+    text-shadow:0 2px 8px #000, 0 0 20px #fff;
+    z-index:999;
+    opacity:0;
+    white-space:nowrap;
+}
+
+/* Merge hint arrows */
+.slot.can-merge { border-color:#00ff99 !important; box-shadow:0 0 8px rgba(0,255,150,0.5); }
+
+/* ── INFO gomb ── */
+#info-btn {
+    background:rgba(10,50,100,0.55);
+    border:1px solid rgba(74,176,232,0.38);
+    border-radius:20px;
+    color:#4ab0e8;
+    font-size:14px;
+    padding:5px 10px;
+    cursor:pointer;
+    transition:background 0.15s, border-color 0.15s, transform 0.12s;
+    line-height:1;
+}
+#info-btn:hover { background:rgba(20,80,150,0.75); border-color:#4ab0e8; transform:scale(1.1); }
+
+/* ── INFO OVERLAY ── */
+#info-overlay {
+    position:fixed; inset:0;
+    background:rgba(0,10,22,0.82);
+    z-index:190;
+    display:flex; align-items:center; justify-content:center;
+    backdrop-filter:blur(4px);
+}
+#info-panel {
+    background:linear-gradient(160deg,#0a2438,#061420);
+    border:2px solid #1a6090;
+    border-radius:18px;
+    width:min(540px,95vw);
+    max-height:88vh;
+    display:flex; flex-direction:column;
+    box-shadow:0 0 50px rgba(0,100,200,0.28), 0 10px 40px rgba(0,0,0,0.8);
+    overflow:hidden;
+    animation:popupIn 0.22s cubic-bezier(.36,1.56,.64,1);
+}
+#info-header {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:14px 20px 10px;
+    border-bottom:1px solid #12304a;
+    flex-shrink:0;
+}
+#info-title { font-size:17px; font-weight:bold; color:#4ab0e8; letter-spacing:.5px; }
+#info-close-btn {
+    background:transparent; border:none; color:#446; font-size:20px;
+    cursor:pointer; padding:2px 6px; border-radius:6px;
+    transition:color .18s, background .18s;
+}
+#info-close-btn:hover { color:#fff; background:rgba(255,255,255,0.08); }
+
+/* Info tabs */
+#info-tabs {
+    display:flex; flex-shrink:0;
+    border-bottom:1px solid #12304a;
+    overflow-x:auto; scrollbar-width:none;
+}
+#info-tabs::-webkit-scrollbar { display:none; }
+.info-tab {
+    flex-shrink:0;
+    background:transparent; border:none;
+    border-bottom:2.5px solid transparent;
+    color:#4a7a9a; font-size:11.5px; font-weight:bold;
+    font-family:inherit; cursor:pointer;
+    padding:8px 13px;
+    transition:color .18s, border-color .18s, background .18s;
+    white-space:nowrap;
+}
+.info-tab:hover  { color:#7ab8d8; background:rgba(255,255,255,0.03); }
+.info-tab.active { color:#4ab0e8; border-bottom-color:#4ab0e8; background:rgba(74,176,232,0.06); }
+
+/* Info content */
+#info-content {
+    flex:1; overflow-y:auto; padding:14px 18px 18px;
+    scrollbar-width:thin; scrollbar-color:#1a4060 transparent;
+}
+#info-content::-webkit-scrollbar { width:5px; }
+#info-content::-webkit-scrollbar-thumb { background:#1a4060; border-radius:4px; }
+.info-section { display:none; }
+.info-section.active { display:block; }
+.info-section h3 {
+    color:#4ab0e8; font-size:11px; letter-spacing:1.4px;
+    text-transform:uppercase; margin:14px 0 7px;
+    border-bottom:1px solid #12304a; padding-bottom:4px;
+}
+.info-section h3:first-child { margin-top:0; }
+.info-row {
+    display:flex; align-items:flex-start; gap:9px;
+    margin-bottom:7px; font-size:12.5px; color:#bbc;
+    line-height:1.5;
+}
+.info-key {
+    background:rgba(74,176,232,0.13); border:1px solid #1a4060;
+    border-radius:6px; padding:2px 8px; font-size:10.5px;
+    color:#4ab0e8; white-space:nowrap; flex-shrink:0;
+    font-weight:bold; align-self:flex-start; margin-top:1px;
+}
+.info-note { font-size:11px; color:#445566; margin-top:10px; line-height:1.6; }
+
+/* Tier table */
+.tier-table { width:100%; border-collapse:collapse; font-size:12px; margin-top:4px; }
+.tier-table th {
+    color:#3a6a8a; font-size:10px; letter-spacing:1px;
+    text-transform:uppercase; padding:5px 8px;
+    border-bottom:1px solid #1a3d5a; text-align:left;
+}
+.tier-table td { padding:5px 8px; border-bottom:1px solid rgba(20,50,80,0.5); vertical-align:middle; }
+.tier-table tbody tr:hover { background:rgba(74,176,232,0.06); }
+.tier-table tbody tr:last-child td { border-bottom:none; }
+.tier-dot {
+    display:inline-block; width:9px; height:9px;
+    border-radius:50%; margin-right:5px; vertical-align:middle;
+    flex-shrink:0;
+}
+.tc { color:#4ab0e8; font-weight:bold; }  /* chance */
+.tp { color:#ffd700; font-weight:bold; }  /* points */
+.tm { color:#88aacc; font-size:11px; }    /* merge */
+
+/* Boss tier grid */
+.boss-tier-grid { display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; }
+.boss-tier-badge {
+    display:inline-flex; align-items:center; gap:5px;
+    padding:4px 10px; border-radius:10px;
+    font-size:11.5px; font-weight:bold;
+}
+
+@media (max-width:640px) {
+    #info-panel  { max-height:92vh; }
+    #info-content { padding:10px 12px 14px; }
+    .info-tab    { font-size:10.5px; padding:7px 9px; }
+    .tier-table  { font-size:11px; }
+    .tier-table th, .tier-table td { padding:4px 5px; }
+}
+
+/* ══════════════════════════════════════════
+   BOSS MINIGAME
+   ══════════════════════════════════════════ */
+#boss-overlay {
+    position:fixed; inset:0;
+    background:rgba(0,0,18,0.93);
+    z-index:500;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    gap:18px;
+    backdrop-filter:blur(6px);
+}
+#boss-shrimp-icon {
+    font-size:52px;
+    animation:bossIconSpin 2s linear infinite;
+    filter:drop-shadow(0 0 18px #ff8800);
+}
+@keyframes bossIconSpin {
+    0%   { transform:rotate(-8deg) scale(1.0); }
+    25%  { transform:rotate(8deg)  scale(1.08); }
+    50%  { transform:rotate(-8deg) scale(1.0); }
+    75%  { transform:rotate(8deg)  scale(1.06); }
+    100% { transform:rotate(-8deg) scale(1.0); }
+}
+#boss-title {
+    font-size:26px; font-weight:900;
+    color:#ffdd00;
+    text-shadow:0 0 16px #ff8800, 0 0 36px #ff4400;
+    letter-spacing:2px;
+    text-align:center;
+    animation:bossGlow 0.55s ease-in-out infinite;
+}
+#boss-subtitle {
+    font-size:14px; color:#ffaa55; letter-spacing:1px;
+    margin-top:-10px; text-align:center;
+}
+@keyframes bossGlow {
+    0%,100% { transform:scale(1);    text-shadow:0 0 16px #ff8800, 0 0 36px #ff4400; }
+    50%     { transform:scale(1.04); text-shadow:0 0 26px #ffcc00, 0 0 55px #ff6600; }
+}
+#boss-arrows { display:flex; gap:10px; }
+.boss-arrow {
+    width:54px; height:54px;
+    background:rgba(255,255,255,0.08);
+    border:2.5px solid rgba(255,255,255,0.18);
+    border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:26px;
+    transition:border-color 0.12s, background 0.12s, box-shadow 0.12s;
+}
+.boss-arrow.current {
+    border-color:#ffdd00;
+    background:rgba(255,221,0,0.18);
+    box-shadow:0 0 14px rgba(255,221,0,0.55);
+    animation:arrowPulse 0.38s ease-in-out infinite;
+}
+.boss-arrow.correct {
+    border-color:#00ff88;
+    background:rgba(0,255,136,0.28);
+    box-shadow:0 0 12px rgba(0,255,136,0.55);
+    animation:none;
+}
+.boss-arrow.wrong {
+    border-color:#ff3333;
+    background:rgba(255,50,50,0.38);
+    box-shadow:0 0 16px rgba(255,0,0,0.65);
+    animation:wrongShake 0.25s ease-in-out;
+}
+@keyframes arrowPulse {
+    0%,100% { transform:scale(1); }
+    50%     { transform:scale(1.14); }
+}
+@keyframes wrongShake {
+    0%,100% { transform:translateX(0); }
+    25%     { transform:translateX(-6px); }
+    75%     { transform:translateX(6px); }
+}
+#boss-timer-wrap { width:280px; text-align:center; }
+#boss-timer-bar {
+    width:100%; height:13px;
+    background:rgba(255,255,255,0.1);
+    border-radius:7px; overflow:hidden;
+    border:1px solid rgba(255,255,255,0.14);
+}
+#boss-timer-fill {
+    height:100%; width:100%;
+    background:linear-gradient(90deg,#ff3300,#ffcc00);
+    border-radius:7px;
+    transition:width 0.08s linear;
+}
+#boss-timer-secs {
+    font-size:12px; color:#ff9944;
+    margin-top:5px; font-weight:bold;
+}
+/* Mobile / touch gombok */
+#boss-mobile-btns {
+    display:none;
+    gap:10px; flex-wrap:wrap;
+    justify-content:center; max-width:210px;
+}
+@media (max-width:640px) { #boss-mobile-btns { display:flex; } }
+@media (pointer:coarse)  { #boss-mobile-btns { display:flex; } }
+.boss-mobile-btn {
+    width:62px; height:62px;
+    background:rgba(255,255,255,0.1);
+    border:2px solid rgba(255,255,255,0.28);
+    border-radius:14px;
+    font-size:28px; color:#fff; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:background 0.1s, transform 0.1s;
+    -webkit-tap-highlight-color:transparent;
+}
+.boss-mobile-btn:active { background:rgba(255,200,0,0.35); transform:scale(0.9); }
+</style>
+</head>
+<body>
+
+<div id="dock">
+    <div id="hud">
+        <div class="hud-box">🎣 Pont: <span id="sv">0</span></div>
+        <div class="hud-box">🦐 Fogott: <span id="cc">0</span></div>
+        <div class="hud-box">🌟 Max: <span id="mt">Szürke</span></div>
+        <button id="reset-save-btn" title="Mentés törlése">🗑️</button>
+        <button id="info-btn" title="Játék súgó">❓ Súgó</button>
+    </div>
+    <div id="status-msg">Kattints a vízre a horgászáshoz!</div>
+    <div id="fisherman-body-wrap">
+        <svg id="fisherman-body-svg" viewBox="0 0 280 85" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="140" cy="68" rx="80" ry="54" fill="#1a3a5c"/>
+            <ellipse cx="140" cy="55" rx="60" ry="38" fill="#1e4268"/>
+            <rect x="118" y="0" width="44" height="38" rx="14" fill="#1a3a5c"/>
+            <ellipse cx="55" cy="35" rx="28" ry="32" fill="#1a3a5c" transform="rotate(-12 55 35)"/>
+            <ellipse cx="30" cy="60" rx="14" ry="22" fill="#1a3a5c" transform="rotate(-20 30 60)"/>
+            <ellipse cx="225" cy="30" rx="28" ry="30" fill="#1a3a5c" transform="rotate(15 225 30)"/>
+            <ellipse cx="244" cy="58" rx="13" ry="22" fill="#1a3a5c" transform="rotate(30 244 58)"/>
+            <circle cx="252" cy="76" r="13" fill="#c8a070"/>
+            <g id="rod-anim-group">
+                <line x1="248" y1="70" x2="316" y2="-22"
+                      stroke="#5a3200" stroke-width="7" stroke-linecap="round"/>
+                <line x1="248" y1="70" x2="316" y2="-22"
+                      stroke="#c07830" stroke-width="3.5" stroke-linecap="round"/>
+                <circle cx="316" cy="-22" r="4.5" fill="#e8c050"/>
+                <line x1="316" y1="-22" x2="322" y2="-8"
+                      stroke="rgba(220,220,200,0.45)" stroke-width="1"/>
+            </g>
+        </svg>
+    </div>
+    <div id="fisherman-head-clip">
+        <img id="fisherman-head-img" src="fisherman_head.png"
+             onerror="this.style.display='none'">
+    </div>
+    <!-- Anger overlay (piros arc + füst a fülekből) -->
+    <div id="anger-wrap">
+        <div id="anger-red"></div>
+        <div class="steam-anchor steam-l">
+            <div class="puff"></div>
+            <div class="puff"></div>
+            <div class="puff"></div>
+        </div>
+        <div class="steam-anchor steam-r">
+            <div class="puff"></div>
+            <div class="puff"></div>
+            <div class="puff"></div>
+        </div>
+    </div>
+    <div id="dock-planks"></div>
+</div>
+
+<canvas id="ocean"></canvas>
+
+<div id="bottom-panel">
+    <div id="tab-bar">
+        <button id="tab-btn-collection" class="tab-btn active">🦐 Gyűjtemény</button>
+        <button id="tab-btn-aquarium"   class="tab-btn">🐠 Akvárium</button>
+    </div>
+    <div id="tab-collection" class="tab-content visible">
+        <div id="inv-title">2× kattintás = összevon &nbsp;·&nbsp; hosszan nyomj = elnevez 🔒</div>
+        <div id="shrimp-slots"></div>
+    </div>
+    <div id="tab-aquarium" class="tab-content">
+        <canvas id="aquarium-canvas"></canvas>
+        <div id="aquarium-empty-msg">🐠 Az akvárium üres.<br>Nevezz el egy garnélát, majd az elnevezési ablakban tedd be!</div>
+    </div>
+</div>
+
+<div id="float-label"></div>
+
+<!-- ── NAMING POPUP OVERLAY ── -->
+<div id="name-overlay" style="display:none;">
+    <div id="name-popup">
+        <div id="name-popup-title">🏷️ Garnéla elnevezése</div>
+        <div id="name-popup-tier"></div>
+        <input id="name-input" type="text" maxlength="22"
+               placeholder="Adj nevet a garnélának..." autocomplete="off" spellcheck="false">
+        <div id="name-popup-btns">
+            <button id="name-save-btn">💾 Mentés</button>
+            <button id="name-delete-btn">🗑️ Törlés</button>
+            <button id="name-aquarium-btn">🐠 Akváriumba</button>
+            <button id="name-cancel-btn">✖ Mégsem</button>
+        </div>
+        <div id="name-popup-hint"></div>
+    </div>
+</div>
+
+<!-- ── BOSS MINIGAME OVERLAY ── -->
+<div id="boss-overlay" style="display:none;">
+    <div id="boss-shrimp-icon">🦐</div>
+    <div id="boss-title">⚡ FŐNÖK GARNÉLA!</div>
+    <div id="boss-subtitle">Nyomd le a nyilakat sorban!</div>
+    <div id="boss-arrows"></div>
+    <div id="boss-timer-wrap">
+        <div id="boss-timer-bar"><div id="boss-timer-fill"></div></div>
+        <div id="boss-timer-secs">5.0 mp</div>
+    </div>
+    <!-- Érintőképernyős gombok -->
+    <div id="boss-mobile-btns">
+        <button class="boss-mobile-btn" data-key="ArrowLeft">←</button>
+        <button class="boss-mobile-btn" data-key="ArrowUp">↑</button>
+        <button class="boss-mobile-btn" data-key="ArrowDown">↓</button>
+        <button class="boss-mobile-btn" data-key="ArrowRight">→</button>
+    </div>
+</div>
+
+<!-- ── AQUARIUM REMOVE POPUP ── -->
+<div id="aq-action-overlay" style="display:none;">
+    <div id="aq-action-popup">
+        <div id="aq-action-title">🐠 Kivesszük az akváriumból?</div>
+        <div id="aq-action-info"></div>
+        <div id="aq-action-btns">
+            <button id="aq-remove-btn">🔙 Gyűjteménybe</button>
+            <button id="aq-cancel-btn">✖ Marad</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── RESET SAVE CONFIRMATION POPUP ── -->
+<div id="reset-overlay" style="display:none;">
+    <div id="reset-popup">
+        <div id="reset-popup-title">⚠️ Mentés törlése</div>
+        <div id="reset-popup-desc">
+            Ez az összes garnélát, pontot és haladást törli.<br>
+            A visszavonás <strong>nem lehetséges!</strong><br><br>
+            Írd be megerősítéshez:
+        </div>
+        <input id="reset-input" type="text" maxlength="10"
+               placeholder="TÖRLÉS" autocomplete="off" spellcheck="false">
+        <div id="reset-popup-btns">
+            <button id="reset-confirm-btn">🗑️ Törlés</button>
+            <button id="reset-cancel-btn">✖ Mégsem</button>
+        </div>
+        <div id="reset-popup-hint"></div>
+    </div>
+</div>
+
+<!-- ── INFO OVERLAY ── -->
+<div id="info-overlay" style="display:none;">
+    <div id="info-panel">
+        <div id="info-header">
+            <div id="info-title">📖 Du-Duduk Horgász — Súgó</div>
+            <button id="info-close-btn">✕</button>
+        </div>
+        <div id="info-tabs">
+            <button class="info-tab active" data-tab="controls">🎣 Irányítás</button>
+            <button class="info-tab" data-tab="shrimp">🦐 Garnélák</button>
+            <button class="info-tab" data-tab="boss">⚡ Boss</button>
+            <button class="info-tab" data-tab="aquarium">🐠 Akvárium</button>
+            <button class="info-tab" data-tab="other">💾 Egyéb</button>
+        </div>
+        <div id="info-content">
+
+            <!-- Tab 1: Irányítás -->
+            <div class="info-section active" id="info-sec-controls">
+                <h3>Horgászás</h3>
+                <div class="info-row"><span class="info-key">Kattintás / Tap</span><span>Horog bedobása — kattints arra a helyre, ahova dobni szeretnéd</span></div>
+                <div class="info-row"><span class="info-key">2. kattintás</span><span>Horog behúzása — harapás után rántsd be azonnal!</span></div>
+                <div class="info-row"><span class="info-key">Korai húzás</span><span>Ha harapás előtt húzod be, semmi sem kerül a gyűjteménybe</span></div>
+                <h3>Gyűjtemény</h3>
+                <div class="info-row"><span class="info-key">1× kattintás</span><span>Garnéla kijelölése összevonáshoz (arany keret jelzi)</span></div>
+                <div class="info-row"><span class="info-key">2× kattintás</span><span>Azonos szintű kijelölt + kattintott garnéla összevonása — újabb szintet kapsz, +3× pont bónusz</span></div>
+                <div class="info-row"><span class="info-key">Hosszú nyomás</span><span>500 ms nyomvatartás — megnyílik az elnevező ablak</span></div>
+                <h3>Boss QTE</h3>
+                <div class="info-row"><span class="info-key">← ↑ ↓ →</span><span>Nyisd le a megjelenő nyilakat sorban — billentyűzetről vagy az érintőgombokkal</span></div>
+                <div class="info-row"><span class="info-key">5 másodperc</span><span>Ennyi idő áll rendelkezésre mind az 5 nyíl helyes megnyomásához</span></div>
+                <h3>Egyéb gombok</h3>
+                <div class="info-row"><span class="info-key">🗑️ HUD</span><span>Mentés törlése — megerősítéshez írd be TÖRLÉS (nagybetűkkel)</span></div>
+                <div class="info-row"><span class="info-key">❓ Súgó</span><span>Ez az ablak — bármikor elérhető játék közben is</span></div>
+                <div class="info-row"><span class="info-key">Du-Duduk 🦐</span><span>Kattints a jobb alsó sarokfigurára egy véletlenszerű garnéla tippért!</span></div>
+            </div>
+
+            <!-- Tab 2: Garnélák -->
+            <div class="info-section" id="info-sec-shrimp">
+                <h3>Szintek, esélyek és pontok</h3>
+                <table class="tier-table">
+                    <thead><tr>
+                        <th>T</th>
+                        <th>Név</th>
+                        <th>Esély</th>
+                        <th>Pont</th>
+                        <th>Összevonva</th>
+                    </tr></thead>
+                    <tbody id="info-tier-tbody"></tbody>
+                </table>
+                <p class="info-note">Az esélyek az összes súly arányában értendők. Összevonáskor a magasabb szint alap pontjainak 3-szorosa jár bónuszként. A Szivárvány (T10) a maximum — tovább nem fejleszthető.</p>
+            </div>
+
+            <!-- Tab 3: Boss -->
+            <div class="info-section" id="info-sec-boss">
+                <h3>Megjelenés</h3>
+                <div class="info-row"><span class="info-key">2% / harapás</span><span>Minden harapásnál 2% eséllyel jelenik meg boss garnéla a normál hal helyett</span></div>
+                <div class="info-row"><span class="info-key">5× pont</span><span>Sikeres elfogás esetén az adott tier pontjainak ötszöröse jár</span></div>
+                <div class="info-row"><span class="info-key">Egyedi név</span><span>Minden boss garnéla saját nevet kap a 41 elemű névkészletből (körkörösen)</span></div>
+                <h3>Boss szinteloszlás</h3>
+                <div class="boss-tier-grid" id="info-boss-tiers"></div>
+                <h3>QTE szabályok</h3>
+                <div class="info-row"><span class="info-key">5 nyíl</span><span>Véletlenszerű sorozat, minden nyíl ←, →, ↑, ↓ valamelyike lehet (ismétlődhet)</span></div>
+                <div class="info-row"><span class="info-key">Helyes gomb</span><span>Zöld keret jelzi — folytasd a következővel</span></div>
+                <div class="info-row"><span class="info-key">Helytelen gomb</span><span>Piros keret + azonnali kudarc — a boss elmenekül, horgász mérges lesz</span></div>
+                <div class="info-row"><span class="info-key">Időtúllépés</span><span>Ha 5 mp alatt nem nyomtad le mind az 5-öt, szintén elmenekül</span></div>
+                <div class="info-row"><span class="info-key">Siker</span><span>Boss garnéla kerül a gyűjteménybe, elnevezve — azonnal akváriumba tehető</span></div>
+            </div>
+
+            <!-- Tab 4: Akvárium -->
+            <div class="info-section" id="info-sec-aquarium">
+                <h3>Bejutási feltételek</h3>
+                <div class="info-row"><span class="info-key">Elnevezett 🔒</span><span>Hosszú nyomás → írd be a nevet → mentés → majd az „Akváriumba" gombra kattints</span></div>
+                <div class="info-row"><span class="info-key">Boss garnéla 👑</span><span>Automatikusan akváriumba tehető az elnevező ablakból — külön névadás nélkül is</span></div>
+                <h3>Kezelés az akváriumban</h3>
+                <div class="info-row"><span class="info-key">Kattints rá</span><span>Az akváriumban úszkáló garnélára kattintva előjön a kivételi ablak</span></div>
+                <div class="info-row"><span class="info-key">Visszahelyezés</span><span>„Gyűjteménybe" gomb — ha a gyűjtemény tele van (32), a legalacsonyabb szintű névtelen kiesik</span></div>
+                <div class="info-row"><span class="info-key">Animáció</span><span>Az akvárium csak az „Akvárium" fülön aktív — garnélák úsznak, hínár mozog</span></div>
+                <p class="info-note">Az akváriumban lévő garnélák sosem vonhatók össze és nem vesznek el automatikusan. Névcímkéjük az állat fölött látható.</p>
+            </div>
+
+            <!-- Tab 5: Egyéb -->
+            <div class="info-section" id="info-sec-other">
+                <h3>Mentési rendszer</h3>
+                <div class="info-row"><span class="info-key">Automatikus</span><span>Minden fogás, összevonás, elnevezés és mozgatás után azonnal elmenti a böngésző local storage-ba</span></div>
+                <div class="info-row"><span class="info-key">Törlés</span><span>HUD 🗑️ gomb → írd be TÖRLÉS → megerősítés → az oldal újratöltődik, az összes adat elvész</span></div>
+                <h3>Gyűjtemény korlátok</h3>
+                <div class="info-row"><span class="info-key">Max 32 hely</span><span>Ha tele van, az új garnéla automatikusan kiszorítja a legalacsonyabb szintű névtelent</span></div>
+                <div class="info-row"><span class="info-key">Védett helyek</span><span>Elnevezett 🔒 és boss 👑 garnélák sosem esnek ki automatikusan</span></div>
+                <h3>Összevonás szabályok</h3>
+                <div class="info-row"><span class="info-key">Azonos szint</span><span>Csak ugyanolyan szintű garnélák vonhatók össze — különböző szint esetén hibaüzenet</span></div>
+                <div class="info-row"><span class="info-key">Nem vonható</span><span>Elnevezett és boss garnélák összevonása nem lehetséges (lenne kár értük!)</span></div>
+                <div class="info-row"><span class="info-key">T10 maximum</span><span>Szivárvány garnéla a végső szint — tovább nem fejleszthető</span></div>
+                <h3>Du-Duduk tippek</h3>
+                <div class="info-row"><span class="info-key">Automatikus</span><span>Az első tipp 7 másodperccel az oldal betöltése után jelenik meg, majd 20 mp-ként ismétlődik</span></div>
+                <div class="info-row"><span class="info-key">Kattintásra</span><span>A jobb alsó sarokfigurára kattintva azonnal új, véletlenszerű tipp ugrik be</span></div>
+                <div class="info-row"><span class="info-key">Tartalom</span><span>20 valódi garnélatenyésztési tipp — pH, hőmérséklet, etetés, vedlés és még sok más</span></div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<audio id="snd-miss"       src="miss.mp3"       preload="auto"></audio>
+<audio id="snd-good-catch" src="good_catch.mp3" preload="auto"></audio>
+<audio id="snd-bgm"        src="bgm.wav"        preload="auto" loop></audio>
+
+<!-- Teljes képernyős zsinór overlay — a bot hegyétől húzódik le -->
+<svg id="line-svg" style="position:fixed;top:0;left:0;width:100vw;height:100vh;
+     pointer-events:none;z-index:20;overflow:visible;"></svg>
+
+<img id="duduk-corner" src="duduk_corner.png" alt="Du-Duduk"
+     style="position:fixed;bottom:0;right:0;height:280px;width:auto;
+            object-fit:contain;object-position:bottom right;
+            pointer-events:auto;z-index:50;cursor:pointer;
+            filter:drop-shadow(-5px 0 16px rgba(0,0,0,0.85));">
+
+<div id="duduk-bubble">
+    <span id="duduk-tip-text"></span>
+</div>
+
+<style>
+/* dudukBob animáció eltávolítva — a karakter most nyugodtan áll */
+
+/* ── DUDUK TIPP BUBORÉK ── */
+#duduk-bubble {
+    position:fixed;
+    bottom:292px;
+    right:14px;
+    max-width:195px;
+    background:#fffde7;
+    border:2.5px solid #1a1a1a;
+    border-radius:14px;
+    padding:10px 13px;
+    font-size:12px;
+    font-weight:bold;
+    color:#1a1a1a;
+    line-height:1.45;
+    z-index:49;
+    pointer-events:none;
+    box-shadow:3px 4px 0 rgba(0,0,0,0.25);
+    opacity:0;
+    transform:scale(0.82) translateY(6px);
+    transform-origin:bottom right;
+    transition:opacity 0.28s ease, transform 0.28s cubic-bezier(.36,1.4,.64,1);
+}
+#duduk-bubble.show {
+    opacity:1;
+    transform:scale(1) translateY(0);
+}
+/* Buborék farok (lefelé-jobbra mutat a karakter fele) */
+#duduk-bubble::before {
+    content:'';
+    position:absolute;
+    bottom:-14px; right:22px;
+    width:0; height:0;
+    border-left:10px solid transparent;
+    border-right:2px solid transparent;
+    border-top:14px solid #1a1a1a;
+}
+#duduk-bubble::after {
+    content:'';
+    position:absolute;
+    bottom:-10px; right:24px;
+    width:0; height:0;
+    border-left:8px solid transparent;
+    border-right:1px solid transparent;
+    border-top:10px solid #fffde7;
+}
+
+@media (max-width:640px) {
+    #duduk-bubble { bottom:165px; right:8px; max-width:160px; font-size:11px; padding:8px 11px; }
+    #duduk-corner  { height:155px !important; }
+}
+
+/* ══════════════════════════════════════════
+   RESPONSIVE — mobilbarát layout (≤640px)
+   ══════════════════════════════════════════ */
+@media (max-width:640px) {
+
+    /* ── Dock & szég ── */
+    #dock         { height:130px; }
+    #dock-planks  { height:26px; }
+
+    /* ── Horgász felsőtest ── */
+    #fisherman-body-wrap {
+        bottom:26px;
+        width:190px;
+    }
+    #fisherman-body-svg { height:58px; }
+
+    /* ── Fej ──
+       1024×1446 kép, height=310px → scale=0.214
+       face center: (358*0.214, 289*0.214) ≈ (77, 62)px
+       container 105×105, center=52.5
+       offset: left=-(77-53)=-24   top=-(62-53)=-9                */
+    #fisherman-head-clip {
+        bottom:26px;
+        width:105px;
+        height:105px;
+    }
+    #fisherman-head-img {
+        height:310px;
+        top:-9px;
+        left:-24px;
+    }
+    #anger-wrap {
+        bottom:26px;
+        width:105px;
+        height:105px;
+    }
+
+    /* ── HUD ── */
+    #hud { gap:4px; flex-wrap:wrap; max-width:56vw; top:5px; left:7px; }
+    .hud-box       { font-size:10px; padding:3px 7px; }
+    #reset-save-btn{ font-size:12px; padding:3px 7px; }
+    #info-btn      { font-size:12px; padding:3px 7px; }
+
+    /* ── Státusz üzenet ── */
+    #status-msg { font-size:10.5px; max-width:165px; padding:3px 8px; top:5px; right:7px; }
+
+    /* ── Bottom panel / tabs ── */
+    #bottom-panel   { height:160px; }
+    #tab-bar        { height:30px; }
+    .tab-btn        { font-size:11px; }
+    #tab-collection { padding:3px 6px 4px; }
+    #inv-title  { font-size:9px; letter-spacing:0.8px; margin-bottom:2px; }
+    .slot       { width:44px; height:44px; border-radius:8px; }
+    .slot .scircle { width:22px; height:22px; font-size:12px; }
+    .slot .sname   { font-size:7px; }
+    .slot .stier   { font-size:7px; top:1px; right:3px; }
+    .slot .lock-icon{ font-size:8px; }
+
+    /* ── Sarokember ── */
+    #duduk-corner { height:155px !important; }
+
+    /* ── Popupok ── */
+    #name-popup  { padding:18px 16px 14px; gap:10px; min-width:260px; }
+    #reset-popup { padding:20px 18px 16px; gap:10px; min-width:260px; }
+    #name-popup-title, #reset-popup-title { font-size:16px; }
+    #name-input, #reset-input { font-size:14px; padding:8px 12px; }
+    #name-popup-btns button,
+    #reset-popup-btns button  { padding:7px 13px; font-size:12px; }
+}
+</style>
+
+<script>
+'use strict';
+
+// ══════════════════════════════════════════════
+//  TIERS
+// ══════════════════════════════════════════════
+const TIERS=[
+    {name:'Szürke',     c:'#909090', g:'#bbb',    pts:1,    funny:'Közönséges, mint a szombati eső 😐'},
+    {name:'Rózsaszín',  c:'#ff85b3', g:'#ff4488', pts:4,    funny:'Eléggé cuki, de nem veszel vele el 🩷'},
+    {name:'Piros',      c:'#ff3030', g:'#ff0000', pts:12,   funny:'Tüzes mint a srác jelleme! 🔥'},
+    {name:'Narancs',    c:'#ff8800', g:'#ff5500', pts:30,   funny:'Citrusos hangulatú rák 🍊'},
+    {name:'Sárga',      c:'#ffe030', g:'#ffaa00', pts:75,   funny:'Nap garnéla — sütöget! ☀️'},
+    {name:'Zöld',       c:'#00e676', g:'#00bf58', pts:180,  funny:'Ninja garnéla a mélységből 🥷'},
+    {name:'Kék',        c:'#29b6f6', g:'#0288d1', pts:450,  funny:'Óceán lelke maga 🌊'},
+    {name:'Lila',       c:'#cc80ff', g:'#9c27b0', pts:1100, funny:'Kozmikus borzalom szépsége 🔮'},
+    {name:'Arany',      c:'#ffd700', g:'#ff8c00', pts:2800, funny:'Az élet értelme = arany rák 👑'},
+    {name:'Szivárvány', c:'rainbow', g:'rainbow', pts:8000, funny:'LEGENDA! A vízből maga az istenek adják! 🌈'},
+];
+const WEIGHTS=[50,26,14,7,3.5,1.6,0.7,0.25,0.1,0.04];
+
+function pickTier(){
+    const s=WEIGHTS.reduce((a,b)=>a+b,0);
+    let r=Math.random()*s;
+    for(let i=0;i<WEIGHTS.length;i++){r-=WEIGHTS[i];if(r<=0)return i;}
+    return 0;
+}
+
+// ══════════════════════════════════════════════
+//  AUDIO
+// ══════════════════════════════════════════════
+let AC;
+function initAC(){
+    if(!AC){
+        AC=new(window.AudioContext||window.webkitAudioContext)();
+        // Good catch buffer előtöltése amint az AudioContext kész
+        setTimeout(_preloadGoodCatch, 0);
+    }
+}
+function tone(freq,type,dur,vol=0.15,delay=0){
+    if(!AC)return;
+    const o=AC.createOscillator(),g=AC.createGain();
+    o.connect(g);g.connect(AC.destination);
+    o.type=type;o.frequency.value=freq;
+    const t=AC.currentTime+delay;
+    g.gain.setValueAtTime(0,t);
+    g.gain.linearRampToValueAtTime(vol,t+0.01);
+    g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+    o.start(t);o.stop(t+dur+0.01);
+}
+
+// Custom MP3 fájl betöltése a hiba- és üres rántás hangokhoz
+const missSound = new Audio('miss.mp3');
+
+// Good catch hang — fetch→ArrayBuffer→AudioBufferSource + GainNode
+// Ez megkerüli a HTML audio 1.0-s volume-korlátját, gain 1.0 fölé mehet
+let _gcBuffer = null;
+function _preloadGoodCatch(){
+    if(_gcBuffer || !AC) return;
+    fetch('good_catch.mp3')
+        .then(r => r.arrayBuffer())
+        .then(arr => AC.decodeAudioData(arr))
+        .then(buf => { _gcBuffer = buf; })
+        .catch(()=>{});
+}
+function playGoodCatch(){
+    initAC();
+    _preloadGoodCatch();
+    if(_gcBuffer && AC){
+        // Web Audio lejátszás erősítéssel
+        const src  = AC.createBufferSource();
+        src.buffer = _gcBuffer;
+        const gain = AC.createGain();
+        gain.gain.value = 3.2;   // 3.2× — hangos, de nem torzít
+        src.connect(gain);
+        gain.connect(AC.destination);
+        src.start(0);
+    } else {
+        // Fallback: buffer még tölt (első alkalom) → normál HTML audio
+        const gc = document.getElementById('snd-good-catch');
+        gc.currentTime = 0; gc.play().catch(()=>{});
+    }
+}
+
+const SFX={
+    cast:  ()=>{tone(200,'sine',0.22,0.18);tone(120,'sine',0.3,0.1,0.1);},
+    nibble:()=>{tone(500,'square',0.06,0.08);tone(650,'square',0.06,0.06,0.08);},
+    catch: ()=>{tone(440,'square',0.07,0.12);tone(660,'square',0.1,0.12,0.08);tone(880,'square',0.14,0.1,0.18);},
+    merge: ()=>{[523,659,784,1046].forEach((f,i)=>tone(f,'sine',0.18,0.18,i*0.09));},
+    
+    // Az eddigi szintetizált hang helyett a miss.mp3-at játssza le
+    fail:  ()=>{ missSound.currentTime = 0; missSound.play().catch(e => {}); },
+    
+    splash:()=>{tone(280,'sine',0.12,0.18);tone(140,'sine',0.22,0.12,0.08);},
+    max:   ()=>{[523,659,784,1046,1318].forEach((f,i)=>tone(f,'triangle',0.25,0.2,i*0.07));},
+};
+
+// ══════════════════════════════════════════════
+//  CANVAS
+// ══════════════════════════════════════════════
+const canvas=document.getElementById('ocean');
+const ctx=canvas.getContext('2d');
+let W=0,H=0;
+
+function resize(){
+    W=canvas.width=window.innerWidth;
+    H=canvas.height=canvas.offsetHeight;
+    if(H<50)H=canvas.height=300;
+}
+window.addEventListener('resize',resize);
+resize();
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let score=0,catches=0,maxTierIdx=0;
+let inventory=[];   // [{tier, uid, name, isBoss}]
+let aquarium=[];    // ugyanolyan schema — jövőbeli feature
+let uid=0;
+let selIdx=null;
+
+// ══════════════════════════════════════════════
+//  MENTÉS / BETÖLTÉS  (localStorage)
+// ══════════════════════════════════════════════
+const SAVE_KEY='duduk_horgasz_v1';
+
+function saveGame(){
+    try{
+        localStorage.setItem(SAVE_KEY, JSON.stringify({
+            score, catches, maxTierIdx, uid,
+            inventory, aquarium
+        }));
+    }catch(e){ console.warn('Mentés sikertelen:',e); }
+}
+
+function loadGame(){
+    try{
+        const raw=localStorage.getItem(SAVE_KEY);
+        if(!raw)return;
+        const d=JSON.parse(raw);
+        score      = d.score      ?? 0;
+        catches    = d.catches    ?? 0;
+        maxTierIdx = d.maxTierIdx ?? 0;
+        uid        = d.uid        ?? 0;
+        // Régi mentések kompatibilitása: name / isBoss mezők hozzáadása ha hiányoznak
+        inventory  = (d.inventory ?? []).map(s=>({
+            tier:   s.tier   ?? 0,
+            uid:    s.uid    ?? uid++,
+            name:   s.name   ?? null,
+            isBoss: s.isBoss ?? false,
+        }));
+        aquarium   = (d.aquarium  ?? []).map(s=>({
+            tier:   s.tier   ?? 0,
+            uid:    s.uid    ?? uid++,
+            name:   s.name   ?? null,
+            isBoss: s.isBoss ?? false,
+        }));
+    }catch(e){ console.warn('Betöltés sikertelen:',e); }
+}
+
+const FS={IDLE:0,CASTING:1,WAITING:2,REELING:3,BOSS_GAME:4};
+let fishState=FS.IDLE;
+let hookX=W/2,hookY=0,hookTargetY=H*0.5;
+let caughtTier=null;
+let nibbleTimer=null;
+let nibbled=false;
+
+// Fisher cursor-follow
+let fisherAngle=0, targetFisherAngle=0;
+
+function updateFisherFromX(clientX){
+    const dockEl=document.getElementById('dock');
+    if(!dockEl)return;
+    const dockW=dockEl.offsetWidth;
+    const dx=clientX-dockW/2;
+    targetFisherAngle=Math.max(-22,Math.min(22, dx/dockW*44));
+}
+
+window.addEventListener('mousemove',e=>updateFisherFromX(e.clientX));
+window.addEventListener('touchmove',e=>{
+    if(e.touches.length>0) updateFisherFromX(e.touches[0].clientX);
+},{passive:true});
+
+function updateFisherRotation(){
+    fisherAngle+=(targetFisherAngle-fisherAngle)*0.07;
+    const t=`translateX(-50%) rotate(${fisherAngle.toFixed(2)}deg)`;
+    const bw=document.getElementById('fisherman-body-wrap');
+    const hc=document.getElementById('fisherman-head-clip');
+    const aw=document.getElementById('anger-wrap');
+    if(bw)bw.style.transform=t;
+    if(hc)hc.style.transform=t;
+    if(aw)aw.style.transform=t;
+}
+
+let angerTimeout=null;
+
+// ══════════════════════════════════════════════
+//  NAMING POPUP
+// ══════════════════════════════════════════════
+let namePopupIdx=null;
+
+function openNamePopup(idx){
+    if(idx<0||idx>=inventory.length)return;
+    namePopupIdx=idx;
+    const item=inventory[idx];
+    const overlay=document.getElementById('name-overlay');
+    const tierDiv=document.getElementById('name-popup-tier');
+    const inp=document.getElementById('name-input');
+    const deleteBtn=document.getElementById('name-delete-btn');
+    const hintDiv=document.getElementById('name-popup-hint');
+    const saveBtn=document.getElementById('name-save-btn');
+
+    tierDiv.textContent=TIERS[item.tier].name+' garnéla — T'+(item.tier+1);
+    inp.value=item.name||'';
+
+    const aqBtn=document.getElementById('name-aquarium-btn');
+    if(item.isBoss){
+        inp.disabled=true;
+        deleteBtn.style.display='none';
+        saveBtn.style.display='none';
+        if(aqBtn) aqBtn.style.display='';
+        hintDiv.textContent='👑 Főnök garnéla — csak az akváriumba tehető';
+    } else {
+        inp.disabled=false;
+        saveBtn.style.display='';
+        deleteBtn.style.display=item.name?'':'none';
+        if(aqBtn) aqBtn.style.display=item.name?'':'none';
+        hintDiv.textContent=item.name
+            ? '⚠️ Elnevezett garnéla nem vonható össze!'
+            : '💡 Hosszan nyomj egy garnélát az elnevezéséhez';
+    }
+
+    // Recreate popup so entrance animation replays
+    const p=document.getElementById('name-popup');
+    p.style.animation='none';
+    requestAnimationFrame(()=>{ p.style.animation=''; });
+
+    overlay.style.display='flex';
+    if(!item.isBoss) setTimeout(()=>inp.focus(),60);
+}
+
+function closeNamePopup(){
+    document.getElementById('name-overlay').style.display='none';
+    namePopupIdx=null;
+}
+
+// Button listeners (wired once at startup)
+document.addEventListener('DOMContentLoaded',()=>{}, false); // no-op guard
+(function wireNamePopup(){
+    document.getElementById('name-save-btn').addEventListener('click',()=>{
+        if(namePopupIdx===null)return;
+        const inp=document.getElementById('name-input');
+        const nm=inp.value.trim();
+        if(!nm){
+            document.getElementById('name-popup-hint').textContent='⚠️ Írj be egy nevet!';
+            inp.focus();
+            return;
+        }
+        inventory[namePopupIdx].name=nm;
+        saveGame(); renderInv(); closeNamePopup();
+    });
+
+    document.getElementById('name-delete-btn').addEventListener('click',()=>{
+        if(namePopupIdx===null)return;
+        inventory[namePopupIdx].name=null;
+        saveGame(); renderInv(); closeNamePopup();
+    });
+
+    document.getElementById('name-aquarium-btn').addEventListener('click',()=>{
+        if(namePopupIdx===null) return;
+        const item=inventory[namePopupIdx];
+        if(!item.name&&!item.isBoss){
+            document.getElementById('name-popup-hint').textContent='⚠️ Előbb adj nevet a garnélának!';
+            return;
+        }
+        const idx=namePopupIdx;
+        closeNamePopup();
+        moveToAquarium(idx);
+        switchTab('aquarium');
+    });
+
+    document.getElementById('name-cancel-btn').addEventListener('click',closeNamePopup);
+
+    // Click outside popup → close
+    document.getElementById('name-overlay').addEventListener('click',(e)=>{
+        if(e.target===document.getElementById('name-overlay')) closeNamePopup();
+    });
+
+    // Escape key
+    document.addEventListener('keydown',(e)=>{
+        if(e.key==='Escape'&&namePopupIdx!==null) closeNamePopup();
+    });
+
+    // Enter in input → save
+    document.getElementById('name-input').addEventListener('keydown',(e)=>{
+        if(e.key==='Enter') document.getElementById('name-save-btn').click();
+    });
+})();
+
+// ══════════════════════════════════════════════
+//  RESET SAVE
+// ══════════════════════════════════════════════
+(function wireResetPopup(){
+    const overlay     = document.getElementById('reset-overlay');
+    const inp         = document.getElementById('reset-input');
+    const confirmBtn  = document.getElementById('reset-confirm-btn');
+    const cancelBtn   = document.getElementById('reset-cancel-btn');
+    const hintDiv     = document.getElementById('reset-popup-hint');
+
+    function openResetPopup(){
+        inp.value='';
+        confirmBtn.classList.remove('ready');
+        hintDiv.textContent='';
+        // Replay entrance animation
+        const p=document.getElementById('reset-popup');
+        p.style.animation='none';
+        requestAnimationFrame(()=>{ p.style.animation=''; });
+        overlay.style.display='flex';
+        setTimeout(()=>inp.focus(),60);
+    }
+    function closeResetPopup(){
+        overlay.style.display='none';
+        inp.value='';
+        confirmBtn.classList.remove('ready');
+        hintDiv.textContent='';
+    }
+
+    // Unlock confirm button only when input matches exactly
+    inp.addEventListener('input',()=>{
+        const ok = inp.value === 'TÖRLÉS';
+        confirmBtn.classList.toggle('ready', ok);
+        hintDiv.textContent = ok ? '✅ Kész — rányomhatsz a törlésre!' : '';
+    });
+
+    // Paste/autocorrect guard: force uppercase check
+    inp.addEventListener('keydown',(e)=>{
+        if(e.key==='Enter' && inp.value==='TÖRLÉS') confirmBtn.click();
+        if(e.key==='Escape') closeResetPopup();
+    });
+
+    confirmBtn.addEventListener('click',()=>{
+        if(inp.value!=='TÖRLÉS')return;
+        localStorage.removeItem(SAVE_KEY);
+        location.reload();
+    });
+
+    cancelBtn.addEventListener('click', closeResetPopup);
+    overlay.addEventListener('click',(e)=>{ if(e.target===overlay) closeResetPopup(); });
+
+    document.getElementById('reset-save-btn').addEventListener('click', openResetPopup);
+})();
+
+function triggerAnger(){
+    const aw=document.getElementById('anger-wrap');
+    const ms=document.getElementById('snd-miss');
+    if(!aw)return;
+    aw.classList.add('active');
+    clearTimeout(angerTimeout);
+    // Leáll amikor a hang véget ér
+    if(ms){
+        ms.onended=()=>{ aw.classList.remove('active'); ms.onended=null; };
+    }
+    // Fallback: max 4 másodperc
+    angerTimeout=setTimeout(()=>aw.classList.remove('active'), 4000);
+}
+
+let oShrimp=[];
+let particles=[];
+let wt=0; // wave time
+
+// ══════════════════════════════════════════════
+//  OCEAN SHRIMP
+// ══════════════════════════════════════════════
+function mkShrimp(){
+    const left=Math.random()<0.5;
+    return{
+        x:left?-60:W+60,
+        y:30+Math.random()*(H-60),
+        vx:(0.35+Math.random()*0.75)*(left?1:-1),
+        vy:(Math.random()-0.5)*0.22,
+        size:11+Math.random()*11,
+        tier:pickTier(),
+        phase:Math.random()*Math.PI*2,
+    };
+}
+for(let i=0;i<16;i++){const s=mkShrimp();s.x=Math.random()*W;oShrimp.push(s);}
+setInterval(()=>{if(oShrimp.length<20)oShrimp.push(mkShrimp());},2200);
+
+// ══════════════════════════════════════════════
+//  SHRIMP DRAWING
+// ══════════════════════════════════════════════
+function hexToRgb(h){
+    const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);
+    return{r,g,b};
+}
+function shade(hex,d){
+    if(!hex.startsWith('#'))return hex;
+    const c=hexToRgb(hex);
+    return`rgb(${Math.min(255,Math.max(0,c.r+d))|0},${Math.min(255,Math.max(0,c.g+d))|0},${Math.min(255,Math.max(0,c.b+d))|0})`;
+}
+function tierColor(tier){
+    const t=TIERS[tier];
+    if(t.c==='rainbow'){
+        const h=(Date.now()/18+tier*40)%360;
+        return{fill:`hsl(${h},100%,60%)`,glow:`hsl(${(h+130)%360},100%,72%)`};
+    }
+    return{fill:t.c,glow:t.g};
+}
+
+function drawShrimp(actx,x,y,size,tier,dir,phase){
+    const{fill,glow}=tierColor(tier);
+    actx.save();
+    actx.translate(x,y);
+    if(dir<0)actx.scale(-1,1);
+    actx.rotate(Math.sin(phase)*0.13);
+
+    actx.shadowColor=glow;
+    actx.shadowBlur=9+Math.sin(phase)*4;
+
+    // Abdomen (3 segments)
+    for(let i=0;i<3;i++){
+        actx.fillStyle=i%2===0?fill:shade(fill,-18);
+        actx.beginPath();
+        actx.ellipse(i*size*0.26,0,size*0.24,size*0.15,0,0,Math.PI*2);
+        actx.fill();
+    }
+
+    // Tail fan
+    actx.fillStyle=shade(fill,10);
+    for(let j=-1;j<=1;j++){
+        actx.beginPath();
+        actx.moveTo(size*0.72,0);
+        actx.lineTo(size*1.18,j*size*0.28);
+        actx.lineTo(size*1.05,j*size*0.33);
+        actx.closePath();
+        actx.fill();
+    }
+
+    // Cephalothorax (big hump)
+    actx.fillStyle=shade(fill,8);
+    actx.beginPath();
+    actx.ellipse(-size*0.3,-size*0.06,size*0.36,size*0.26,0,0,Math.PI*2);
+    actx.fill();
+
+    // Rostrum
+    actx.fillStyle=fill;
+    actx.beginPath();
+    actx.moveTo(-size*0.6,-size*0.04);
+    actx.lineTo(-size*0.9,-size*0.07);
+    actx.lineTo(-size*0.6,size*0.08);
+    actx.closePath();
+    actx.fill();
+
+    // Eye stalk
+    actx.fillStyle=shade(fill,-10);
+    actx.beginPath();
+    actx.arc(-size*0.48,-size*0.18,size*0.07,0,Math.PI*2);
+    actx.fill();
+    actx.fillStyle='#fff';
+    actx.beginPath();
+    actx.arc(-size*0.48,-size*0.19,size*0.08,0,Math.PI*2);
+    actx.fill();
+    actx.fillStyle='#111';
+    actx.beginPath();
+    actx.arc(-size*0.5,-size*0.19,size*0.05,0,Math.PI*2);
+    actx.fill();
+
+    // Antennae
+    actx.shadowBlur=0;
+    actx.strokeStyle=shade(fill,20);
+    actx.lineWidth=0.9;
+    actx.beginPath();actx.moveTo(-size*0.58,-size*0.2);actx.lineTo(-size*1.1,-size*0.6);actx.stroke();
+    actx.beginPath();actx.moveTo(-size*0.52,-size*0.17);actx.lineTo(-size*0.95,-size*0.55);actx.stroke();
+
+    // Swimmerets (legs)
+    actx.lineWidth=0.8;
+    for(let k=0;k<5;k++){
+        const lx=-size*0.15+k*size*0.2;
+        actx.beginPath();actx.moveTo(lx,size*0.18);actx.lineTo(lx-size*0.03,size*0.42);actx.stroke();
+    }
+
+    actx.restore();
+}
+
+// ══════════════════════════════════════════════
+//  DRAW OCEAN BG
+// ══════════════════════════════════════════════
+function drawWater(){
+    // BG
+    const grd=ctx.createLinearGradient(0,0,0,H);
+    grd.addColorStop(0,'#0a3d62');
+    grd.addColorStop(0.45,'#0a2840');
+    grd.addColorStop(1,'#05101c');
+    ctx.fillStyle=grd;
+    ctx.fillRect(0,0,W,H);
+
+    // Caustic light rays
+    ctx.save();
+    ctx.globalAlpha=0.032;
+    const t=Date.now()*0.0007;
+    for(let i=0;i<8;i++){
+        const rx=W*(0.1+i*0.12)+Math.sin(t+i*1.4)*28;
+        ctx.fillStyle='#aadfff';
+        ctx.beginPath();
+        ctx.moveTo(rx,0);ctx.lineTo(rx+65,H);ctx.lineTo(rx-18,H);ctx.closePath();
+        ctx.fill();
+    }
+    ctx.restore();
+
+    // Surface wave
+    ctx.save();
+    ctx.globalAlpha=0.35;
+    ctx.strokeStyle='#88ccff';
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    for(let x=0;x<=W;x+=4){
+        const y=8+Math.sin(x*0.045+wt)*5+Math.sin(x*0.028-wt*0.7)*3;
+        x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // Depth lines
+    ctx.save();
+    ctx.globalAlpha=0.06;
+    ctx.strokeStyle='#4488aa';
+    ctx.lineWidth=1;
+    for(let d=0;d<=0.85;d+=0.2){
+        ctx.beginPath();
+        for(let x=0;x<=W;x+=5){
+            const y=H*d+Math.sin(x*0.03+wt*0.5+d*10)*4;
+            x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+        }
+        ctx.stroke();
+    }
+    ctx.restore();
+}
+
+// ══════════════════════════════════════════════
+//  FISHING LINE
+// ══════════════════════════════════════════════
+function drawLine(){
+    if(fishState===FS.IDLE)return;
+    ctx.save();
+
+    // Hook (vonal az SVG overlay-ben van)
+    ctx.strokeStyle='#b0b0b0';
+    ctx.lineWidth=2.2;
+    ctx.shadowColor='rgba(200,200,255,0.5)';
+    ctx.shadowBlur=4;
+    ctx.beginPath();ctx.arc(hookX,hookY+8,8,-Math.PI*0.5,Math.PI*0.5);ctx.stroke();
+
+    // Ripple ring
+    if(fishState===FS.WAITING||fishState===FS.CASTING){
+        const rp=((Date.now()%1400)/1400);
+        ctx.strokeStyle=`rgba(100,200,255,${0.55*(1-rp)})`;
+        ctx.lineWidth=1; ctx.shadowBlur=0;
+        ctx.beginPath();ctx.ellipse(hookX,hookY,rp*34,rp*9,0,0,Math.PI*2);ctx.stroke();
+    }
+
+    // Caught shrimp dangling
+    if(caughtTier!==null&&(fishState===FS.WAITING||fishState===FS.REELING)){
+        const wg=Math.sin(Date.now()*0.012)*0.25;
+        ctx.translate(hookX,hookY+26);
+        ctx.rotate(wg);
+        ctx.translate(-hookX,-(hookY+26));
+        drawShrimp(ctx,hookX,hookY+32,17,caughtTier,1,Date.now()*0.01);
+    }
+
+    ctx.restore();
+}
+
+// ── SVG ZSINÓR OVERLAY ──────────────────────────────────────────────────────
+function getRodTipScreen(){
+    // A sárga karika tényleges képernyő-pozíciója — figyelembe veszi
+    // a fisherAngle forgást ÉS a rodCast CSS animációt is.
+    const tipCircle=document.querySelector('#rod-anim-group circle');
+    if(tipCircle){
+        const r=tipCircle.getBoundingClientRect();
+        return { x: r.left+r.width/2, y: r.top+r.height/2 };
+    }
+    // Fallback (ha a DOM még nem kész)
+    const dockEl=document.getElementById('dock');
+    const dockH=dockEl.offsetHeight, dockW=dockEl.offsetWidth;
+    const rad=fisherAngle*Math.PI/180;
+    const ox=176, oy=-107;
+    return { x: dockW/2+ox*Math.cos(rad)-oy*Math.sin(rad),
+             y: dockH-34+ox*Math.sin(rad)+oy*Math.cos(rad) };
+}
+
+function updateLineSVG(){
+    const svg=document.getElementById('line-svg');
+    if(!svg)return;
+    const rt=getRodTipScreen();
+
+    if(fishState===FS.IDLE){
+        // Rövid lógó zsinór + kampó a bot hegyén
+        const sway=Math.sin(Date.now()*0.0018)*6;
+        const lx=rt.x+sway, ly=rt.y+48;
+        svg.innerHTML=`
+            <line x1="${rt.x.toFixed(1)}" y1="${rt.y.toFixed(1)}"
+                  x2="${lx.toFixed(1)}" y2="${ly.toFixed(1)}"
+                  stroke="rgba(215,215,195,0.82)" stroke-width="1.3" stroke-linecap="round"/>
+            <path d="M ${lx.toFixed(1)} ${ly.toFixed(1)}
+                     a 7 7 0 0 1 7 7
+                     l 0 5"
+                  fill="none" stroke="#b0b0b0" stroke-width="2" stroke-linecap="round"/>`;
+        return;
+    }
+
+    const dockH=document.getElementById('dock').offsetHeight;
+    const hx=hookX, hy=dockH+hookY+8;
+    svg.innerHTML=`<line x1="${rt.x.toFixed(1)}" y1="${rt.y.toFixed(1)}"
+        x2="${hx}" y2="${hy}"
+        stroke="rgba(215,215,195,0.88)" stroke-width="1.4" stroke-linecap="round"/>`;
+}
+
+// ══════════════════════════════════════════════
+//  PARTICLES
+// ══════════════════════════════════════════════
+function spawnBubbles(x,y,n){
+    for(let i=0;i<n;i++){
+        particles.push({
+            x:x+(Math.random()-.5)*24,y,
+            vx:(Math.random()-.5)*0.6,
+            vy:-(0.7+Math.random()*1.4),
+            r:1.5+Math.random()*3.5,
+            a:0.75,
+        });
+    }
+}
+function spawnSplash(x,y){
+    for(let i=0;i<12;i++){
+        const a=Math.random()*Math.PI*2;
+        const sp=1+Math.random()*3;
+        particles.push({
+            x,y,
+            vx:Math.cos(a)*sp,
+            vy:Math.sin(a)*sp-2,
+            r:2+Math.random()*3,
+            a:0.9,
+            gravity:0.12,
+        });
+    }
+}
+
+// ══════════════════════════════════════════════
+//  MAIN LOOP
+// ══════════════════════════════════════════════
+function loop(){
+    if(canvas.width!==window.innerWidth){W=canvas.width=window.innerWidth;}
+
+    ctx.clearRect(0,0,W,H);
+    wt+=0.025;
+    drawWater();
+
+    // Ocean shrimp
+    oShrimp=oShrimp.filter(s=>{
+        s.x+=s.vx;
+        s.y+=s.vy+Math.sin(s.phase)*0.14;
+        s.phase+=0.024;
+        if(s.y<15)s.vy=Math.abs(s.vy);
+        if(s.y>H-15)s.vy=-Math.abs(s.vy);
+        if(s.x<-90||s.x>W+90)return false;
+        drawShrimp(ctx,s.x,s.y,s.size,s.tier,s.vx>0?1:-1,s.phase);
+        return true;
+    });
+
+    // Particles
+    particles=particles.filter(p=>{
+        p.x+=p.vx;p.y+=p.vy;
+        if(p.gravity)p.vy+=p.gravity;
+        p.a-=0.013;
+        if(p.a<=0)return false;
+        ctx.save();
+        ctx.globalAlpha=p.a;
+        ctx.strokeStyle='rgba(160,220,255,0.85)';
+        ctx.lineWidth=0.9;
+        ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.stroke();
+        ctx.restore();
+        return true;
+    });
+
+    // Fishing line state machine
+    if(fishState===FS.CASTING){
+        hookY+=8;
+        if(hookY>=hookTargetY){
+            hookY=hookTargetY;
+            fishState=FS.WAITING;
+            spawnBubbles(hookX,hookY,9);
+            spawnSplash(hookX,hookY);
+            SFX.splash();
+            setMsg('🎣 A horog a vízben... várd a harapást, majd kattints!');
+            nibbled=false;
+            const delay=900+Math.random()*2200;
+            nibbleTimer=setTimeout(()=>{
+                // 2% esély boss eseményre
+                if(Math.random()<0.02){
+                    const bRoll=Math.random();
+                    const bTier=bRoll<0.40?5:bRoll<0.70?6:bRoll<0.90?7:bRoll<0.98?8:9;
+                    startBossMinigame(bTier);
+                    return;
+                }
+                caughtTier=pickTier();
+                nibbled=true;
+                SFX.nibble();
+                setMsg(`⚡ HARAPÁS! ${TIERS[caughtTier].name} garnéla! Kattints a behúzáshoz!`);
+                setTimeout(()=>{nibbled=false;},800);
+            },delay);
+        }
+    } else if(fishState===FS.REELING){
+        hookY-=10;
+        if(hookY<=0){
+            hookY=0;
+            fishState=FS.IDLE;
+            if(caughtTier!==null){
+                const t=caughtTier;
+                const isBoss=window._pendingBoss||false;
+                window._pendingBoss=false;
+                const bossName=isBoss?getNextBossName():null;
+                score+=TIERS[t].pts*(isBoss?5:1); // boss = 5x pont
+                catches++;
+                if(t>maxTierIdx)maxTierIdx=t;
+                updateHUD();
+                saveGame();
+                addToInventory(t,isBoss,bossName);
+                showFloat(isBoss?`👑 ${bossName}!`:`+${TIERS[t].pts} 🦐 ${TIERS[t].name}`,hookX);
+                // Tier 3+ → good catch hang (erősítve)
+                if(t>=2||isBoss){
+                    playGoodCatch();
+                } else {
+                    SFX.catch();
+                }
+                setMsg(isBoss?`👑 FŐNÖK GARNÉLA ELFOGVA: "${bossName}"! ${TIERS[t].name} – ${TIERS[t].pts*5} pont!`
+                             :`🎉 Kifogva! ${TIERS[t].funny}`);
+                caughtTier=null;
+            } else {
+                // Semmi sem harapott → miss hang + mérges animáció
+                const ms=document.getElementById('snd-miss');
+                ms.currentTime=0; ms.play().catch(()=>{});
+                triggerAnger();
+                setMsg('😤 SEMMI SEM HARAPOTT! Mérges a horgász!');
+            }
+        }
+    }
+
+    drawLine();
+    updateFisherRotation();
+    updateLineSVG();
+    if(currentTab==='aquarium') renderAquariumCanvas();
+    requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// ══════════════════════════════════════════════
+//  CLICK TO FISH
+// ══════════════════════════════════════════════
+function doFishAction(clientX, clientY){
+    initAC(); AC.resume();
+    const rect=canvas.getBoundingClientRect();
+    const cx=clientX-rect.left;
+    const cy=clientY-rect.top;
+
+    if(fishState===FS.IDLE){
+        hookX=cx; hookY=0;
+        hookTargetY=Math.max(50,Math.min(cy,H*0.88));
+        fishState=FS.CASTING;
+        caughtTier=null;
+        SFX.cast();
+        setMsg('🎣 Horgász a vízbe...');
+    } else if(fishState===FS.WAITING){
+        clearTimeout(nibbleTimer);
+        fishState=FS.REELING;
+        setMsg(caughtTier!==null ? '💪 Behúzás...' : '😅 Semmi sem harapott még... behúzás!');
+    }
+    // ignore during CASTING / REELING
+}
+
+canvas.addEventListener('click',e=>doFishAction(e.clientX,e.clientY));
+
+// Touch support for canvas
+canvas.addEventListener('touchstart',e=>{
+    e.preventDefault();
+    if(e.touches.length===0)return;
+    const t=e.touches[0];
+    updateFisherFromX(t.clientX);
+    doFishAction(t.clientX,t.clientY);
+},{passive:false});
+
+canvas.addEventListener('touchmove',e=>{
+    e.preventDefault();
+    if(e.touches.length>0) updateFisherFromX(e.touches[0].clientX);
+},{passive:false});
+
+// ══════════════════════════════════════════════
+//  HUD
+// ══════════════════════════════════════════════
+function setMsg(t){document.getElementById('status-msg').textContent=t;}
+function updateHUD(){
+    document.getElementById('sv').textContent=score.toLocaleString();
+    document.getElementById('cc').textContent=catches;
+    document.getElementById('mt').textContent=TIERS[maxTierIdx].name;
+}
+
+// Float label
+function showFloat(text,x){
+    const el=document.getElementById('float-label');
+    const dH=document.getElementById('dock').offsetHeight;
+    el.textContent=text;
+    el.style.left=(x-60)+'px';
+    el.style.top=(dH+H*0.35)+'px';
+    el.style.opacity='1';
+    el.style.transform='translateY(0)';
+    el.style.transition='none';
+    requestAnimationFrame(()=>{
+        requestAnimationFrame(()=>{
+            el.style.transition='all 0.9s ease-out';
+            el.style.opacity='0';
+            el.style.transform='translateY(-65px)';
+        });
+    });
+}
+
+// ══════════════════════════════════════════════
+//  INVENTORY & MERGE
+// ══════════════════════════════════════════════
+const MAX_INV=32;
+
+function addToInventory(tier, isBoss=false, bossName=null){
+    if(inventory.length>=MAX_INV){
+        // Evict lowest tier unnamed (soha ne dobjuk ki a bossokat vagy elnevezetteket)
+        const evict=inventory.reduce((best,s,i)=>{
+            if(s.name||s.isBoss) return best;
+            if(best===-1||s.tier<inventory[best].tier) return i;
+            return best;
+        },-1);
+        if(evict>=0) inventory.splice(evict,1);
+        // Ha nincs mit kidobni, csak hozzáadjuk (max+1 ideiglenesen)
+    }
+    inventory.push({tier, uid:uid++, name:bossName, isBoss});
+    renderInv();
+    saveGame();
+}
+
+function renderInv(){
+    const container=document.getElementById('shrimp-slots');
+    container.innerHTML='';
+    inventory.forEach((item,i)=>{
+        const t=TIERS[item.tier];
+        const div=document.createElement('div');
+
+        // Base class
+        let cls='slot'+(selIdx===i?' selected':'');
+        if(item.name && !item.isBoss) cls+=' named';
+        if(item.isBoss) cls+=' is-boss';
+        div.className=cls;
+
+        // can-merge highlight: only for unnamed, non-boss items
+        const sel=inventory[selIdx];
+        if(selIdx!==null&&selIdx!==i&&sel&&sel.tier===item.tier
+           &&!item.name&&!item.isBoss&&!sel.name&&!sel.isBoss){
+            div.classList.add('can-merge');
+        }
+
+        // Tier badge
+        const badge=document.createElement('div');
+        badge.className='stier';
+        badge.textContent='T'+(item.tier+1);
+        div.appendChild(badge);
+
+        // Lock / boss icon (top-left)
+        if(item.name||item.isBoss){
+            const lockEl=document.createElement('div');
+            lockEl.className='lock-icon';
+            lockEl.textContent=item.isBoss?'👑':'🔒';
+            div.appendChild(lockEl);
+        }
+
+        // Shrimp circle
+        const circle=document.createElement('div');
+        circle.className='scircle';
+        if(t.c==='rainbow'){
+            circle.style.background='conic-gradient(red,yellow,green,cyan,blue,magenta,red)';
+            circle.style.boxShadow='0 0 10px white';
+        } else {
+            circle.style.background=t.c;
+            circle.style.boxShadow=`0 0 7px ${t.g}`;
+        }
+        circle.textContent='🦐';
+        div.appendChild(circle);
+
+        // Name label: custom name in gold, or tier name in grey
+        const nameEl=document.createElement('div');
+        nameEl.className='sname';
+        if(item.name){
+            nameEl.textContent=item.name;
+            nameEl.style.color='#ffd700';
+            nameEl.style.fontWeight='bold';
+            nameEl.title=item.name; // full name on hover
+        } else {
+            nameEl.textContent=t.name;
+        }
+        div.appendChild(nameEl);
+
+        // ── Long-press to open name popup ──
+        let pressTimer=null, lpTriggered=false;
+
+        div.addEventListener('mousedown',()=>{
+            lpTriggered=false;
+            pressTimer=setTimeout(()=>{
+                lpTriggered=true; pressTimer=null;
+                openNamePopup(i);
+            },500);
+        });
+        div.addEventListener('mouseup',()=>{ if(pressTimer){clearTimeout(pressTimer);pressTimer=null;} });
+        div.addEventListener('mouseleave',()=>{ if(pressTimer){clearTimeout(pressTimer);pressTimer=null;} });
+
+        div.addEventListener('touchstart',(e)=>{
+            lpTriggered=false;
+            pressTimer=setTimeout(()=>{
+                lpTriggered=true; pressTimer=null;
+                e.preventDefault();
+                openNamePopup(i);
+            },500);
+        },{passive:false});
+        div.addEventListener('touchend',()=>{ if(pressTimer){clearTimeout(pressTimer);pressTimer=null;} });
+        div.addEventListener('touchmove',()=>{ if(pressTimer){clearTimeout(pressTimer);pressTimer=null;} });
+
+        // click: skip if long-press already consumed
+        div.addEventListener('click',()=>{
+            if(lpTriggered){ lpTriggered=false; return; }
+            onSlotClick(i);
+        });
+
+        container.appendChild(div);
+    });
+}
+
+function onSlotClick(i){
+    initAC();AC.resume();
+
+    if(selIdx===null){
+        selIdx=i;
+        renderInv();
+        return;
+    }
+    if(selIdx===i){
+        selIdx=null;
+        renderInv();
+        return;
+    }
+
+    const a=inventory[selIdx],b=inventory[i];
+
+    // Named or boss shrimp cannot be merged
+    if(a.name!==null||a.isBoss||b.name!==null||b.isBoss){
+        const nm=a.name||b.name;
+        setMsg(`🔒 Elnevezett garnéla nem vonható össze!${nm?' ("'+nm+'")':''}`);
+        selIdx=null; renderInv(); return;
+    }
+
+    if(a.tier!==b.tier){
+        setMsg(`❌ Csak azonos szintű garnéla vonható össze! (${TIERS[a.tier].name} ≠ ${TIERS[b.tier].name})`);
+        SFX.fail(); // Itt is le fogja játszani a miss.mp3-at rossz összevonáskor
+        selIdx=null;
+        renderInv();
+        return;
+    }
+
+    if(a.tier>=TIERS.length-1){
+        setMsg('🌈 Ez már a VÉGSŐ SZINTŰ garnéla! Gyűjts belőle sokat!');
+        SFX.fail();
+        selIdx=null;
+        renderInv();
+        return;
+    }
+
+    // MERGE!
+    const newTier=a.tier+1;
+    const hi=Math.max(selIdx,i), lo=Math.min(selIdx,i);
+    inventory.splice(hi,1);
+    inventory.splice(lo,1);
+    inventory.push({tier:newTier, uid:uid++, name:null, isBoss:false});
+
+    const pts=TIERS[newTier].pts*3;
+    score+=pts;
+    if(newTier>maxTierIdx)maxTierIdx=newTier;
+    updateHUD();
+    saveGame();
+
+    selIdx=null;
+    if(newTier===TIERS.length-1)SFX.max();
+    else SFX.merge();
+    setMsg(`✨ ÖSSZEVONVA! → ${TIERS[newTier].name} garnéla! +${pts} pont! ${TIERS[newTier].funny}`);
+    renderInv();
+
+    // Pop + glow animation on the new slot
+    setTimeout(()=>{
+        const slots=document.querySelectorAll('.slot');
+        const last=slots[slots.length-1];
+        if(last){
+            last.classList.add('pop','merge-anim');
+            setTimeout(()=>last.classList.remove('pop','merge-anim'),500);
+        }
+    },30);
+}
+
+// ══════════════════════════════════════════════
+//  AKVÁRIUM
+// ══════════════════════════════════════════════
+
+// drawShrimp alias tetszőleges ctx-hez
+function drawShrimpCtx(actx, x, y, size, tier, dir, phase){
+    drawShrimp(actx, x, y, size, tier, dir, phase);
+}
+
+let aquariumSwimData = {};   // uid → {x,y,vx,vy,phase}
+let currentTab       = 'collection';
+let aqActionUid      = null;
+
+// ── Tab váltás ────────────────────────────────
+function switchTab(tab){
+    currentTab = tab;
+    document.getElementById('tab-collection').classList.toggle('visible', tab==='collection');
+    document.getElementById('tab-aquarium'  ).classList.toggle('visible', tab==='aquarium');
+    document.getElementById('tab-btn-collection').classList.toggle('active', tab==='collection');
+    document.getElementById('tab-btn-aquarium'  ).classList.toggle('active', tab==='aquarium');
+}
+document.getElementById('tab-btn-collection').addEventListener('click', ()=>switchTab('collection'));
+document.getElementById('tab-btn-aquarium'  ).addEventListener('click', ()=>switchTab('aquarium'));
+
+// ── Garnéla mozgatás ──────────────────────────
+function moveToAquarium(idx){
+    if(idx<0||idx>=inventory.length) return;
+    const item=inventory[idx];
+    aquarium.push(item);
+    inventory.splice(idx,1);
+    saveGame(); renderInv();
+    setMsg(`🐠 "${item.name}" az akváriumba került!`);
+}
+
+function removeFromAquarium(uid){
+    const idx=aquarium.findIndex(s=>s.uid===uid);
+    if(idx<0) return;
+    const item=aquarium[idx];
+    // Ha tele a gyűjtemény, kipottyant egy alacsony szintű névtelent
+    if(inventory.length>=MAX_INV){
+        const evict=inventory.reduce((best,s,i)=>{
+            if(s.name||s.isBoss) return best;
+            if(best===-1||s.tier<inventory[best].tier) return i;
+            return best;
+        },-1);
+        if(evict>=0) inventory.splice(evict,1);
+        else{ setMsg('❌ A gyűjtemény tele van, nincs összevonható garnéla!'); return; }
+    }
+    aquarium.splice(idx,1);
+    delete aquariumSwimData[uid];
+    inventory.push(item);
+    saveGame(); renderInv();
+    setMsg(`🦐 "${item.name}" visszakerült a gyűjteménybe!`);
+}
+
+// ── Akvárium kivevő popup ─────────────────────
+function openAqActionPopup(uid){
+    aqActionUid=uid;
+    const item=aquarium.find(s=>s.uid===uid);
+    if(!item) return;
+    document.getElementById('aq-action-info').textContent=
+        `"${item.name}" — ${TIERS[item.tier].name} (T${item.tier+1})`;
+    const p=document.getElementById('aq-action-popup');
+    p.style.animation='none'; requestAnimationFrame(()=>{ p.style.animation=''; });
+    document.getElementById('aq-action-overlay').style.display='flex';
+}
+function closeAqActionPopup(){
+    document.getElementById('aq-action-overlay').style.display='none';
+    aqActionUid=null;
+}
+(function wireAqPopup(){
+    document.getElementById('aq-remove-btn').addEventListener('click',()=>{
+        if(aqActionUid===null) return;
+        removeFromAquarium(aqActionUid);
+        closeAqActionPopup();
+    });
+    document.getElementById('aq-cancel-btn').addEventListener('click', closeAqActionPopup);
+    document.getElementById('aq-action-overlay').addEventListener('click',(e)=>{
+        if(e.target===document.getElementById('aq-action-overlay')) closeAqActionPopup();
+    });
+    document.addEventListener('keydown',(e)=>{
+        if(e.key==='Escape'&&aqActionUid!==null) closeAqActionPopup();
+    });
+})();
+
+// ── Akvárium canvas koppintás ─────────────────
+function handleAquariumTap(clientX, clientY){
+    const aqC=document.getElementById('aquarium-canvas');
+    if(!aqC) return;
+    const rect=aqC.getBoundingClientRect();
+    const cx=clientX-rect.left, cy=clientY-rect.top;
+    let nearest=null, nearestDist=38;
+    aquarium.forEach(item=>{
+        const sd=aquariumSwimData[item.uid];
+        if(!sd) return;
+        const d=Math.sqrt((sd.x-cx)**2+(sd.y-cy)**2);
+        if(d<nearestDist){ nearestDist=d; nearest=item; }
+    });
+    if(nearest) openAqActionPopup(nearest.uid);
+}
+(function wireAqCanvas(){
+    const aqC=document.getElementById('aquarium-canvas');
+    aqC.addEventListener('click',(e)=>handleAquariumTap(e.clientX,e.clientY));
+    aqC.addEventListener('touchstart',(e)=>{
+        e.preventDefault();
+        if(e.touches.length>0) handleAquariumTap(e.touches[0].clientX,e.touches[0].clientY);
+    },{passive:false});
+})();
+
+// ── Akvárium rajz ─────────────────────────────
+function drawSeaweed(actx, bx, by, idx){
+    const t=Date.now()*0.0012;
+    const h=26+idx*8;
+    const sway=Math.sin(t+idx*1.7)*6;
+    actx.save();
+    actx.lineWidth=2.5; actx.lineCap='round';
+    const green=idx===1?'#2a8a50':'#1a6840';
+    actx.strokeStyle=green;
+    actx.beginPath();
+    actx.moveTo(bx,by);
+    actx.quadraticCurveTo(bx+sway*0.5,by-h*0.5,bx+sway,by-h);
+    actx.stroke();
+    actx.fillStyle=idx===1?'#247845':'#1a5c38';
+    for(let i=0;i<3;i++){
+        const ht=(i+1)/4;
+        const lx=bx+sway*ht, ly=by-h*ht;
+        const side=i%2===0?1:-1;
+        actx.beginPath();
+        actx.ellipse(lx+side*8+sway*0.2,ly-1,7,2.8,side*0.45,0,Math.PI*2);
+        actx.fill();
+    }
+    actx.restore();
+}
+
+function drawAquariumBubbles(actx, W, H){
+    const t=Date.now()*0.0008;
+    actx.save();
+    for(let i=0;i<10;i++){
+        const cycle=(t*0.35+i*0.32)%1;
+        const x=(i*113+28)%W;
+        const y=H-15-cycle*(H-22);
+        const r=1.4+(i%3)*0.7;
+        actx.globalAlpha=(1-cycle)*0.45;
+        actx.strokeStyle='#60d8a0'; actx.lineWidth=0.9;
+        actx.beginPath();
+        actx.arc(x+Math.sin(t+i)*3,y,r,0,Math.PI*2);
+        actx.stroke();
+    }
+    actx.restore();
+}
+
+function renderAquariumCanvas(){
+    const aqC=document.getElementById('aquarium-canvas');
+    if(!aqC) return;
+    const W=aqC.width=aqC.offsetWidth;
+    const H=aqC.height=aqC.offsetHeight;
+    if(W<10||H<10) return;
+    const ac=aqC.getContext('2d');
+
+    // Háttér
+    const bg=ac.createLinearGradient(0,0,0,H);
+    bg.addColorStop(0,'#051a14'); bg.addColorStop(0.65,'#071e1a'); bg.addColorStop(1,'#030d0a');
+    ac.fillStyle=bg; ac.fillRect(0,0,W,H);
+
+    // Kausztikus fénysugarak
+    ac.save(); ac.globalAlpha=0.022;
+    const t=Date.now()*0.0004;
+    for(let i=0;i<4;i++){
+        const rx=W*(0.1+i*0.25)+Math.sin(t+i*2)*16;
+        ac.fillStyle='#aaffdd';
+        ac.beginPath(); ac.moveTo(rx,0); ac.lineTo(rx+42,H); ac.lineTo(rx-12,H);
+        ac.closePath(); ac.fill();
+    }
+    ac.restore();
+
+    // Homok alap
+    const sg=ac.createLinearGradient(0,H-16,0,H);
+    sg.addColorStop(0,'#2c1e08'); sg.addColorStop(1,'#3c2810');
+    ac.fillStyle=sg; ac.fillRect(0,H-16,W,16);
+    // Kavicsok
+    ac.fillStyle='#4a3318';
+    for(let i=0;i<10;i++){
+        const px=(i*151+22)%W, pr=2.2+(i*71)%3;
+        ac.beginPath(); ac.ellipse(px,H-4,pr*1.8,pr*0.65,0,0,Math.PI*2); ac.fill();
+    }
+
+    // Szikla
+    ac.save();
+    ac.fillStyle='#182820';
+    ac.beginPath(); ac.ellipse(W*0.63,H-16,20,13,0.1,0,Math.PI*2); ac.fill();
+    ac.fillStyle='#223430';
+    ac.beginPath(); ac.ellipse(W*0.63-4,H-22,11,8,-0.2,0,Math.PI*2); ac.fill();
+    ac.restore();
+
+    // Hínárok
+    [0.1,0.88,0.46].forEach((px,idx)=>drawSeaweed(ac,W*px,H-16,idx));
+
+    // Buborékok
+    drawAquariumBubbles(ac,W,H);
+
+    // Üres üzenet
+    const emptyMsg=document.getElementById('aquarium-empty-msg');
+    if(aquarium.length===0){ emptyMsg.style.display='flex'; return; }
+    emptyMsg.style.display='none';
+
+    const sandTop=H-20;
+
+    // Garnélák
+    aquarium.forEach(item=>{
+        if(!aquariumSwimData[item.uid]){
+            aquariumSwimData[item.uid]={
+                x:30+Math.random()*(W-60),
+                y:12+Math.random()*(sandTop-32),
+                vx:(Math.random()<0.5?1:-1)*(0.28+Math.random()*0.55),
+                vy:(Math.random()-0.5)*0.28,
+                phase:Math.random()*Math.PI*2
+            };
+        }
+        const sd=aquariumSwimData[item.uid];
+        sd.x+=sd.vx;
+        sd.y+=sd.vy+Math.sin(sd.phase)*0.1;
+        sd.phase+=0.018;
+        if(sd.x<18)        { sd.vx= Math.abs(sd.vx); }
+        if(sd.x>W-18)      { sd.vx=-Math.abs(sd.vx); }
+        if(sd.y<10)        { sd.vy= Math.abs(sd.vy); }
+        if(sd.y>sandTop)   { sd.vy=-Math.abs(sd.vy); sd.y=sandTop; }
+        if(Math.random()<0.004) sd.vx*=-1;
+        if(Math.random()<0.003) sd.vy+=(Math.random()-0.5)*0.22;
+        sd.vy=Math.max(-0.48,Math.min(0.48,sd.vy));
+
+        const dir=sd.vx>0?1:-1;
+        const sz=12+(item.tier/TIERS.length)*7;
+        drawShrimpCtx(ac,sd.x,sd.y,sz,item.tier,dir,sd.phase);
+
+        // Névcímke
+        if(item.name){
+            ac.save();
+            ac.font='bold 9px Segoe UI,Arial,sans-serif';
+            ac.textAlign='center';
+            const ty=sd.y-sz*0.55-5;
+            ac.fillStyle='rgba(0,0,0,0.65)';
+            ac.fillText(item.name,sd.x+1,ty+1);
+            const tc=TIERS[item.tier];
+            ac.fillStyle=item.isBoss?'#cc44ff':
+                (tc.c==='rainbow'?`hsl(${(Date.now()/20)%360},100%,70%)`:tc.c);
+            ac.fillText(item.name,sd.x,ty);
+            ac.restore();
+        }
+    });
+}
+
+// ══════════════════════════════════════════════
+//  BOSS MINIGAME
+// ══════════════════════════════════════════════
+const BOSS_NAMES=[
+    'Zuboly Péter','Nagy Pimasz','Vörös Démon','Csipetke Vezér',
+    'Mélység Ura','Büdös Bandi','Királyrákok Fejedelme','Óceán Réme',
+    'Fenék Felügyelő','Komisz Kálmán','Vastag Vilmos','Harcias Hedvig',
+    'Tüskés Tibor','Göndör Géza','Tapadós Tamás','Piszkos Fred',
+    'Hatalmas Henrik','Kicsi Karcsi (de annál gonoszabb)','Pimasz Pál',
+    'Zsíros Zsolt','Bikinis Benedek','Ordas Ottó','Rémületes Rezső',
+    'Kapzsi Kázmér','Sunyi Sándor','Morgó Márton','Makacs Miksa',
+    'Dühös Dezső','Vigyorgó Viktor','Rettentő Rudolf',
+    'Csúnya Csaba','Faramuci Feri','Girhes Gábor','Handabanda Hunor',
+    'Izmos Imi','Jajgató Jenő','Kövér Kornél','Lusta Lázár',
+    'Mogorva Mátyás','Nyögdécselő Nándor','Ördögi Oszkár',
+];
+let usedBossNames=[];
+
+function getNextBossName(){
+    let pool=BOSS_NAMES.filter(n=>!usedBossNames.includes(n));
+    if(pool.length===0){ usedBossNames=[]; pool=[...BOSS_NAMES]; }
+    const name=pool[Math.floor(Math.random()*pool.length)];
+    usedBossNames.push(name);
+    return name;
+}
+
+const ARROW_KEYS=['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'];
+const ARROW_CHAR={'ArrowLeft':'←','ArrowRight':'→','ArrowUp':'↑','ArrowDown':'↓'};
+
+let bossSequence=[], bossStep=0, bossTierVal=0;
+let bossTimerRaf=null, bossStartTime=0, bossActive=false;
+
+function startBossMinigame(tier){
+    bossTierVal=tier;
+    bossStep=0;
+    bossActive=true;
+    bossSequence=Array.from({length:5},()=>ARROW_KEYS[Math.floor(Math.random()*4)]);
+
+    // Nyilak kirajzolása
+    const cont=document.getElementById('boss-arrows');
+    cont.innerHTML='';
+    bossSequence.forEach((key,i)=>{
+        const d=document.createElement('div');
+        d.className='boss-arrow'+(i===0?' current':'');
+        d.id=`ba${i}`;
+        d.textContent=ARROW_CHAR[key];
+        cont.appendChild(d);
+    });
+
+    document.getElementById('boss-timer-fill').style.width='100%';
+    document.getElementById('boss-timer-secs').textContent='5.0 mp';
+    document.getElementById('boss-overlay').style.display='flex';
+    fishState=FS.BOSS_GAME;
+    setMsg('⚡ FŐNÖK GARNÉLA jelent meg! Nyomd a nyilakat sorban!');
+
+    // Timer rAF loop
+    bossStartTime=performance.now();
+    function timerTick(){
+        if(!bossActive) return;
+        const elapsed=performance.now()-bossStartTime;
+        const pct=Math.max(0,100-(elapsed/5000)*100);
+        document.getElementById('boss-timer-fill').style.width=pct+'%';
+        document.getElementById('boss-timer-secs').textContent=
+            Math.max(0,(5-elapsed/1000)).toFixed(1)+' mp';
+        if(elapsed>=5000){ bossFail(); return; }
+        bossTimerRaf=requestAnimationFrame(timerTick);
+    }
+    bossTimerRaf=requestAnimationFrame(timerTick);
+}
+
+function bossInput(key){
+    if(fishState!==FS.BOSS_GAME||!bossActive) return;
+    if(!ARROW_KEYS.includes(key)) return;
+    const expected=bossSequence[bossStep];
+    const el=document.getElementById(`ba${bossStep}`);
+    if(key===expected){
+        if(el){el.classList.remove('current');el.classList.add('correct');}
+        bossStep++;
+        if(bossStep>=5){ bossSuccess(); return; }
+        const next=document.getElementById(`ba${bossStep}`);
+        if(next) next.classList.add('current');
+    } else {
+        if(el){el.classList.remove('current');el.classList.add('wrong');}
+        setTimeout(bossFail,350);
+    }
+}
+
+function bossSuccess(){
+    bossActive=false;
+    cancelAnimationFrame(bossTimerRaf);
+    document.getElementById('boss-overlay').style.display='none';
+    caughtTier=bossTierVal;
+    window._pendingBoss=true;
+    fishState=FS.REELING;
+    setMsg('🎉 ELFOGTAD! A főnök garnéla a zsákodban van!');
+}
+
+function bossFail(){
+    if(!bossActive) return;
+    bossActive=false;
+    cancelAnimationFrame(bossTimerRaf);
+    document.getElementById('boss-overlay').style.display='none';
+    caughtTier=null;
+    fishState=FS.REELING;
+    setMsg('😤 A főnök garnéla elmenekült! Mérges a horgász!');
+    const ms=document.getElementById('snd-miss');
+    ms.currentTime=0; ms.play().catch(()=>{});
+    triggerAnger();
+}
+
+// Billentyűzet figyelő
+window.addEventListener('keydown',e=>{
+    if(fishState===FS.BOSS_GAME) bossInput(e.key);
+});
+
+// Mobilgombok
+document.querySelectorAll('.boss-mobile-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>bossInput(btn.dataset.key));
+    btn.addEventListener('touchstart',e=>{
+        e.preventDefault();
+        bossInput(btn.dataset.key);
+    },{passive:false});
+});
+
+// ══════════════════════════════════════════════
+//  DUDUK TIPPEK
+// ══════════════════════════════════════════════
+const DUDUK_TIPS = [
+    "💧 A garnélák lágy, tiszta vizet szeretnek! pH: 6.5–7.5 az ideális érték.",
+    "🌿 A Java moha tökéletes búvóhely és természetes táplálékforrás — imádják!",
+    "🔄 Heti 20–30%-os vízcserével tartsd frissen az akváriumot!",
+    "🍃 Ne etess túl sokat! A garnélák természetes algát és biofilmet esznek.",
+    "🦴 Vedléskor add meg nekik a kalciumot — pl. tintahalcsont a vízbe!",
+    "🚿 Csapvíznél mindig használj kondicionálót a nehézfémek ellen!",
+    "🦐 A Neocaridina fajok kezdőknek ideálisak — rendkívül kitartóak!",
+    "🌡️ Tartsd 20–24°C között a vizet — ne essen 18°C alá télen sem!",
+    "👥 Legalább 10 egyedet tarts — csapatban sokkal boldogabbak!",
+    "🪨 Csak mosott, fertőtlenített kavicsot tegyél az akváriumba!",
+    "⏳ Optimális körülmények között a garnéla akár 2 évig is élhet!",
+    "🏠 A tenyésztés titka: sok búvóhely, stabil víz és türelem!",
+    "🥚 Az anyák 2–4 hét alatt keltetik ki a petéiket — ne zavarjad!",
+    "🐟 Ne tartsd garnélát agresszív halakkal — hamar az ebédjük lesznek!",
+    "⚠️ Soha ne adj sót az édesvízi garnélák vizéhez — halálos lehet!",
+    "🌱 A vizi növények segítenek a nitrátszint alacsonyan tartásában!",
+    "🔬 Az ammónia és a nitrit nulla legyen — rendszeres mérés ajánlott!",
+    "💡 Az akvárium fénye ne legyen túl erős — a garnélák a félhomályt kedvelik!",
+    "🎨 A szín a tartási körülményektől is függ — jobb víz = élénkebb garnéla!",
+    "🍀 A vörös cseresznyegarnéla az egyik legnépszerűbb kezdőfaj — és okkal!",
+];
+
+let dudukTipIdx = -1;
+let dudukBubbleHideTimer = null;
+
+function showDudukTip() {
+    const bubble = document.getElementById('duduk-bubble');
+    const textEl = document.getElementById('duduk-tip-text');
+    if(!bubble || !textEl) return;
+
+    // Véletlenszerű, de ne ismételje az előzőt
+    let ni;
+    do { ni = Math.floor(Math.random() * DUDUK_TIPS.length); }
+    while(ni === dudukTipIdx && DUDUK_TIPS.length > 1);
+    dudukTipIdx = ni;
+
+    textEl.textContent = DUDUK_TIPS[dudukTipIdx];
+
+    // Transition újraindítása: remove → reflow → add
+    bubble.classList.remove('show');
+    void bubble.offsetWidth; // kényszerített reflow
+    bubble.classList.add('show');
+    clearTimeout(dudukBubbleHideTimer);
+    dudukBubbleHideTimer = setTimeout(() => bubble.classList.remove('show'), 6000);
+}
+
+// Első tipp 7 mp után, aztán minden 20 mp-ben
+setTimeout(() => { showDudukTip(); setInterval(showDudukTip, 20000); }, 7000);
+
+// Kattintásra is azonnal mutat egyet
+document.getElementById('duduk-corner').addEventListener('click', showDudukTip);
+
+// ══════════════════════════════════════════════
+//  INFO PANEL
+// ══════════════════════════════════════════════
+(function wireInfoPanel(){
+    const overlay = document.getElementById('info-overlay');
+    if(!overlay) return;
+
+    function openInfo(){
+        buildTierTable();
+        buildBossTiers();
+        const p = document.getElementById('info-panel');
+        p.style.animation = 'none';
+        requestAnimationFrame(()=>{ p.style.animation = ''; });
+        overlay.style.display = 'flex';
+    }
+    function closeInfo(){
+        overlay.style.display = 'none';
+    }
+
+    // Tab switching
+    function switchInfoTab(tab){
+        document.querySelectorAll('.info-tab').forEach(btn=>{
+            btn.classList.toggle('active', btn.dataset.tab === tab);
+        });
+        document.querySelectorAll('.info-section').forEach(sec=>{
+            sec.classList.toggle('active', sec.id === 'info-sec-' + tab);
+        });
+        // Scroll content to top on tab change
+        document.getElementById('info-content').scrollTop = 0;
+    }
+    document.querySelectorAll('.info-tab').forEach(btn=>{
+        btn.addEventListener('click', ()=> switchInfoTab(btn.dataset.tab));
+    });
+
+    document.getElementById('info-btn').addEventListener('click', openInfo);
+    document.getElementById('info-close-btn').addEventListener('click', closeInfo);
+    overlay.addEventListener('click', e=>{ if(e.target === overlay) closeInfo(); });
+    document.addEventListener('keydown', e=>{
+        if(e.key === 'Escape' && overlay.style.display !== 'none') closeInfo();
+    });
+
+    // Build tier table (only once)
+    function buildTierTable(){
+        const tbody = document.getElementById('info-tier-tbody');
+        if(!tbody || tbody.children.length > 0) return;
+        const totalW = WEIGHTS.reduce((a,b)=>a+b, 0);
+        TIERS.forEach((t, i)=>{
+            const pct = WEIGHTS[i] / totalW * 100;
+            let pctStr;
+            if(pct >= 0.5)       pctStr = pct.toFixed(1) + '%';
+            else if(pct >= 0.05) pctStr = pct.toFixed(2) + '%';
+            else                 pctStr = '~1/' + Math.round(totalW / WEIGHTS[i]);
+
+            const mergeStr = i < TIERS.length - 1
+                ? (TIERS[i+1].pts * 3).toLocaleString() + ' p'
+                : '—';
+
+            const dotStyle = t.c === 'rainbow'
+                ? 'background:conic-gradient(red,yellow,green,cyan,blue,magenta,red)'
+                : `background:${t.c}`;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML =
+                `<td style="color:#667;font-size:11px">T${i+1}</td>` +
+                `<td><span class="tier-dot" style="${dotStyle}"></span>${t.name}</td>` +
+                `<td class="tc">${pctStr}</td>` +
+                `<td class="tp">${t.pts.toLocaleString()}</td>` +
+                `<td class="tm">${mergeStr}</td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Build boss tier badges (only once)
+    function buildBossTiers(){
+        const grid = document.getElementById('info-boss-tiers');
+        if(!grid || grid.children.length > 0) return;
+        const bossDist = [
+            {tierIdx:5, pct:'40%'},
+            {tierIdx:6, pct:'30%'},
+            {tierIdx:7, pct:'20%'},
+            {tierIdx:8, pct:'8%'},
+            {tierIdx:9, pct:'2%'},
+        ];
+        bossDist.forEach(({tierIdx, pct})=>{
+            const t = TIERS[tierIdx];
+            const badge = document.createElement('div');
+            badge.className = 'boss-tier-badge';
+            if(t.c === 'rainbow'){
+                badge.style.background = 'linear-gradient(135deg,rgba(255,0,128,.18),rgba(0,200,100,.18))';
+                badge.style.border = '1px solid #aaa';
+                badge.style.color = '#fff';
+            } else {
+                badge.style.background = t.c + '22';
+                badge.style.border = '1px solid ' + t.c;
+                badge.style.color = t.c;
+            }
+            badge.innerHTML =
+                `<span>T${tierIdx+1} ${t.name}</span>` +
+                `<span style="opacity:0.65;font-size:10px;margin-left:4px">${pct}</span>`;
+            grid.appendChild(badge);
+        });
+    }
+})();
+
+// ══════════════════════════════════════════════
+//  HÁTTÉRZENE
+// ══════════════════════════════════════════════
+(function wireBGM(){
+    const bgm = document.getElementById('snd-bgm');
+    if(!bgm) return;
+    bgm.volume = 0.055;  // nagyon halk háttér — alig hallatszik, de érezhető
+
+    let bgmStarted = false;
+    function startBGM(){
+        if(bgmStarted) return;
+        bgmStarted = true;
+        bgm.play().catch(()=>{});
+    }
+
+    // Az első felhasználói interakciónál indul (böngésző autoplay-szabály)
+    ['click','touchstart','keydown'].forEach(ev=>{
+        document.addEventListener(ev, startBGM, {once:true, passive:true});
+    });
+})();
+
+// ══════════════════════════════════════════════
+// Initial render
+// ── BETÖLTÉS INDULÁSKOR ──────────────────────────────────────────────────────
+loadGame();
+renderInv();
+updateHUD();
+</script>
+</body>
+</html>
