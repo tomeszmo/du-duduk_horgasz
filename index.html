@@ -8,6 +8,21 @@
 <title>🦐 Du-Duduk Horgász</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; touch-action:manipulation; }
+
+/* ── Globális scrollbar stílus ── */
+* {
+    scrollbar-width:thin;
+    scrollbar-color:#1a5080 transparent;
+}
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb {
+    background:#1a5080;
+    border-radius:4px;
+    transition:background 0.2s;
+}
+::-webkit-scrollbar-thumb:hover { background:#2a78b8; }
+::-webkit-scrollbar-corner { background:transparent; }
 body {
     background:#071018;
     font-family:'Segoe UI',Arial,sans-serif;
@@ -148,7 +163,7 @@ body {
 
 /* ── BOTTOM PANEL (tabs) ── */
 #bottom-panel {
-    height:218px;
+    height:246px;
     background:linear-gradient(180deg,#091520,#060d14);
     border-top:none;
     flex-shrink:0;
@@ -213,12 +228,31 @@ body {
 }
 #shrimp-slots {
     display:flex;
-    flex-wrap:wrap;
-    gap:4px;
-    justify-content:center;
+    flex-direction:column;
+    gap:6px;
     overflow-y:auto;
     flex:1;
     align-content:flex-start;
+    padding-right:2px;
+}
+.inv-species-section {
+    border-left:3px solid #3a7090;
+    padding-left:6px;
+    flex-shrink:0;
+}
+.inv-species-title {
+    font-size:9px;
+    font-weight:bold;
+    text-transform:uppercase;
+    letter-spacing:0.9px;
+    margin-bottom:3px;
+    opacity:0.9;
+}
+.inv-species-slots {
+    display:flex;
+    flex-wrap:wrap;
+    gap:4px;
+    max-width:780px;
 }
 
 /* ── Akvárium tab ── */
@@ -261,7 +295,9 @@ body {
 #aq-remove-btn { background:linear-gradient(135deg,#0b4a32,#051e14); border-color:#30d890; color:#fff; }
 #aq-cancel-btn { background:rgba(255,255,255,0.07); border-color:#334455; color:#aac; }
 .slot {
-    width:52px; height:52px;
+    min-width:52px; height:52px;
+    width:max-content;
+    padding:0 5px;
     background:rgba(20,50,80,0.65);
     border:2px solid #1a3d5a;
     border-radius:10px;
@@ -293,6 +329,7 @@ body {
     text-align:center;
     margin-top:2px;
     line-height:1;
+    white-space:nowrap;
 }
 .slot .stier {
     position:absolute;
@@ -478,6 +515,113 @@ body {
     opacity:0.85;
     line-height:1;
 }
+.slot .sspecies {
+    position:absolute;
+    bottom:1px; left:3px;
+    font-size:7px;
+    color:#6699bb;
+    font-weight:bold;
+    line-height:1;
+    max-width:28px;
+    overflow:hidden;
+    white-space:nowrap;
+}
+
+/* ── Dev mode badge ── */
+#devmode-badge {
+    display:none;
+    background:rgba(200,50,0,0.88);
+    border:1px solid #ff6600;
+    border-radius:8px;
+    color:#fff;
+    font-size:9px;
+    font-weight:bold;
+    padding:2px 8px;
+    letter-spacing:1.2px;
+    pointer-events:none;
+    animation:devPulse 1.8s ease-in-out infinite;
+    white-space:nowrap;
+}
+@keyframes devPulse {
+    0%,100%{opacity:1;} 50%{opacity:0.55;}
+}
+
+/* ── Map selector ── */
+#map-selector {
+    flex-shrink:0;
+    height:28px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+    padding:0 8px;
+    background:rgba(0,0,0,0.28);
+    border-bottom:1px solid #0a2030;
+    overflow-x:auto;
+}
+.map-btn {
+    background:rgba(8,25,42,0.85);
+    border:1.5px solid #1a4060;
+    border-radius:11px;
+    color:#4a7aaa;
+    font-size:10px;
+    font-weight:bold;
+    padding:2px 9px;
+    cursor:pointer;
+    font-family:inherit;
+    transition:all 0.15s;
+    white-space:nowrap;
+    flex-shrink:0;
+}
+.map-btn.active { border-color:#4ab0e8; color:#4ab0e8; background:rgba(74,176,232,0.13); }
+.map-btn.locked { border-color:#1a2a3a; color:#2a4055; cursor:default; font-style:italic; }
+.map-btn:hover:not(.locked):not(.active) { background:rgba(74,176,232,0.08); color:#6ab8e8; }
+
+/* ── Katalógus tab ── */
+#tab-catalog { padding:6px 8px; overflow:auto; flex-direction:column; gap:0; }
+#catalog-header {
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:10.5px; color:#4ab0e8; text-transform:uppercase; letter-spacing:1px;
+    margin-bottom:6px; flex-shrink:0;
+}
+#catalog-count { font-size:10px; color:#6a9aaa; }
+#catalog-body {
+    display:flex; flex-direction:row; gap:40px;
+    min-width:min-content; align-items:flex-start;
+}
+.catalog-map-section {
+    display:flex; flex-direction:column; gap:6px;
+    flex-shrink:0;
+    padding-right:40px;
+    border-right:1px solid #0e2535;
+}
+.catalog-map-section:last-child {
+    padding-right:0;
+    border-right:none;
+}
+.catalog-map-header {
+    font-size:10px; font-weight:bold; color:#3a8aaa;
+    padding:2px 4px; border-left:3px solid #1a6090;
+    white-space:nowrap;
+}
+.catalog-map-header.locked { color:#2a4a5a; border-color:#1a3040; font-style:italic; }
+.catalog-species-block { display:flex; flex-direction:column; gap:2px; }
+.catalog-species-name {
+    font-size:8.5px; font-weight:bold; text-transform:uppercase; letter-spacing:0.8px;
+    padding:0 2px 2px; opacity:0.88; white-space:nowrap;
+}
+.catalog-species-name.locked { color:#1a3040 !important; }
+.catalog-species-tiers {
+    display:grid;
+    grid-template-columns:repeat(5, max-content);
+    gap:4px;
+    padding-left:4px;
+    border-left:3px solid transparent;
+}
+/* Katalógus slotok = ugyanolyan mint az inv slotok, de nem kattinthatóak */
+.slot.cat-found   { cursor:default; }
+.slot.cat-unknown { opacity:0.32; filter:grayscale(1) brightness(0.5); cursor:default; pointer-events:none; }
+.slot.cat-locked  { opacity:0.1; cursor:default; pointer-events:none; }
 
 /* ── ANGER EFFECTS ── */
 #anger-wrap {
@@ -734,11 +878,10 @@ body {
 
 /* ── BUFF HUD ── */
 #buff-hud {
-    position:fixed;
-    top:42px; left:14px;
     display:flex; gap:5px; flex-wrap:wrap;
-    z-index:11; pointer-events:none;
+    pointer-events:none;
     max-width:65vw;
+    min-height:0;
 }
 .buff-badge {
     background:rgba(5,30,12,0.88);
@@ -751,7 +894,7 @@ body {
 
 @media (max-width:640px){
     .quest-desc { font-size:10px; }
-    #buff-hud   { top:36px; left:7px; max-width:55vw; }
+    #buff-hud   { max-width:55vw; }
     .buff-badge { font-size:9px; padding:2px 6px; }
 }
 
@@ -1046,6 +1189,106 @@ body {
     font-size:11.5px; font-weight:bold;
 }
 
+/* ══════════════════════════════════════
+   OLTÁR TAB
+   ══════════════════════════════════════ */
+#tab-altar { padding:6px 8px 8px; flex-direction:column; gap:7px; overflow-y:auto; }
+.altar-header-row {
+    display:flex; align-items:center; justify-content:space-between;
+    flex-shrink:0;
+}
+.altar-title-lbl { font-size:10.5px; color:#9040cc; text-transform:uppercase; letter-spacing:1px; }
+.altar-pts-box {
+    background:rgba(80,0,100,0.55); border:1px solid rgba(200,100,255,0.35);
+    border-radius:16px; padding:4px 12px;
+    font-size:12px; font-weight:bold; color:#d880ff;
+}
+.altar-section {
+    background:rgba(30,5,50,0.45); border:1px solid rgba(100,30,180,0.28);
+    border-radius:10px; padding:7px 9px; flex-shrink:0;
+}
+.altar-sec-title {
+    font-size:10px; font-weight:bold; color:#b060e8;
+    text-transform:uppercase; letter-spacing:0.9px; margin-bottom:5px;
+}
+.altar-sub { font-size:10.5px; color:#7050a0; line-height:1.4; margin-bottom:6px; }
+.altar-action-btn {
+    background:linear-gradient(135deg,#2a004a,#4a008a);
+    border:1.5px solid #8030cc; border-radius:9px; color:#d0a0ff;
+    font-size:11.5px; font-family:inherit; font-weight:bold;
+    padding:5px 14px; cursor:pointer; transition:transform 0.12s, box-shadow 0.12s;
+    white-space:nowrap;
+}
+.altar-action-btn:disabled { opacity:0.35; cursor:default; }
+.altar-action-btn:not(:disabled):hover {
+    transform:scale(1.05); box-shadow:0 0 10px rgba(150,60,255,0.45);
+}
+.altar-sacrifice-btn {
+    background:linear-gradient(135deg,#3a0010,#700030);
+    border-color:#cc2060; color:#ffb0c8;
+}
+.altar-upgrade-grid {
+    display:grid; grid-template-columns:1fr 1fr; gap:5px; flex-shrink:0;
+}
+.altar-upg-card {
+    background:rgba(30,5,50,0.55); border:1px solid rgba(100,30,160,0.38);
+    border-radius:8px; padding:5px 7px; cursor:pointer;
+    transition:border-color 0.15s, background 0.15s;
+}
+.altar-upg-card.upg-owned {
+    border-color:rgba(160,70,255,0.65); background:rgba(50,15,80,0.7); cursor:default;
+}
+.altar-upg-card.upg-locked { opacity:0.35; cursor:default; }
+.altar-upg-card:not(.upg-owned):not(.upg-locked):hover {
+    border-color:rgba(200,100,255,0.75); background:rgba(50,10,70,0.7);
+}
+.altar-upg-top { display:flex; align-items:center; gap:5px; margin-bottom:2px; }
+.altar-upg-icon { font-size:14px; }
+.altar-upg-name { font-size:10px; font-weight:bold; color:#c090ee; line-height:1.2; }
+.altar-upg-desc { font-size:9.5px; color:#8060aa; }
+.altar-upg-cost { font-size:9.5px; font-weight:bold; margin-top:2px; }
+.altar-upg-cost.can-afford { color:#d070ff; }
+.altar-upg-cost.upg-done { color:#60a040; }
+.altar-upg-cost.too-poor { color:#5a4068; }
+
+/* ══════════════════════════════════════
+   PRIZMA POPUP
+   ══════════════════════════════════════ */
+#prisma-overlay {
+    position:fixed; inset:0;
+    background:rgba(0,0,18,0.86);
+    z-index:200; display:flex; align-items:center; justify-content:center;
+    backdrop-filter:blur(6px);
+}
+#prisma-popup {
+    background:linear-gradient(160deg,#08001c,#120032);
+    border:2px solid rgba(180,80,255,0.7);
+    border-radius:18px; padding:22px 26px 18px;
+    min-width:260px; max-width:330px; width:88%;
+    box-shadow:0 0 60px rgba(160,60,255,0.4), 0 8px 32px rgba(0,0,0,0.85);
+    display:flex; flex-direction:column; gap:9px; align-items:center;
+    animation:popupIn 0.22s cubic-bezier(.36,1.56,.64,1);
+}
+#prisma-popup-title { font-size:18px; font-weight:bold; color:#d880ff; }
+#prisma-popup-canvas { display:block; border-radius:10px; background:rgba(0,0,30,0.6); }
+#prisma-popup-desc { font-size:11.5px; color:#9870c8; text-align:center; line-height:1.5; }
+#prisma-popup-cd { font-size:11px; color:#6040a0; text-align:center; min-height:14px; }
+#prisma-popup-btns { display:flex; gap:8px; }
+#prisma-activate-btn {
+    background:linear-gradient(135deg,#3a006a,#7000cc); border:1.5px solid #c050ff;
+    color:#fff; border-radius:10px; font-size:12px; font-family:inherit;
+    font-weight:bold; padding:8px 18px; cursor:pointer;
+    transition:transform 0.12s, box-shadow 0.12s;
+}
+#prisma-activate-btn:not(:disabled):hover { transform:scale(1.07); box-shadow:0 0 16px rgba(180,60,255,0.6); }
+#prisma-activate-btn:disabled { opacity:0.42; cursor:default; }
+#prisma-close-btn {
+    background:rgba(255,255,255,0.07); border:1.5px solid #334; color:#aac;
+    border-radius:8px; font-size:12px; font-family:inherit; cursor:pointer; padding:8px 14px;
+}
+/* Prizma sziluett a katalógusban */
+.cat-prisma-unknown { filter:brightness(0.25) saturate(0); }
+
 @media (max-width:640px) {
     #info-panel  { max-height:92vh; }
     #info-content { padding:10px 12px 14px; }
@@ -1183,6 +1426,8 @@ body {
             <button id="bgm-btn"  title="Zene be/ki">🔊</button>
             <button id="info-btn" title="Játék súgó">❓ Súgó</button>
         </div>
+        <div id="buff-hud"></div>
+        <div id="devmode-badge">🛠️ DEV MODE</div>
     </div>
     <div id="status-msg">Kattints a vízre a horgászáshoz!</div>
     <div id="fisherman-body-wrap">
@@ -1228,11 +1473,14 @@ body {
 
 <div id="bottom-panel">
     <div id="panel-drag-handle" title="Húzd fel/le az ablak átméretezéséhez"></div>
+    <div id="map-selector"></div>
     <div id="tab-bar">
         <button id="tab-btn-collection" class="tab-btn active">🦐 Gyűjtemény</button>
         <button id="tab-btn-aquarium"   class="tab-btn">🐠 Akvárium</button>
         <button id="tab-btn-shop"       class="tab-btn">🏪 Bolt <i>(hamarosan)</i></button>
+        <button id="tab-btn-catalog"    class="tab-btn">📚 Katalógus</button>
         <button id="tab-btn-quests"     class="tab-btn">📋 Küldetések</button>
+        <button id="tab-btn-altar"      class="tab-btn">🌈 Oltár</button>
     </div>
     <div id="tab-collection" class="tab-content visible">
         <div id="inv-title">2× kattintás = összevon &nbsp;·&nbsp; hosszan nyomj = elnevez 🔒</div>
@@ -1250,12 +1498,34 @@ body {
             <div id="shop-balance">🪙 <span id="gc2">0</span> Gold Coin az egyenleged</div>
         </div>
     </div>
+    <div id="tab-catalog" class="tab-content">
+        <div id="catalog-header">
+            <span>📚 Garnéla Katalógus</span>
+            <span id="catalog-count">0/60</span>
+        </div>
+        <div id="catalog-body"></div>
+    </div>
     <div id="tab-quests" class="tab-content">
         <div id="quest-list"></div>
     </div>
+    <div id="tab-altar" class="tab-content">
+        <div id="altar-inner"></div>
+    </div>
 </div>
 
-<div id="buff-hud"></div>
+<!-- ── PRIZMA POPUP ── -->
+<div id="prisma-overlay" style="display:none">
+    <div id="prisma-popup">
+        <div id="prisma-popup-title">🌈 Prizma Garnéla</div>
+        <canvas id="prisma-popup-canvas" width="120" height="80"></canvas>
+        <div id="prisma-popup-desc">Naponta egyszer aktiválható — 2 percre az összes buff egyszerre aktívvá válik.</div>
+        <div id="prisma-popup-cd"></div>
+        <div id="prisma-popup-btns">
+            <button id="prisma-activate-btn">🌟 Aktiválás</button>
+            <button id="prisma-close-btn">✕ Bezárás</button>
+        </div>
+    </div>
+</div>
 
 <div id="float-label"></div>
 
@@ -1379,9 +1649,11 @@ body {
             <button class="info-tab active" data-tab="controls">🎣 Irányítás</button>
             <button class="info-tab" data-tab="shrimp">🦐 Garnélák</button>
             <button class="info-tab" data-tab="boss">⚡ Boss</button>
+            <button class="info-tab" data-tab="map">🗺️ Térkép</button>
             <button class="info-tab" data-tab="aquarium">🐠 Akvárium</button>
             <button class="info-tab" data-tab="equip">⚙️ Felszerelés</button>
             <button class="info-tab" data-tab="quests">📋 Küldetések</button>
+            <button class="info-tab" data-tab="altar-info">🌈 Oltár</button>
             <button class="info-tab" data-tab="other">💾 Egyéb</button>
         </div>
         <div id="info-content">
@@ -1404,6 +1676,10 @@ body {
                 <h3>Boss QTE</h3>
                 <div class="info-row"><span class="info-key">← ↑ ↓ →</span><span>Nyisd le a megjelenő nyilakat sorban — billentyűzetről vagy az érintőgombokkal</span></div>
                 <div class="info-row"><span class="info-key">5 másodperc</span><span>Ennyi idő áll rendelkezésre mind az 5 nyíl helyes megnyomásához</span></div>
+                <h3>HUD kijelzők</h3>
+                <div class="info-row"><span class="info-key">🪙 Gold Coin</span><span>Napi küldetésekből szerzett érmék egyenlege — a Boltban lesz felhasználható</span></div>
+                <div class="info-row"><span class="info-key">🎣 EXP</span><span>Jelenlegi pontszámod — fogásokból, összevonásokból és bónuszokból gyűlik</span></div>
+                <div class="info-row"><span class="info-key">🦐 KIFOGVA</span><span>Az összes eddig fogott garnéla száma — ez határozza meg a térkép feloldásait is</span></div>
                 <h3>Egyéb gombok</h3>
                 <div class="info-row"><span class="info-key">🔊 Zene</span><span>Háttérzene némítása / bekapcsolása — az első kattintásra indul el automatikusan</span></div>
                 <div class="info-row"><span class="info-key">⚙️ Horgász</span><span>Kattints a horgász fejére a felszerelés panelhez</span></div>
@@ -1444,6 +1720,20 @@ body {
                 <div class="info-row"><span class="info-key">Helytelen gomb</span><span>Piros keret + azonnali kudarc — a boss elmenekül, horgász mérges lesz</span></div>
                 <div class="info-row"><span class="info-key">Időtúllépés</span><span>Ha 5 mp alatt nem nyomtad le mind az 5-öt, szintén elmenekül</span></div>
                 <div class="info-row"><span class="info-key">Siker</span><span>Boss garnéla kerül a gyűjteménybe, elnevezve — azonnal akváriumba tehető</span></div>
+            </div>
+
+            <!-- Tab: Térkép -->
+            <div class="info-section" id="info-sec-map">
+                <h3>Helyszínek</h3>
+                <div class="info-row"><span class="info-key">🏞️ Tavi Horgásztó</span><span>Alap helyszín — itt indul a játék. Közönséges Garnéla és Tigris Garnéla él itt.</span></div>
+                <div class="info-row"><span class="info-key">🌊 Sziklás Tengerpart</span><span>50 fogás után nyílik — Kék Páva és Vörös Homár Garnéla fogható itt.</span></div>
+                <div class="info-row"><span class="info-key">🏖️ Trópusi Tengerpart</span><span>300 fogás után nyílik — Tűzkorall és Lagúna Garnéla él a zátonyon.</span></div>
+                <h3>Használat</h3>
+                <div class="info-row"><span class="info-key">Váltás</span><span>Az alsó panel tetején lévő térkép sávon kattints bármelyik feloldott helyszínre — azonnal vált</span></div>
+                <div class="info-row"><span class="info-key">Exkluzív fajok</span><span>Minden helyszínen 2 egyedi garnélafaj él — máshol nem foghatók, T1–T10 szintig</span></div>
+                <div class="info-row"><span class="info-key">Feloldás</span><span>A fogásszám elérésekor arany popup jelzi, és a térkép sávon a gomb automatikusan aktívvá válik</span></div>
+                <div class="info-row"><span class="info-key">Háttér</span><span>Helyszínenként más az óceán és az égbolt színe — a vízalatti silhuett és az időjárás is változik</span></div>
+                <p class="info-note">A Katalógus fülön helyszínenként csoportosítva látod a fajokat. Zárolt helyszínen a fejléc szürke és mutatja a szükséges fogásszámot.</p>
             </div>
 
             <!-- Tab 4: Akvárium -->
@@ -1503,6 +1793,34 @@ body {
                 <div class="info-row"><span class="info-key">👑 Boss Varázslat</span><span>+3% boss esély · 5 percig</span></div>
                 <div class="info-row"><span class="info-key">✨ Összevonó Erő</span><span>+30% összevonási pont · 8 percig</span></div>
                 <p class="info-note">Aktív buffok és trinket bónuszok összeadódnak egymással. A HUD-ban a buff badge-ek jelzik a visszaszámlálást — oldalfrissítés után is folytatódnak.</p>
+                <h3>Napi küldetések</h3>
+                <div class="info-row"><span class="info-key">2 naponta</span><span>Minden nap 2 napi küldetés generálódik (sárga kerettel jelölve a Küldetések fülön) — másnap automatikusan resetelődnek</span></div>
+                <div class="info-row"><span class="info-key">🪙 Gold Coin</span><span>Teljesítéskor 2–3 Gold Coinos jutalom jár — a HUD bal sarkában látszik az egyenleg</span></div>
+                <div class="info-row"><span class="info-key">Típusok</span><span>Fogj el X garnélát · Vonj össze X-szer · Gyűjts X pontot — naponta más kombináció</span></div>
+                <div class="info-row"><span class="info-key">🏪 Bolt</span><span>A Gold Coinok a leendő Boltban lesznek felhasználhatók buffokra és egyedi akvárium dekorációkra</span></div>
+            </div>
+
+            <!-- Tab: Oltár -->
+            <div class="info-section" id="info-sec-altar-info">
+                <h3>Beáldozás</h3>
+                <div class="info-row"><span class="info-key">🌈 T10 garnéla</span><span>Névtelen Szivárvány garnélát az Oltáron beáldozhatsz — minden darab <strong>+1 oltárpontot</strong> ér</span></div>
+                <div class="info-row"><span class="info-key">Beáldoz egyet</span><span>Egyenként — ha szeretnéd kontrollálni mennyi marad</span></div>
+                <div class="info-row"><span class="info-key">Mindet beáldoz</span><span>Az összes névtelen T10 egyszerre megy — gyorsabb farm után</span></div>
+                <h3>Prizma Alkotás</h3>
+                <div class="info-row"><span class="info-key">10× T10 szükséges</span><span>Ha legalább 10 névtelen Szivárvány garnéla van a gyűjteményben, alkotható egy Prizma Garnéla</span></div>
+                <div class="info-row"><span class="info-key">Egyszerre 1</span><span>Csak egy Prizma létezhet — amíg az akváriumban él, újabb nem alkotható</span></div>
+                <div class="info-row"><span class="info-key">Akvárium lakó</span><span>A Prizma nem kerülhet a gyűjteménybe — az akváriumban él örökre, onnan nem vehető ki</span></div>
+                <h3>Prizma Garnéla</h3>
+                <div class="info-row"><span class="info-key">Kattints rá</span><span>Az akváriumban az úszkáló Prizmára kattintva megnyílik az aktiváló ablak</span></div>
+                <div class="info-row"><span class="info-key">🌟 Aktiválás</span><span>Naponta egyszer aktiválható — 2 percre az összes buff egyszerre aktívvá válik (Szerencsés Víz, Gyors Kezű, Arany Horog, Boss Varázslat, Összevonó Erő)</span></div>
+                <div class="info-row"><span class="info-key">⏳ 24 óra cooldown</span><span>Aktiválás után pontosan 24 óráig nem aktiválható újra — az ablakban visszaszámlálás mutatja</span></div>
+                <div class="info-row"><span class="info-key">💀 Feláldozás</span><span>Az Oltár fülön a Prizma feláldozható <strong>+5 oltárpontért</strong> — a katalógusban felfedezettként marad</span></div>
+                <h3>Permanens fejlesztések</h3>
+                <div class="info-row"><span class="info-key">9 fejlesztés</span><span>Oltárpontokért vásárolhatók — tier esély, harapási idő, fogási pont, összevonási pont, boss esély</span></div>
+                <div class="info-row"><span class="info-key">Lánc feltételek</span><span>Néhány fejlesztésnek előfeltétele van (pl. Ösztön I kell az Ösztön II-höz)</span></div>
+                <div class="info-row"><span class="info-key">Permanens</span><span>Az oltár fejlesztések sosem járnak le — oldalfrissítés után is megmaradnak</span></div>
+                <h3>Katalógus</h3>
+                <div class="info-row"><span class="info-key">X/61</span><span>A Prizma Garnéla a katalógus különleges sorában jelenik meg — alkotás előtt ??? sziluett, utána teljes látvánnyal</span></div>
             </div>
 
             <!-- Tab 7: Egyéb -->
@@ -1517,6 +1835,11 @@ body {
                 <div class="info-row"><span class="info-key">Azonos szint</span><span>Csak ugyanolyan szintű garnélák vonhatók össze — különböző szint esetén hibaüzenet</span></div>
                 <div class="info-row"><span class="info-key">Nem vonható</span><span>Elnevezett és boss garnélák összevonása nem lehetséges (lenne kár értük!)</span></div>
                 <div class="info-row"><span class="info-key">T10 maximum</span><span>Szivárvány garnéla a végső szint — tovább nem fejleszthető</span></div>
+                <h3>Katalógus</h3>
+                <div class="info-row"><span class="info-key">60 bejegyzés</span><span>6 garnélafaj × 10 szint — minden kombináció egyszer kerül be, ha megfogod az adott példányt</span></div>
+                <div class="info-row"><span class="info-key">Felfedezés</span><span>Első fogáskor automatikusan rögzítődik — teljes szín = megtalálva, szürke/homályos = még ismeretlen</span></div>
+                <div class="info-row"><span class="info-key">Szervezés</span><span>Helyszínenként csoportosítva jelenik meg — zárolt helyszín fajainál szürke a fejléc és mutatja a fogásszám feltételt</span></div>
+                <div class="info-row"><span class="info-key">Haladás</span><span>A jobb felső sarokban látod az X/60 számlálót — ez a teljesség mértéke</span></div>
                 <h3>Du-Duduk tippek</h3>
                 <div class="info-row"><span class="info-key">Automatikus</span><span>Az első tipp 7 másodperccel az oldal betöltése után jelenik meg, majd 20 mp-ként ismétlődik</span></div>
                 <div class="info-row"><span class="info-key">Kattintásra</span><span>A jobb alsó sarokfigurára kattintva azonnal új, véletlenszerű tipp ugrik be</span></div>
@@ -1645,12 +1968,12 @@ body {
     #status-msg { font-size:10.5px; max-width:165px; padding:3px 8px; top:5px; right:7px; }
 
     /* ── Bottom panel / tabs ── */
-    #bottom-panel   { height:186px; }
+    #bottom-panel   { height:214px; }
     #tab-bar        { height:30px; }
     .tab-btn        { font-size:11px; }
     #tab-collection { padding:3px 6px 4px; }
     #inv-title  { font-size:9px; letter-spacing:0.8px; margin-bottom:2px; }
-    .slot       { width:44px; height:44px; border-radius:8px; }
+    .slot       { min-width:44px; width:max-content; height:44px; border-radius:8px; padding:0 4px; }
     .slot .scircle { width:22px; height:22px; font-size:12px; }
     .slot .sname   { font-size:7px; }
     .slot .stier   { font-size:7px; top:1px; right:3px; }
@@ -1684,10 +2007,39 @@ const TIERS=[
     {name:'Zöld',       c:'#00e676', g:'#00bf58', pts:180,  funny:'Ninja garnéla a mélységből 🥷'},
     {name:'Kék',        c:'#29b6f6', g:'#0288d1', pts:450,  funny:'Óceán lelke maga 🌊'},
     {name:'Lila',       c:'#cc80ff', g:'#9c27b0', pts:1100, funny:'Kozmikus borzalom szépsége 🔮'},
-    {name:'Arany',      c:'#d4880a', g:'#ff5500', pts:2800, funny:'Az élet értelme = arany rák 👑'},
+    {name:'Arany',      c:'#e8b723', g:'#ff5500', pts:2800, funny:'Az élet értelme = arany rák 👑'},
     {name:'Szivárvány', c:'rainbow', g:'rainbow', pts:8000, funny:'LEGENDA! A vízből maga az istenek adják! 🌈'},
 ];
 const WEIGHTS=[50,26,14,7,3.5,1.6,0.7,0.25,0.1,0.04];
+
+// ══════════════════════════════════════════════
+//  SPECIES & MAPS
+// ══════════════════════════════════════════════
+const SPECIES=[
+    {id:'kozonsegos',   name:'Közönséges Garnéla',    shortName:'Köz.',     icon:'🦐', mapId:'to',
+     tint:null,      tintStr:0,    desc:'Az alap édesvízi garnéla. Mindenhol megtalálható.'},
+    {id:'tigris',       name:'Tigris Garnéla',         shortName:'Tigris',   icon:'🐅', mapId:'to',
+     tint:'#ff7700', tintStr:0.5,  desc:'Narancssárga csíkos. Vad természetű.'},
+    {id:'kek_pava',     name:'Kék Páva Garnéla',       shortName:'Kék Páva', icon:'🦚', mapId:'tenger',
+     tint:'#0077ff', tintStr:0.5,  desc:'Díszes kék farka. A sziklás tengerparton él.'},
+    {id:'voros_homark', name:'Vörös Homár Garnéla',    shortName:'V. Homár', icon:'🦞', mapId:'tenger',
+     tint:'#cc2200', tintStr:0.5,  desc:'Apró ollói és vastag páncélja van.'},
+    {id:'abisszalis',   name:'Tűzkorall Garnéla',      shortName:'Tűzkorall',icon:'🪸', mapId:'melyseg',
+     tint:'#ff5500', tintStr:0.5,  desc:'Élénk narancsvörös. Trópusi korallzátonyokon él.'},
+    {id:'arany_sarkany',name:'Lagúna Garnéla',         shortName:'Lagúna',   icon:'🐠', mapId:'melyseg',
+     tint:'#00ccaa', tintStr:0.42, desc:'Smaragdzöld csillogás. Sekély lagúnák kincse.'},
+];
+
+const MAPS=[
+    {id:'to',      name:'Tavi Horgásztó',     icon:'🏞️', unlockAt:0,
+     bgTop:'#2a7a5a', bgMid:'#1a5838', bgBot:'#0e3422'},
+    {id:'tenger',  name:'Sziklás Tengerpart', icon:'🌊', unlockAt:50,
+     bgTop:'#1a78c0', bgMid:'#0e5490', bgBot:'#083868'},
+    {id:'melyseg', name:'Trópusi Tengerpart', icon:'🏖️', unlockAt:300,
+     bgTop:'#00c8e0', bgMid:'#009ab8', bgBot:'#2a8870'},
+];
+
+function getCurrentMap(){ return MAPS.find(m=>m.id===currentMapId)||MAPS[0]; }
 
 function pickTier(){
     const b=getActiveBonuses();
@@ -1704,6 +2056,13 @@ function pickTier(){
     let r=Math.random()*s;
     for(let i=0;i<w.length;i++){r-=w[i];if(r<=0)return i;}
     return 0;
+}
+
+function pickCatch(){
+    const tier=pickTier();
+    const pool=SPECIES.map((sp,i)=>sp.mapId===currentMapId?i:-1).filter(i=>i>=0);
+    const speciesIdx=pool.length?pool[Math.floor(Math.random()*pool.length)]:0;
+    return{tier,speciesIdx};
 }
 
 // ══════════════════════════════════════════════
@@ -1723,6 +2082,18 @@ const DECORATION_TYPES=[
     {id:'shell',    name:'Csiga',          icon:'🐚'},
     {id:'diver',    name:'Búvárfigura',    icon:'🤿'},
     {id:'anchor',   name:'Horgony',        icon:'⚓'},
+];
+
+const ALTAR_UPGRADES=[
+    {id:'t3a',   name:'Mélység Ösztöne I',  icon:'🎣', cost:2, bonus:{tierBoost3:3},  req:null,    desc:'+3% T3+ esély'},
+    {id:'t3b',   name:'Mélység Ösztöne II', icon:'🎣', cost:5, bonus:{tierBoost3:5},  req:'t3a',   desc:'+5% T3+ esély'},
+    {id:'spda',  name:'Villám Kezek I',     icon:'⚡', cost:2, bonus:{nibbleSpeed:10}, req:null,    desc:'-10% harapási idő'},
+    {id:'spdb',  name:'Villám Kezek II',    icon:'⚡', cost:5, bonus:{nibbleSpeed:15}, req:'spda',  desc:'-15% harapási idő'},
+    {id:'cpta',  name:'Arany Érintés I',    icon:'🪝', cost:3, bonus:{catchMult:10},  req:null,    desc:'+10% fogási pont'},
+    {id:'cptb',  name:'Arany Érintés II',   icon:'🪝', cost:6, bonus:{catchMult:15},  req:'cpta',  desc:'+15% fogási pont'},
+    {id:'mrga',  name:'Fúzió Mester I',     icon:'✨', cost:3, bonus:{mergeMult:20},  req:null,    desc:'+20% összevonási pont'},
+    {id:'mrgb',  name:'Fúzió Mester II',    icon:'✨', cost:6, bonus:{mergeMult:25},  req:'mrga',  desc:'+25% összevonási pont'},
+    {id:'bossa', name:'Boss Vadász',         icon:'👑', cost:4, bonus:{bossChance:1},  req:null,    desc:'+1% boss esély'},
 ];
 
 function _rndFrom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
@@ -1947,6 +2318,13 @@ let aquariumDecorations=[];   // [{id, xFrac, scale}]
 let goldCoins=0;
 let dailyQuests=[];
 let lastDailyDate='';
+// Oltár + Prizma
+let altarPoints=0;
+let altarUpgrades={};      // {upgradeId: true}
+let prismaExists=false;
+let prismaLastActivated=0; // Date.now() timestamp
+let prismaDiscovered=false;
+let prismaSwimData={x:0,y:0,vx:0.22,vy:0,phase:0,init:false};
 
 // ══════════════════════════════════════════════
 //  MENTÉS / BETÖLTÉS  (localStorage)
@@ -1954,6 +2332,7 @@ let lastDailyDate='';
 const SAVE_KEY='duduk_horgasz_v1';
 
 function saveGame(){
+    if(devMode) return;
     try{
         localStorage.setItem(SAVE_KEY, JSON.stringify({
             score, catches, maxTierIdx, uid,
@@ -1963,7 +2342,11 @@ function saveGame(){
             usedBossNames,
             activeQuests, questSeed,
             activeBuffs, unlockedDecorations, aquariumDecorations,
-            goldCoins, dailyQuests, lastDailyDate
+            goldCoins, dailyQuests, lastDailyDate,
+            currentMapId, unlockedMaps,
+            discoveredShrimp: Object.keys(discoveredShrimp),
+            altarPoints, altarUpgrades,
+            prismaExists, prismaLastActivated, prismaDiscovered
         }));
     }catch(e){ console.warn('Mentés sikertelen:',e); }
 }
@@ -1977,18 +2360,20 @@ function loadGame(){
         catches    = d.catches    ?? 0;
         maxTierIdx = d.maxTierIdx ?? 0;
         uid        = d.uid        ?? 0;
-        // Régi mentések kompatibilitása: name / isBoss mezők hozzáadása ha hiányoznak
+        // Régi mentések kompatibilitása: name / isBoss / species mezők hozzáadása ha hiányoznak
         inventory  = (d.inventory ?? []).map(s=>({
-            tier:   s.tier   ?? 0,
-            uid:    s.uid    ?? uid++,
-            name:   s.name   ?? null,
-            isBoss: s.isBoss ?? false,
+            tier:    s.tier    ?? 0,
+            uid:     s.uid     ?? uid++,
+            name:    s.name    ?? null,
+            isBoss:  s.isBoss  ?? false,
+            species: s.species ?? 0,
         }));
         aquarium   = (d.aquarium  ?? []).map(s=>({
-            tier:   s.tier   ?? 0,
-            uid:    s.uid    ?? uid++,
-            name:   s.name   ?? null,
-            isBoss: s.isBoss ?? false,
+            tier:    s.tier    ?? 0,
+            uid:     s.uid     ?? uid++,
+            name:    s.name    ?? null,
+            isBoss:  s.isBoss  ?? false,
+            species: s.species ?? 0,
         }));
         mergeCount          = d.mergeCount          ?? 0;
         bossCount           = d.bossCount           ?? 0;
@@ -2004,6 +2389,16 @@ function loadGame(){
         goldCoins            = d.goldCoins            ?? 0;
         dailyQuests          = d.dailyQuests          ?? [];
         lastDailyDate        = d.lastDailyDate        ?? '';
+        currentMapId         = d.currentMapId         ?? 'to';
+        unlockedMaps         = d.unlockedMaps         ?? ['to'];
+        discoveredShrimp     = {};
+        (d.discoveredShrimp ?? []).forEach(k=>{ discoveredShrimp[k]=true; });
+        altarPoints          = d.altarPoints          ?? 0;
+        altarUpgrades        = d.altarUpgrades        ?? {};
+        prismaExists         = d.prismaExists         ?? false;
+        prismaLastActivated  = d.prismaLastActivated  ?? 0;
+        prismaDiscovered     = d.prismaDiscovered     ?? false;
+        prismaSwimData       = {x:0,y:0,vx:0.22,vy:0,phase:0,init:false};
     }catch(e){ console.warn('Betöltés sikertelen:',e); }
 }
 
@@ -2023,6 +2418,12 @@ function getActiveBonuses(){
     activeBuffs.filter(ab=>ab.endTime>now).forEach(ab=>{
         Object.entries(ab.buff.bonus).forEach(([k,v])=>{ b[k]=(b[k]||0)+v; });
     });
+    // Oltár permanens fejlesztések
+    ALTAR_UPGRADES.forEach(upg=>{
+        if(altarUpgrades[upg.id]){
+            Object.entries(upg.bonus).forEach(([k,v])=>{ b[k]=(b[k]||0)+v; });
+        }
+    });
     return b;
 }
 
@@ -2030,6 +2431,12 @@ const FS={IDLE:0,CASTING:1,WAITING:2,REELING:3,BOSS_GAME:4};
 let fishState=FS.IDLE;
 let hookX=W/2,hookY=0,hookTargetY=H*0.5;
 let caughtTier=null;
+let caughtSpeciesIdx=0;
+let currentMapId='to';
+let unlockedMaps=['to'];
+let discoveredShrimp={};
+let devMode=false;
+let devSnapshot=null;
 let nibbleTimer=null;
 let nibbled=false;
 // Timing bar
@@ -2082,7 +2489,8 @@ function openNamePopup(idx){
     const hintDiv=document.getElementById('name-popup-hint');
     const saveBtn=document.getElementById('name-save-btn');
 
-    tierDiv.textContent=TIERS[item.tier].name+' garnéla — T'+(item.tier+1);
+    const _spPfx=(item.species||0)>0?SPECIES[item.species].shortName+' ':'';
+    tierDiv.textContent=_spPfx+TIERS[item.tier].name+' garnéla — T'+(item.tier+1);
     inp.value=item.name||'';
 
     const aqBtn=document.getElementById('name-aquarium-btn');
@@ -2171,6 +2579,48 @@ document.addEventListener('DOMContentLoaded',()=>{}, false); // no-op guard
 })();
 
 // ══════════════════════════════════════════════
+//  DEV MODE
+// ══════════════════════════════════════════════
+function toggleDevMode(){
+    if(!devMode){
+        devSnapshot={
+            unlockedMaps:     [...unlockedMaps],
+            discoveredShrimp: Object.assign({},discoveredShrimp),
+            unlockedTrinkets: [...unlockedTrinkets],
+            currentMapId,
+            prismaExists,
+            prismaDiscovered,
+        };
+        unlockedMaps=MAPS.map(m=>m.id);
+        const allD={};
+        SPECIES.forEach((_,si)=>TIERS.forEach((_,ti)=>{ allD[si+'_'+ti]=true; }));
+        discoveredShrimp=allD;
+        unlockedTrinkets=Object.values(TRINKETS).flat().map(t=>t.id);
+        prismaExists=true;
+        prismaDiscovered=true;
+        prismaSwimData={x:0,y:0,vx:0.22,vy:0,phase:0,init:false};
+        devMode=true;
+    } else {
+        unlockedMaps     =devSnapshot.unlockedMaps;
+        discoveredShrimp =devSnapshot.discoveredShrimp;
+        unlockedTrinkets =devSnapshot.unlockedTrinkets;
+        currentMapId     =devSnapshot.currentMapId;
+        prismaExists     =devSnapshot.prismaExists;
+        prismaDiscovered =devSnapshot.prismaDiscovered;
+        prismaSwimData   ={x:0,y:0,vx:0.22,vy:0,phase:0,init:false};
+        devSnapshot=null;
+        devMode=false;
+    }
+    document.getElementById('devmode-badge').style.display=devMode?'block':'none';
+    renderMapSelector();
+    updateMapDock();
+    renderInv();
+    updateHUD();
+    renderCatalog();
+    if(currentTab==='altar') renderAltarTab();
+}
+
+// ══════════════════════════════════════════════
 //  RESET SAVE
 // ══════════════════════════════════════════════
 (function wireResetPopup(){
@@ -2200,6 +2650,12 @@ document.addEventListener('DOMContentLoaded',()=>{}, false); // no-op guard
 
     // Unlock confirm button only when input matches exactly
     inp.addEventListener('input',()=>{
+        if(inp.value==='/devmode'){
+            inp.value='';
+            closeResetPopup();
+            toggleDevMode();
+            return;
+        }
         const ok = inp.value === 'TÖRLÉS';
         confirmBtn.classList.toggle('ready', ok);
         hintDiv.textContent = ok ? '✅ Kész — rányomhatsz a törlésre!' : '';
@@ -2357,13 +2813,15 @@ initSkyCanvas();
 // ══════════════════════════════════════════════
 function mkShrimp(){
     const left=Math.random()<0.5;
+    const c=pickCatch();
     return{
         x:left?-60:W+60,
         y:30+Math.random()*(H-60),
         vx:(0.35+Math.random()*0.75)*(left?1:-1),
         vy:(Math.random()-0.5)*0.22,
         size:11+Math.random()*11,
-        tier:pickTier(),
+        tier:c.tier,
+        species:c.speciesIdx,
         phase:Math.random()*Math.PI*2,
     };
 }
@@ -2382,6 +2840,22 @@ function shade(hex,d){
     const c=hexToRgb(hex);
     return`rgb(${Math.min(255,Math.max(0,c.r+d))|0},${Math.min(255,Math.max(0,c.g+d))|0},${Math.min(255,Math.max(0,c.b+d))|0})`;
 }
+function blendHex(h1,h2,t){
+    if(!h1||!h1.startsWith('#')||!h2||!h2.startsWith('#'))return h1;
+    const a=hexToRgb(h1),b=hexToRgb(h2);
+    const rr=((a.r*(1-t)+b.r*t)|0).toString(16).padStart(2,'0');
+    const gg=((a.g*(1-t)+b.g*t)|0).toString(16).padStart(2,'0');
+    const bb=((a.b*(1-t)+b.b*t)|0).toString(16).padStart(2,'0');
+    return '#'+rr+gg+bb;
+}
+function tierColorForSpecies(tier,speciesIdx){
+    const base=tierColor(tier);
+    if(!speciesIdx)return base;
+    const sp=SPECIES[speciesIdx];
+    if(!sp||!sp.tint)return base;
+    if(base.fill.startsWith('hsl'))return base; // rainbow megtartva
+    return{fill:blendHex(base.fill,sp.tint,sp.tintStr),glow:blendHex(base.glow,sp.tint,sp.tintStr*0.65)};
+}
 function tierColor(tier){
     const t=TIERS[tier];
     if(t.c==='rainbow'){
@@ -2391,8 +2865,9 @@ function tierColor(tier){
     return{fill:t.c,glow:t.g};
 }
 
-function drawShrimp(actx,x,y,size,tier,dir,phase){
-    const{fill,glow}=tierColor(tier);
+function drawShrimp(actx,x,y,size,tier,speciesIdx,dir,phase){
+    const si=speciesIdx||0;
+    const{fill,glow}=tierColorForSpecies(tier,si);
     actx.save();
     actx.translate(x,y);
     if(dir<0)actx.scale(-1,1);
@@ -2409,38 +2884,81 @@ function drawShrimp(actx,x,y,size,tier,dir,phase){
         actx.fill();
     }
 
-    // Tail fan
+    // Tigris (1) – sötét csíkok az abdomenre
+    if(si===1){
+        actx.fillStyle='rgba(0,0,0,0.28)';
+        for(let si2=0;si2<3;si2++){
+            actx.beginPath();
+            actx.ellipse(si2*size*0.26-size*0.04,0,size*0.045,size*0.17,-0.4,0,Math.PI*2);
+            actx.fill();
+        }
+    }
+
+    // Tail fan – Kék Páva (2) kiszélesített farokkal
+    const tailRays=si===2?[-2,-1,0,1,2]:[-1,0,1];
+    const tLen=si===2?1.32:1.18, tBase=si===2?1.18:1.05;
     actx.fillStyle=shade(fill,10);
-    for(let j=-1;j<=1;j++){
+    for(const j of tailRays){
         actx.beginPath();
         actx.moveTo(size*0.72,0);
-        actx.lineTo(size*1.18,j*size*0.28);
-        actx.lineTo(size*1.05,j*size*0.33);
+        actx.lineTo(size*tLen,j*size*0.28);
+        actx.lineTo(size*tBase,j*size*0.33);
         actx.closePath();
         actx.fill();
     }
 
-    // Cephalothorax (big hump)
+    // Cephalothorax – Vörös Homár (3) szélesebb
     actx.fillStyle=shade(fill,8);
     actx.beginPath();
-    actx.ellipse(-size*0.3,-size*0.06,size*0.36,size*0.26,0,0,Math.PI*2);
+    actx.ellipse(-size*0.3,-size*0.06,si===3?size*0.42:size*0.36,size*0.26,0,0,Math.PI*2);
     actx.fill();
 
-    // Rostrum
+    // Arany Sárkány (5) – háti tüskék
+    if(si===5){
+        actx.fillStyle=shade(fill,-25);
+        for(let ki=0;ki<3;ki++){
+            const kx=-size*0.28+ki*size*0.32;
+            actx.beginPath();
+            actx.moveTo(kx,-size*0.26);
+            actx.lineTo(kx+size*0.06,-size*0.43);
+            actx.lineTo(kx+size*0.13,-size*0.26);
+            actx.closePath();
+            actx.fill();
+        }
+    }
+
+    // Rostrum – Arany Sárkány (5) megnyújtva
     actx.fillStyle=fill;
     actx.beginPath();
     actx.moveTo(-size*0.6,-size*0.04);
-    actx.lineTo(-size*0.9,-size*0.07);
+    actx.lineTo(si===5?-size*1.28:-size*0.9,-size*0.07);
     actx.lineTo(-size*0.6,size*0.08);
     actx.closePath();
     actx.fill();
+
+    // Vörös Homár (3) – kis ollók
+    if(si===3){
+        actx.fillStyle=shade(fill,-15);
+        actx.beginPath();
+        actx.moveTo(-size*0.62,0);
+        actx.lineTo(-size*0.96,-size*0.24);
+        actx.lineTo(-size*0.86,-size*0.08);
+        actx.closePath();
+        actx.fill();
+        actx.beginPath();
+        actx.moveTo(-size*0.62,0);
+        actx.lineTo(-size*0.96,size*0.24);
+        actx.lineTo(-size*0.86,size*0.08);
+        actx.closePath();
+        actx.fill();
+    }
 
     // Eye stalk
     actx.fillStyle=shade(fill,-10);
     actx.beginPath();
     actx.arc(-size*0.48,-size*0.18,size*0.07,0,Math.PI*2);
     actx.fill();
-    actx.fillStyle='#fff';
+    actx.fillStyle=si===4?'#00ffaa':'#fff';
     actx.beginPath();
     actx.arc(-size*0.48,-size*0.19,size*0.08,0,Math.PI*2);
     actx.fill();
@@ -2449,12 +2967,13 @@ function drawShrimp(actx,x,y,size,tier,dir,phase){
     actx.arc(-size*0.5,-size*0.19,size*0.05,0,Math.PI*2);
     actx.fill();
 
-    // Antennae
+    // Antennae – Kék Páva (2) hosszabb
     actx.shadowBlur=0;
     actx.strokeStyle=shade(fill,20);
     actx.lineWidth=0.9;
-    actx.beginPath();actx.moveTo(-size*0.58,-size*0.2);actx.lineTo(-size*1.1,-size*0.6);actx.stroke();
-    actx.beginPath();actx.moveTo(-size*0.52,-size*0.17);actx.lineTo(-size*0.95,-size*0.55);actx.stroke();
+    const aL=si===2?1.5:1.1;
+    actx.beginPath();actx.moveTo(-size*0.58,-size*0.2);actx.lineTo(-size*aL,-size*0.6);actx.stroke();
+    actx.beginPath();actx.moveTo(-size*0.52,-size*0.17);actx.lineTo(-size*(aL-0.15),-size*0.55);actx.stroke();
 
     // Swimmerets (legs)
     actx.lineWidth=0.8;
@@ -2463,51 +2982,297 @@ function drawShrimp(actx,x,y,size,tier,dir,phase){
         actx.beginPath();actx.moveTo(lx,size*0.18);actx.lineTo(lx-size*0.03,size*0.42);actx.stroke();
     }
 
+    // Abisszális (4) – biolumineszcens pontok
+    if(si===4){
+        actx.shadowBlur=0;
+        actx.fillStyle='rgba(80,255,160,0.88)';
+        for(let di=0;di<5;di++){
+            const dx=di*size*0.22-size*0.44;
+            actx.beginPath();
+            actx.arc(dx,size*(di%2===0?-0.22:0.07),size*0.045,0,Math.PI*2);
+            actx.fill();
+        }
+    }
+
     actx.restore();
 }
 
 // ══════════════════════════════════════════════
 //  DRAW OCEAN BG
 // ══════════════════════════════════════════════
+// ══════════════════════════════════════════════
+//  MAP VISUAL HELPERS
+// ══════════════════════════════════════════════
+function drawSeabedSilhouettes(){
+    ctx.save();
+    if(currentMapId==='to'){
+        // Vízi növények – lomb lengetés
+        const bladeCount=Math.max(10,Math.floor(W/14));
+        for(let g=0;g<bladeCount;g++){
+            const seed=g*7.31+1.1;
+            const bx=g*(W/bladeCount)+(seed*4.7)%10;
+            const h=18+(seed*11.3)%30;
+            const sway=Math.sin(wt*1.1+seed)*5;
+            ctx.globalAlpha=0.45+(g%3)*0.06;
+            ctx.fillStyle=g%3===0?'#1e6830':g%3===1?'#256a38':'#175225';
+            ctx.beginPath();
+            ctx.moveTo(bx,H);
+            ctx.quadraticCurveTo(bx+sway,H-h*0.6,bx+sway*1.5,H-h);
+            ctx.lineTo(bx+sway*1.5+3,H-h);
+            ctx.quadraticCurveTo(bx+sway+3,H-h*0.6,bx+3,H);
+            ctx.closePath(); ctx.fill();
+        }
+        // Tavirózsa levelek a vízfelszínen
+        const padSeeds=[0.08,0.22,0.41,0.58,0.73,0.89];
+        padSeeds.forEach((rx,i)=>{
+            const px=rx*W, py=10+(i%2)*4;
+            ctx.globalAlpha=0.55;
+            ctx.fillStyle='#1a6828';
+            ctx.beginPath(); ctx.ellipse(px,py,11+(i%3)*4,5+(i%2)*2,Math.sin(wt*0.4+i)*0.2,0,Math.PI*2); ctx.fill();
+            ctx.globalAlpha=0.18;
+            ctx.strokeStyle='#33aa44'; ctx.lineWidth=1;
+            ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(px+3,py-4); ctx.stroke();
+        });
+    } else if(currentMapId==='tenger'){
+        // Folytonos sziklás aljzat – hátsó réteg (sötétebb)
+        ctx.fillStyle='#0a1520'; ctx.globalAlpha=0.85;
+        ctx.beginPath();
+        ctx.moveTo(0,H);
+        for(let x=0;x<=W;x+=3){
+            const y=H-(10+Math.sin(x*0.09+1.3)*7+Math.sin(x*0.05+0.7)*11+Math.sin(x*0.02+2.1)*16);
+            ctx.lineTo(x,y);
+        }
+        ctx.lineTo(W,H); ctx.closePath(); ctx.fill();
+
+        // Közepes réteg (kicsit világosabb, kisebb sziklák)
+        ctx.fillStyle='#131f2d'; ctx.globalAlpha=0.9;
+        ctx.beginPath();
+        ctx.moveTo(0,H);
+        for(let x=0;x<=W;x+=3){
+            const y=H-(5+Math.sin(x*0.13+0.5)*5+Math.sin(x*0.07+1.8)*7+Math.sin(x*0.03+3.2)*10);
+            ctx.lineTo(x,y);
+        }
+        ctx.lineTo(W,H); ctx.closePath(); ctx.fill();
+
+        // Első réteg – legfelső, legvilágosabb sziklaél
+        ctx.fillStyle='#1c2e40'; ctx.globalAlpha=0.95;
+        ctx.beginPath();
+        ctx.moveTo(0,H);
+        for(let x=0;x<=W;x+=2){
+            const y=H-(2+Math.sin(x*0.18+2.2)*3+Math.sin(x*0.1+0.3)*4+Math.sin(x*0.06+1.1)*6);
+            ctx.lineTo(x,y);
+        }
+        ctx.lineTo(W,H); ctx.closePath(); ctx.fill();
+
+        // Algafoltok a sziklaélen
+        ctx.globalAlpha=0.35;
+        for(let ax=0;ax<W;ax+=28){
+            const seed=ax*0.1;
+            const ay=H-(4+Math.sin(ax*0.18+2.2)*3+Math.sin(ax*0.1+0.3)*4+Math.sin(ax*0.06+1.1)*6);
+            if(Math.sin(seed)>0.1){
+                ctx.fillStyle=Math.sin(seed*1.3)>0?'#1a5a2a':'#1e6630';
+                for(let k=0;k<3;k++){
+                    const sway=Math.sin(wt+seed+k)*3;
+                    ctx.beginPath();
+                    ctx.moveTo(ax+k*6,ay);
+                    ctx.quadraticCurveTo(ax+k*6+sway,ay-9,ax+k*6+sway*1.4,ay-15);
+                    ctx.lineTo(ax+k*6+sway*1.4+2,ay-15);
+                    ctx.quadraticCurveTo(ax+k*6+sway+2,ay-9,ax+k*6+2,ay);
+                    ctx.fill();
+                }
+            }
+        }
+    } else {
+        // Trópusi tengerpart – homokos alap + korallok
+        // Homok gradient
+        const sand=ctx.createLinearGradient(0,H*0.75,0,H);
+        sand.addColorStop(0,'rgba(210,180,110,0)');
+        sand.addColorStop(0.5,'rgba(200,168,95,0.35)');
+        sand.addColorStop(1,'rgba(185,155,80,0.55)');
+        ctx.fillStyle=sand; ctx.globalAlpha=1;
+        ctx.fillRect(0,H*0.75,W,H*0.25);
+
+        // Fan korallok (legyező alakú)
+        const fanCorals=[{x:0.06,h:0.28,c:'#ff7044'},{x:0.19,h:0.22,c:'#ff4488'},
+                         {x:0.35,h:0.32,c:'#ff8800'},{x:0.52,h:0.24,c:'#dd44aa'},
+                         {x:0.67,h:0.3,c:'#ff6622'},{x:0.81,h:0.2,c:'#ee3388'},
+                         {x:0.94,h:0.26,c:'#ff5500'}];
+        fanCorals.forEach(fc=>{
+            const cx=fc.x*W, ch=fc.h*H;
+            ctx.strokeStyle=fc.c; ctx.globalAlpha=0.65; ctx.lineWidth=1.2;
+            for(let a=-0.7;a<=0.7;a+=0.18){
+                const sway=Math.sin(wt*0.8+fc.x*5)*0.06;
+                ctx.beginPath();
+                ctx.moveTo(cx,H);
+                ctx.quadraticCurveTo(cx+Math.sin(a+sway)*ch*0.6, H-ch*0.5,
+                                     cx+Math.sin(a+sway)*ch*0.9, H-ch);
+                ctx.stroke();
+            }
+        });
+
+        // Agyas korallok (kerek, csomós)
+        [{x:0.12,r:14},{x:0.44,r:18},{x:0.61,r:12},{x:0.77,r:16},{x:0.9,r:10}].forEach((bc,i)=>{
+            const bx=bc.x*W;
+            ctx.fillStyle=i%2===0?'#e06080':'#cc4488'; ctx.globalAlpha=0.5;
+            ctx.beginPath(); ctx.arc(bx,H-bc.r*0.6,bc.r,Math.PI,0); ctx.fill();
+            ctx.fillStyle=i%2===0?'#f08090':'#dd5599'; ctx.globalAlpha=0.3;
+            for(let k=0;k<5;k++){
+                ctx.beginPath();
+                ctx.arc(bx-bc.r*0.6+k*bc.r*0.3, H-bc.r*0.8, bc.r*0.22,0,Math.PI*2);
+                ctx.fill();
+            }
+        });
+
+        // Trópusi tengeri fű
+        const tCount=Math.floor(W/20);
+        for(let g=0;g<tCount;g++){
+            const seed=g*5.7+2; const tx=g*(W/tCount)+(seed*3.1)%10;
+            const th=10+(seed*8.2)%18; const sway=Math.sin(wt*0.9+seed)*4;
+            ctx.fillStyle=g%2===0?'#22aa55':'#1e9048'; ctx.globalAlpha=0.4;
+            ctx.beginPath();
+            ctx.moveTo(tx,H); ctx.quadraticCurveTo(tx+sway,H-th*0.6,tx+sway*1.3,H-th);
+            ctx.lineTo(tx+sway*1.3+2,H-th); ctx.quadraticCurveTo(tx+sway+2,H-th*0.6,tx+2,H);
+            ctx.fill();
+        }
+    }
+    ctx.restore();
+}
+
+function drawAmbientParticles(){
+    ctx.save();
+    const now=Date.now();
+    if(currentMapId==='to'){
+        ctx.lineWidth=1.4;
+        for(let b=0;b<14;b++){
+            const seed=b*1357.9+5;
+            const prog=(now+seed*80)%(5500+(seed%900)*5)/(5500+(seed%900)*5);
+            const bx=((seed*0.31)%(W-40))+20;
+            const by=H-prog*(H+30)-5;
+            const r=2+(b%3)*1.4;
+            ctx.globalAlpha=0.22*(1-prog*0.5);
+            ctx.strokeStyle='rgba(80,200,120,0.9)';
+            ctx.beginPath(); ctx.arc(bx,by,r,0,Math.PI*2); ctx.stroke();
+        }
+    } else if(currentMapId==='tenger'){
+        ctx.lineWidth=1;
+        for(let b=0;b<22;b++){
+            const seed=b*987.4+3;
+            const prog=(now+seed*90)%(2200+(seed%600)*3)/(2200+(seed%600)*3);
+            const drift=Math.sin(now*0.0004+seed)*18;
+            const bx=Math.max(5,Math.min(W-5,((seed*0.42)%(W-40))+20+drift));
+            const by=H-prog*(H+20)-5;
+            const r=0.9+(b%4)*0.7;
+            ctx.globalAlpha=0.28*(1-prog*0.35);
+            ctx.strokeStyle='rgba(130,190,240,0.9)';
+            ctx.beginPath(); ctx.arc(bx,by,r,0,Math.PI*2); ctx.stroke();
+        }
+    } else {
+        // Trópusi: arany napfény-csillanások + meleg buborékok
+        const t=now*0.001;
+        for(let p=0;p<28;p++){
+            const seed=p*312.5+4;
+            const cycle=4000+(seed%1200)*3;
+            const prog=(now+seed*110)%cycle/cycle;
+            const px=((seed*0.35)%(W-40))+20+Math.sin(t*0.5+seed)*10;
+            const py=H*0.05+H*0.9*(1-prog);
+            const pulse=0.5+Math.sin(t*3+seed)*0.5;
+            ctx.globalAlpha=(0.3+pulse*0.4)*(1-prog*0.3);
+            if(p%3===0){
+                // Arany napfény-szikra
+                ctx.fillStyle=p%6===0?'#ffe066':'#ffcc00';
+                ctx.shadowColor='#ffee88'; ctx.shadowBlur=5;
+                const sz=1.5+pulse*1.5;
+                ctx.fillRect(px-sz/2,py-sz/2,sz,sz);
+                ctx.shadowBlur=0;
+            } else {
+                // Meleg buborék
+                ctx.strokeStyle='rgba(255,220,100,0.8)';
+                ctx.lineWidth=1;
+                ctx.beginPath(); ctx.arc(px,py,1.2+(p%3)*0.6,0,Math.PI*2); ctx.stroke();
+            }
+        }
+    }
+    ctx.restore();
+}
+
+function updateMapDock(){
+    const dock=document.getElementById('dock');
+    if(!dock) return;
+    if(currentMapId==='melyseg'){
+        dock.style.background='linear-gradient(180deg,#87ceeb 0%,#4ab8d4 60%,#1a9ab8 100%)';
+    } else if(currentMapId==='tenger'){
+        dock.style.background='linear-gradient(180deg,#4a7a9a 0%,#2a5a7a 60%,#1a4060 100%)';
+    } else {
+        dock.style.background='';
+    }
+}
+
 function drawWater(){
-    // BG
+    const mapDef=getCurrentMap();
+    const mid=currentMapId;
+
+    // BG gradient
     const grd=ctx.createLinearGradient(0,0,0,H);
-    grd.addColorStop(0,'#0a3d62');
-    grd.addColorStop(0.45,'#0a2840');
-    grd.addColorStop(1,'#05101c');
+    grd.addColorStop(0,mapDef.bgTop);
+    grd.addColorStop(0.45,mapDef.bgMid);
+    grd.addColorStop(1,mapDef.bgBot);
     ctx.fillStyle=grd;
     ctx.fillRect(0,0,W,H);
 
-    // Caustic light rays
+    // Caustic fénysugarak – map-specifikus
     ctx.save();
-    ctx.globalAlpha=0.032;
-    const t=Date.now()*0.0007;
-    for(let i=0;i<8;i++){
-        const rx=W*(0.1+i*0.12)+Math.sin(t+i*1.4)*28;
-        ctx.fillStyle='#aadfff';
+    const rayT=Date.now()*0.0007;
+    const rayN =mid==='tenger'?11:mid==='melyseg'?14:8;
+    const rayA =mid==='tenger'?0.042:mid==='melyseg'?0.055:0.028;
+    const rayC =mid==='tenger'?'#88ccff':mid==='melyseg'?'#ffe088':'#88ddaa';
+    ctx.globalAlpha=rayA;
+    ctx.fillStyle=rayC;
+    for(let i=0;i<rayN;i++){
+        const rx=W*(0.03+i*(0.94/rayN))+Math.sin(rayT+i*1.4)*22;
         ctx.beginPath();
-        ctx.moveTo(rx,0);ctx.lineTo(rx+65,H);ctx.lineTo(rx-18,H);ctx.closePath();
+        ctx.moveTo(rx,0); ctx.lineTo(rx+55,H); ctx.lineTo(rx-14,H); ctx.closePath();
         ctx.fill();
     }
     ctx.restore();
 
-    // Surface wave
+    // Vízfelszín
     ctx.save();
-    ctx.globalAlpha=0.35;
-    ctx.strokeStyle='#88ccff';
-    ctx.lineWidth=2;
+    const amp=mid==='tenger'?7:mid==='melyseg'?4:5;
+    ctx.globalAlpha=mid==='tenger'?0.5:mid==='melyseg'?0.55:0.35;
+    ctx.strokeStyle=mid==='tenger'?'#aaddff':mid==='melyseg'?'#66eeff':'#88ccff';
+    ctx.lineWidth=mid==='tenger'?2.5:mid==='melyseg'?2.5:2;
     ctx.beginPath();
     for(let x=0;x<=W;x+=4){
-        const y=8+Math.sin(x*0.045+wt)*5+Math.sin(x*0.028-wt*0.7)*3;
+        const y=8+Math.sin(x*0.045+wt)*amp+Math.sin(x*0.028-wt*0.7)*(amp*0.6);
         x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
     }
     ctx.stroke();
+    // Tengeri hab
+    if(mid==='tenger'){
+        ctx.globalAlpha=0.22; ctx.strokeStyle='#ffffff'; ctx.lineWidth=1.5;
+        ctx.beginPath();
+        for(let x=0;x<=W;x+=8){
+            const sv=Math.sin(x*0.045+wt);
+            if(sv>0.45){ const y=6+sv*7+Math.sin(x*0.028-wt*0.7)*4.2; ctx.moveTo(x,y); ctx.lineTo(x+5,y-1); }
+        }
+        ctx.stroke();
+    }
+    // Trópusi csillogó felszín
+    if(mid==='melyseg'){
+        ctx.globalAlpha=0.3; ctx.strokeStyle='#ffffff'; ctx.lineWidth=1;
+        ctx.beginPath();
+        for(let x=0;x<=W;x+=6){
+            const sv=Math.sin(x*0.055+wt*1.3);
+            if(sv>0.55){ const y=7+sv*4; ctx.moveTo(x,y); ctx.lineTo(x+4,y-1); }
+        }
+        ctx.stroke();
+    }
     ctx.restore();
 
-    // Depth lines
+    // Mélységi vonalak
     ctx.save();
-    ctx.globalAlpha=0.06;
-    ctx.strokeStyle='#4488aa';
+    ctx.globalAlpha=mid==='melyseg'?0.08:0.06;
+    ctx.strokeStyle=mid==='melyseg'?'#44ccaa':mid==='tenger'?'#3366aa':'#33aa77';
     ctx.lineWidth=1;
     for(let d=0;d<=0.85;d+=0.2){
         ctx.beginPath();
@@ -2518,6 +3283,10 @@ function drawWater(){
         ctx.stroke();
     }
     ctx.restore();
+
+    // Aljzat + lebegő részecskék
+    drawSeabedSilhouettes();
+    drawAmbientParticles();
 }
 
 // ══════════════════════════════════════════════
@@ -2548,7 +3317,7 @@ function drawLine(){
         ctx.translate(hookX,hookY+26);
         ctx.rotate(wg);
         ctx.translate(-hookX,-(hookY+26));
-        drawShrimp(ctx,hookX,hookY+32,17,caughtTier,1,Date.now()*0.01);
+        drawShrimp(ctx,hookX,hookY+32,17,caughtTier,caughtSpeciesIdx,1,Date.now()*0.01);
     }
 
     ctx.restore();
@@ -2646,7 +3415,7 @@ function loop(){
         if(s.y<15)s.vy=Math.abs(s.vy);
         if(s.y>H-15)s.vy=-Math.abs(s.vy);
         if(s.x<-90||s.x>W+90)return false;
-        drawShrimp(ctx,s.x,s.y,s.size,s.tier,s.vx>0?1:-1,s.phase);
+        drawShrimp(ctx,s.x,s.y,s.size,s.tier,s.species||0,s.vx>0?1:-1,s.phase);
         return true;
     });
 
@@ -2683,7 +3452,9 @@ function loop(){
                 if(Math.random()<0.02+_b.bossChance/100){
                     const bRoll=Math.random();
                     const bTier=bRoll<0.40?5:bRoll<0.70?6:bRoll<0.90?7:bRoll<0.98?8:9;
-                    startBossMinigame(bTier);
+                    const bPool=SPECIES.map((sp,i)=>sp.mapId===currentMapId?i:-1).filter(i=>i>=0);
+                    const bSpecies=bPool.length?bPool[Math.floor(Math.random()*bPool.length)]:0;
+                    startBossMinigame(bTier, bSpecies);
                     return;
                 }
                 nibbled=true;
@@ -2700,6 +3471,7 @@ function loop(){
             fishState=FS.IDLE;
             if(caughtTier!==null){
                 const t=caughtTier;
+                const sp=caughtSpeciesIdx||0;
                 const isBoss=window._pendingBoss||false;
                 window._pendingBoss=false;
                 const bossName=isBoss?getNextBossName():null;
@@ -2708,6 +3480,10 @@ function loop(){
                 score+=Math.round(TIERS[t].pts*(isBoss?5:1)*(1+_cb.catchMult/100));
                 catches++;
                 if(t>maxTierIdx)maxTierIdx=t;
+                // Katalógus discovery
+                const dKey=sp+'_'+t;
+                if(!discoveredShrimp[dKey]){ discoveredShrimp[dKey]=true; }
+                checkMapUnlocks();
                 updateHUD();
                 saveGame();
                 checkMilestones();
@@ -2716,7 +3492,7 @@ function loop(){
                 updateQuestProgress('catchTier', 1, t);
                 if(isBoss) updateQuestProgress('boss', 1);
                 updateQuestProgress('scoreGain', Math.round(TIERS[t].pts*(isBoss?5:1)*(1+getActiveBonuses().catchMult/100)));
-                addToInventory(t,isBoss,bossName);
+                addToInventory(t,sp,isBoss,bossName);
                 showFloat(isBoss?`👑 ${bossName}!`:`+${TIERS[t].pts} 🦐 ${TIERS[t].name}`,hookX);
                 // Tier 3+ → good catch hang (erősítve)
                 if(t>=2||isBoss){
@@ -2746,7 +3522,7 @@ function loop(){
     document.querySelectorAll('.slot-canvas[data-rainbow]').forEach(cv=>{
         const sc=cv.getContext('2d');
         sc.clearRect(0,0,34,34);
-        drawShrimp(sc,17,19,13,9,1,Date.now()*0.01);
+        drawShrimp(sc,17,19,13,9,0,1,Date.now()*0.01);
     });
     requestAnimationFrame(loop);
 }
@@ -2829,7 +3605,7 @@ function showFloat(text,x){
 // ══════════════════════════════════════════════
 const MAX_INV=32;
 
-function addToInventory(tier, isBoss=false, bossName=null){
+function addToInventory(tier, speciesIdx=0, isBoss=false, bossName=null){
     if(inventory.length>=MAX_INV){
         // Evict lowest tier unnamed (soha ne dobjuk ki a bossokat vagy elnevezetteket)
         const evict=inventory.reduce((best,s,i)=>{
@@ -2840,7 +3616,7 @@ function addToInventory(tier, isBoss=false, bossName=null){
         if(evict>=0) inventory.splice(evict,1);
         // Ha nincs mit kidobni, csak hozzáadjuk (max+1 ideiglenesen)
     }
-    inventory.push({tier, uid:uid++, name:bossName, isBoss});
+    inventory.push({tier, uid:uid++, name:bossName, isBoss, species:speciesIdx});
     renderInv();
     saveGame();
 }
@@ -2848,93 +3624,124 @@ function addToInventory(tier, isBoss=false, bossName=null){
 function renderInv(){
     const container=document.getElementById('shrimp-slots');
     container.innerHTML='';
-    inventory.forEach((item,i)=>{
-        const t=TIERS[item.tier];
-        const div=document.createElement('div');
+    if(inventory.length===0) return;
 
-        // Base class
-        let cls='slot'+(selIdx===i?' selected':'');
-        if(item.name && !item.isBoss) cls+=' named';
-        if(item.isBoss) cls+=' is-boss';
-        div.className=cls;
+    const sel=inventory[selIdx];
 
-        // can-merge highlight: only for unnamed, non-boss items
-        const sel=inventory[selIdx];
-        if(selIdx!==null&&selIdx!==i&&sel&&sel.tier===item.tier
-           &&!item.name&&!item.isBoss&&!sel.name&&!sel.isBoss){
-            div.classList.add('can-merge');
-        }
+    // Csoportosítás species szerint
+    const groups={};
+    inventory.forEach((item,origIdx)=>{
+        const sp=item.species||0;
+        if(!groups[sp]) groups[sp]=[];
+        groups[sp].push({item,origIdx});
+    });
 
-        // Tier badge
-        const badge=document.createElement('div');
-        badge.className='stier';
-        badge.textContent='T'+(item.tier+1);
-        div.appendChild(badge);
+    // Tier szerint rendezés csoporton belül (magas → alacsony)
+    Object.values(groups).forEach(arr=>{
+        arr.sort((a,b)=>b.item.tier-a.item.tier||a.item.uid-b.item.uid);
+    });
 
-        // Lock / boss icon (top-left)
-        if(item.name||item.isBoss){
-            const lockEl=document.createElement('div');
-            lockEl.className='lock-icon';
-            lockEl.textContent=item.isBoss?'👑':'🔒';
-            div.appendChild(lockEl);
-        }
+    const spKeys=Object.keys(groups).map(Number).sort((a,b)=>a-b);
 
-        // Shrimp mini-canvas
-        const cv=document.createElement('canvas');
-        const dpr=window.devicePixelRatio||1;
-        cv.width=34*dpr; cv.height=34*dpr;
-        cv.style.width='34px'; cv.style.height='34px';
-        cv.className='slot-canvas';
-        if(item.tier===9) cv.dataset.rainbow='1';
-        const sc=cv.getContext('2d');
-        sc.scale(dpr,dpr);
-        drawShrimp(sc,17,19,13,item.tier,1,Math.random()*Math.PI*2);
-        div.appendChild(cv);
+    spKeys.forEach(spIdx=>{
+        const entries=groups[spIdx];
+        const sp=SPECIES[spIdx];
+        const spColor=sp.tint||'#3a8abe';
 
-        // Name label: custom name in gold, or tier name in grey
-        const nameEl=document.createElement('div');
-        nameEl.className='sname';
-        if(item.name){
-            nameEl.textContent=item.name;
-            nameEl.style.color='#ffd700';
-            nameEl.style.fontWeight='bold';
-            nameEl.title=item.name; // full name on hover
-        } else {
-            nameEl.textContent=t.name;
-        }
-        div.appendChild(nameEl);
+        // Szekció keret
+        const sectionEl=document.createElement('div');
+        sectionEl.className='inv-species-section';
+        sectionEl.style.borderLeftColor=spColor;
 
-        // ── Long-press to open name popup ──
-        let pressTimer=null, lpTriggered=false;
+        // Szekció fejléc
+        const titleEl=document.createElement('div');
+        titleEl.className='inv-species-title';
+        titleEl.style.color=spColor;
+        titleEl.textContent=`${sp.icon} ${sp.name} · ${entries.length} db`;
+        sectionEl.appendChild(titleEl);
 
-        div.addEventListener('mousedown',()=>{
-            lpTriggered=false;
-            pressTimer=setTimeout(()=>{
-                lpTriggered=true; pressTimer=null;
-                openNamePopup(i);
-            },500);
+        // Slotok
+        const slotsEl=document.createElement('div');
+        slotsEl.className='inv-species-slots';
+
+        entries.forEach(({item,origIdx})=>{
+            const div=document.createElement('div');
+
+            let cls='slot'+(selIdx===origIdx?' selected':'');
+            if(item.name&&!item.isBoss) cls+=' named';
+            if(item.isBoss) cls+=' is-boss';
+            div.className=cls;
+
+            // Can-merge kiemelés (azonos faj + tier)
+            if(selIdx!==null&&selIdx!==origIdx&&sel&&sel.tier===item.tier
+               &&(sel.species||0)===(item.species||0)
+               &&!item.name&&!item.isBoss&&!sel.name&&!sel.isBoss){
+                div.classList.add('can-merge');
+            }
+
+            // Tier badge (jobb felső)
+            const badge=document.createElement('div');
+            badge.className='stier';
+            badge.textContent='T'+(item.tier+1);
+            div.appendChild(badge);
+
+            // Lock / boss ikon (bal felső)
+            if(item.name||item.isBoss){
+                const lockEl=document.createElement('div');
+                lockEl.className='lock-icon';
+                lockEl.textContent=item.isBoss?'👑':'🔒';
+                div.appendChild(lockEl);
+            }
+
+            // Mini-canvas
+            const cv=document.createElement('canvas');
+            const dpr=window.devicePixelRatio||1;
+            cv.width=34*dpr; cv.height=34*dpr;
+            cv.style.width='34px'; cv.style.height='34px';
+            cv.className='slot-canvas';
+            if(item.tier===9) cv.dataset.rainbow='1';
+            const sc=cv.getContext('2d');
+            sc.scale(dpr,dpr);
+            drawShrimp(sc,17,19,13,item.tier,item.species||0,1,Math.random()*Math.PI*2);
+            div.appendChild(cv);
+
+            // Név: elnevezés arannyal, névtelen = species ikon
+            const nameEl=document.createElement('div');
+            nameEl.className='sname';
+            if(item.name){
+                nameEl.textContent=item.name;
+                nameEl.style.color='#ffd700';
+                nameEl.style.fontWeight='bold';
+                nameEl.title=item.name;
+            } else {
+                nameEl.textContent=sp.icon;
+            }
+            div.appendChild(nameEl);
+
+            // Hosszú lenyomás → névadás
+            let pressTimer=null, lpTriggered=false;
+            div.addEventListener('mousedown',()=>{
+                lpTriggered=false;
+                pressTimer=setTimeout(()=>{ lpTriggered=true; pressTimer=null; openNamePopup(origIdx); },500);
+            });
+            div.addEventListener('mouseup',()=>{ if(pressTimer){clearTimeout(pressTimer);pressTimer=null;} });
+            div.addEventListener('mouseleave',()=>{ if(pressTimer){clearTimeout(pressTimer);pressTimer=null;} });
+            div.addEventListener('touchstart',(e)=>{
+                lpTriggered=false;
+                pressTimer=setTimeout(()=>{ lpTriggered=true; pressTimer=null; e.preventDefault(); openNamePopup(origIdx); },500);
+            },{passive:false});
+            div.addEventListener('touchend',()=>{ if(pressTimer){clearTimeout(pressTimer);pressTimer=null;} });
+            div.addEventListener('touchmove',()=>{ if(pressTimer){clearTimeout(pressTimer);pressTimer=null;} });
+            div.addEventListener('click',()=>{
+                if(lpTriggered){ lpTriggered=false; return; }
+                onSlotClick(origIdx);
+            });
+
+            slotsEl.appendChild(div);
         });
-        div.addEventListener('mouseup',()=>{ if(pressTimer){clearTimeout(pressTimer);pressTimer=null;} });
-        div.addEventListener('mouseleave',()=>{ if(pressTimer){clearTimeout(pressTimer);pressTimer=null;} });
 
-        div.addEventListener('touchstart',(e)=>{
-            lpTriggered=false;
-            pressTimer=setTimeout(()=>{
-                lpTriggered=true; pressTimer=null;
-                e.preventDefault();
-                openNamePopup(i);
-            },500);
-        },{passive:false});
-        div.addEventListener('touchend',()=>{ if(pressTimer){clearTimeout(pressTimer);pressTimer=null;} });
-        div.addEventListener('touchmove',()=>{ if(pressTimer){clearTimeout(pressTimer);pressTimer=null;} });
-
-        // click: skip if long-press already consumed
-        div.addEventListener('click',()=>{
-            if(lpTriggered){ lpTriggered=false; return; }
-            onSlotClick(i);
-        });
-
-        container.appendChild(div);
+        sectionEl.appendChild(slotsEl);
+        container.appendChild(sectionEl);
     });
 }
 
@@ -2961,9 +3768,15 @@ function onSlotClick(i){
         selIdx=null; renderInv(); return;
     }
 
+    if((a.species||0)!==(b.species||0)){
+        setMsg(`❌ Csak azonos fajú garnéla vonható össze! (${SPECIES[a.species||0].shortName} ≠ ${SPECIES[b.species||0].shortName})`);
+        SFX.fail();
+        selIdx=null; renderInv(); return;
+    }
+
     if(a.tier!==b.tier){
         setMsg(`❌ Csak azonos szintű garnéla vonható össze! (${TIERS[a.tier].name} ≠ ${TIERS[b.tier].name})`);
-        SFX.fail(); // Itt is le fogja játszani a miss.mp3-at rossz összevonáskor
+        SFX.fail();
         selIdx=null;
         renderInv();
         return;
@@ -2982,7 +3795,7 @@ function onSlotClick(i){
     const hi=Math.max(selIdx,i), lo=Math.min(selIdx,i);
     inventory.splice(hi,1);
     inventory.splice(lo,1);
-    inventory.push({tier:newTier, uid:uid++, name:null, isBoss:false});
+    inventory.push({tier:newTier, uid:uid++, name:null, isBoss:false, species:a.species||0});
 
     const _mb=getActiveBonuses();
     const pts=Math.round(TIERS[newTier].pts*3*(1+_mb.mergeMult/100));
@@ -3019,8 +3832,152 @@ function onSlotClick(i){
 // ══════════════════════════════════════════════
 
 // drawShrimp alias tetszőleges ctx-hez
-function drawShrimpCtx(actx, x, y, size, tier, dir, phase){
-    drawShrimp(actx, x, y, size, tier, dir, phase);
+function drawShrimpCtx(actx, x, y, size, tier, speciesIdx, dir, phase){
+    drawShrimp(actx, x, y, size, tier, speciesIdx||0, dir, phase);
+}
+
+// ── Prizma Garnéla — teljesen egyedi rajzoló ──────────────────────────────
+function drawPrismaShrimp(actx, x, y, dir, phase, sz){
+    sz = sz || 56;
+    const now = Date.now() * 0.001;
+    const hue = (now * 55) % 360;
+    const h2  = (hue + 120) % 360;
+    const h3  = (hue + 240) % 360;
+
+    actx.save();
+    actx.translate(x, y);
+    if(dir < 0) actx.scale(-1, 1);
+
+    // ── Külső aura ──
+    const aura = actx.createRadialGradient(0, 0, sz*0.2, 0, 0, sz*1.15);
+    aura.addColorStop(0,   `hsla(${hue},100%,80%,0.2)`);
+    aura.addColorStop(0.55,`hsla(${h2},100%,60%,0.09)`);
+    aura.addColorStop(1,   'hsla(0,0%,0%,0)');
+    actx.fillStyle = aura;
+    actx.beginPath(); actx.ellipse(0, 0, sz*1.15, sz*0.58, 0, 0, Math.PI*2); actx.fill();
+
+    // ── Faroklegyező (5 sugár) ──
+    const fanCx = -sz * 0.6;
+    for(let i = 0; i < 5; i++){
+        const angle = -0.44 + i * (0.88/4) + Math.sin(now*1.2+i*0.7)*0.06;
+        const len   = sz * (0.4 + (i===2 ? 0.06 : 0));
+        const fHue  = (hue + i*28) % 360;
+        actx.save();
+        actx.strokeStyle = `hsla(${fHue},100%,76%,0.92)`;
+        actx.lineWidth   = sz * 0.042;
+        actx.lineCap     = 'round';
+        actx.beginPath();
+        actx.moveTo(fanCx, 0);
+        actx.lineTo(fanCx - len*Math.cos(angle), -len*Math.sin(angle));
+        actx.stroke();
+        const tipX = fanCx - len*Math.cos(angle);
+        const tipY = -len*Math.sin(angle);
+        actx.shadowColor = `hsl(${fHue},100%,85%)`;
+        actx.shadowBlur  = sz*0.1;
+        actx.fillStyle   = `hsla(${fHue},100%,93%,${0.65+Math.sin(now*3+i)*0.32})`;
+        actx.beginPath(); actx.arc(tipX, tipY, sz*0.045, 0, Math.PI*2); actx.fill();
+        actx.shadowBlur = 0;
+        actx.restore();
+    }
+
+    // ── Potroh szegmensek (7 db, szivárvány gradiens) ──
+    for(let i = 0; i < 7; i++){
+        const bx    = -sz*0.52 + i*(sz*1.0/7);
+        const taper = 1 - Math.abs(i - 3) / 3.8;
+        const bw    = sz*0.1  + taper*sz*0.048;
+        const bh    = sz*0.13 + taper*sz*0.1;
+        const sHue  = (hue + i*24) % 360;
+
+        const sg = actx.createRadialGradient(bx, -bh*0.28, sz*0.01, bx, bh*0.1, bh*1.15);
+        sg.addColorStop(0,   `hsla(${sHue},100%,93%,0.97)`);
+        sg.addColorStop(0.38,`hsla(${sHue},100%,65%,0.92)`);
+        sg.addColorStop(1,   `hsla(${(sHue+50)%360},100%,22%,0.8)`);
+        actx.fillStyle = sg;
+        actx.beginPath(); actx.ellipse(bx, 0, bw, bh, 0, 0, Math.PI*2); actx.fill();
+
+        // Csillogó kiemelő ív
+        actx.save();
+        actx.globalAlpha = 0.38;
+        actx.strokeStyle = `hsl(${(sHue+65)%360},100%,96%)`;
+        actx.lineWidth   = sz*0.014;
+        actx.beginPath(); actx.ellipse(bx, -bh*0.32, bw*0.52, bh*0.26, 0, Math.PI, 0); actx.stroke();
+        actx.restore();
+    }
+
+    // ── Koronaspinák (6 db, pulsáló glow) ──
+    for(let i = 0; i < 6; i++){
+        const sx2  = -sz*0.38 + i*(sz*0.76/5);
+        const sh   = sz*(0.13 + Math.sin(i*1.15)*0.055) + Math.sin(now*1.8+i*0.9)*sz*0.028;
+        const sHue2= (h3 + i*38) % 360;
+        const alpha= 0.68 + Math.sin(now*2.5+i)*0.32;
+
+        actx.save();
+        actx.strokeStyle = `hsla(${sHue2},100%,84%,${alpha})`;
+        actx.lineWidth   = sz*0.028;
+        actx.lineCap     = 'round';
+        actx.beginPath();
+        actx.moveTo(sx2, -sz*0.13);
+        actx.lineTo(sx2 + Math.sin(now+i)*sz*0.022, -sz*0.13 - sh);
+        actx.stroke();
+        actx.shadowColor = `hsl(${sHue2},100%,80%)`;
+        actx.shadowBlur  = sz*0.14;
+        actx.fillStyle   = `hsla(${sHue2},100%,94%,${alpha})`;
+        actx.beginPath(); actx.arc(sx2 + Math.sin(now+i)*sz*0.022, -sz*0.13 - sh, sz*0.042, 0, Math.PI*2); actx.fill();
+        actx.shadowBlur = 0;
+        actx.restore();
+    }
+
+    // ── Csápok (2 db, ívelt, hullámzó) ──
+    for(let a = 0; a < 2; a++){
+        const aY0   = -sz*(0.07 + a*0.07);
+        const w1    = Math.sin(now*1.0 + a*1.8) * sz*0.2;
+        const w2    = Math.sin(now*1.4 + a*1.2) * sz*0.12;
+        const aHue  = (h2 + a*85) % 360;
+        actx.strokeStyle = `hsla(${aHue},100%,82%,0.88)`;
+        actx.lineWidth   = sz*0.02;
+        actx.lineCap     = 'round';
+        actx.beginPath();
+        actx.moveTo(sz*0.44, aY0);
+        actx.bezierCurveTo(
+            sz*0.72 + w1*0.3, aY0 - sz*0.24,
+            sz*0.97 + w1*0.5, aY0 - sz*0.12 + w2,
+            sz*1.18 + w1,     aY0 + a*sz*0.09 + w2
+        );
+        actx.stroke();
+        actx.fillStyle = `hsla(${aHue},100%,92%,0.9)`;
+        actx.beginPath(); actx.arc(sz*1.18+w1, aY0+a*sz*0.09+w2, sz*0.032, 0, Math.PI*2); actx.fill();
+    }
+
+    // ── Lábak (5 pár, apró hullámzás) ──
+    for(let l = 0; l < 5; l++){
+        const lx   = -sz*0.3 + l*(sz*0.64/4);
+        const lOff = Math.sin(now*1.5 + l*0.9) * sz*0.055;
+        const lHue = (hue + l*33) % 360;
+        actx.strokeStyle = `hsla(${lHue},100%,65%,0.55)`;
+        actx.lineWidth   = sz*0.02;
+        actx.lineCap     = 'round';
+        actx.beginPath(); actx.moveTo(lx, sz*0.12); actx.lineTo(lx+lOff, sz*0.3); actx.stroke();
+    }
+
+    // ── Szem (nagy, hasított pupilla, glow) ──
+    {
+        const ex = sz*0.46, ey = -sz*0.09, er = sz*0.078;
+        actx.shadowColor = `hsl(${(hue+180)%360},100%,70%)`;
+        actx.shadowBlur  = sz*0.22;
+        actx.fillStyle   = `hsl(${(hue+180)%360},70%,12%)`;
+        actx.beginPath(); actx.arc(ex, ey, er, 0, Math.PI*2); actx.fill();
+        actx.shadowBlur  = 0;
+        actx.fillStyle   = `hsl(${(hue+180)%360},100%,52%)`;
+        actx.beginPath(); actx.arc(ex, ey, er*0.65, 0, Math.PI*2); actx.fill();
+        actx.fillStyle   = '#000';
+        actx.beginPath(); actx.ellipse(ex+er*0.05, ey, er*0.18, er*0.44, 0, 0, Math.PI*2); actx.fill();
+        actx.fillStyle   = 'rgba(255,255,255,0.92)';
+        actx.beginPath(); actx.arc(ex-er*0.16, ey-er*0.3, er*0.21, 0, Math.PI*2); actx.fill();
+        actx.fillStyle   = 'rgba(255,255,255,0.5)';
+        actx.beginPath(); actx.arc(ex+er*0.2, ey-er*0.18, er*0.1, 0, Math.PI*2); actx.fill();
+    }
+
+    actx.restore();
 }
 
 let aquariumSwimData = {};   // uid → {x,y,vx,vy,phase}
@@ -3030,13 +3987,15 @@ let aqActionUid      = null;
 // ── Tab váltás ────────────────────────────────
 function switchTab(tab){
     currentTab = tab;
-    ['collection','aquarium','shop','quests'].forEach(t=>{
+    ['collection','aquarium','shop','catalog','quests','altar'].forEach(t=>{
         document.getElementById('tab-'+t).classList.toggle('visible', tab===t);
         document.getElementById('tab-btn-'+t).classList.toggle('active', tab===t);
     });
     if(tab==='quests') renderQuestTab();
-    // Duduk elrejtése quest és bolt fülön
-    const hideDuduk = tab==='quests' || tab==='shop';
+    if(tab==='catalog') renderCatalog();
+    if(tab==='altar') renderAltarTab();
+    // Duduk elrejtése quest, bolt, katalógus és oltár fülön
+    const hideDuduk = tab==='quests' || tab==='shop' || tab==='catalog' || tab==='altar';
     document.getElementById('duduk-corner').style.opacity = hideDuduk ? '0' : '1';
     document.getElementById('duduk-corner').style.pointerEvents = hideDuduk ? 'none' : 'auto';
     if(hideDuduk) document.getElementById('duduk-bubble').classList.remove('show');
@@ -3044,6 +4003,221 @@ function switchTab(tab){
 document.getElementById('tab-btn-collection').addEventListener('click', ()=>switchTab('collection'));
 document.getElementById('tab-btn-aquarium'  ).addEventListener('click', ()=>switchTab('aquarium'));
 document.getElementById('tab-btn-shop'      ).addEventListener('click', ()=>switchTab('shop'));
+document.getElementById('tab-btn-altar'     ).addEventListener('click', ()=>switchTab('altar'));
+
+// ══════════════════════════════════════════════
+//  OLTÁR RENDSZER
+// ══════════════════════════════════════════════
+function getRainbowsInInventory(){
+    return inventory.filter(s=>s.tier===9&&!s.name&&!s.isBoss);
+}
+
+function sacrificeOneRainbow(){
+    const idx=inventory.findIndex(s=>s.tier===9&&!s.name&&!s.isBoss);
+    if(idx<0) return;
+    inventory.splice(idx,1);
+    altarPoints++;
+    saveGame(); renderInv(); renderAltarTab();
+    showFloat('✨ +1 pont',W/2);
+}
+
+function sacrificeAllRainbows(){
+    const rainbows=getRainbowsInInventory();
+    if(!rainbows.length) return;
+    rainbows.forEach(r=>{
+        const i=inventory.indexOf(r);
+        if(i>=0) inventory.splice(i,1);
+    });
+    altarPoints+=rainbows.length;
+    saveGame(); renderInv(); renderAltarTab();
+    showFloat(`✨ +${rainbows.length} pont`,W/2);
+}
+
+function fusePrisma(){
+    const rainbows=getRainbowsInInventory();
+    if(rainbows.length<10||prismaExists) return;
+    for(let i=0;i<10;i++){
+        const idx=inventory.indexOf(rainbows[i]);
+        if(idx>=0) inventory.splice(idx,1);
+    }
+    prismaExists=true;
+    prismaDiscovered=true;
+    prismaSwimData={x:0,y:0,vx:0.22,vy:0,phase:0,init:false};
+    saveGame(); renderInv(); renderAltarTab(); renderCatalog();
+    showFloat('🌈 Prizma Garnéla megalkotva!',W/2);
+    setMsg('✨ A Prizma Garnéla az akváriumba költözött — nézd meg!');
+    switchTab('aquarium');
+}
+
+function sacrificePrisma(){
+    if(!prismaExists) return;
+    prismaExists=false;
+    prismaSwimData.init=false;
+    altarPoints+=5;
+    saveGame(); renderAltarTab(); renderCatalog();
+    showFloat('💀 Prizma feláldozva — +5 pont',W/2);
+}
+
+function buyAltarUpgrade(id){
+    const upg=ALTAR_UPGRADES.find(u=>u.id===id);
+    if(!upg||altarUpgrades[id]) return;
+    if(upg.req&&!altarUpgrades[upg.req]) return;
+    if(altarPoints<upg.cost) return;
+    altarPoints-=upg.cost;
+    altarUpgrades[id]=true;
+    saveGame(); renderAltarTab();
+    showFloat(`${upg.icon} ${upg.name} feloldva!`,W/2);
+}
+
+function renderAltarTab(){
+    const inner=document.getElementById('altar-inner');
+    if(!inner) return;
+    const rainbows=getRainbowsInInventory();
+    const rCount=rainbows.length;
+    const canFuse=rCount>=10&&!prismaExists;
+
+    let html=`
+    <div class="altar-header-row">
+        <span class="altar-title-lbl">🌈 Szivárvány Oltár</span>
+        <div class="altar-pts-box">✨ <span id="altar-pts-num">${altarPoints}</span> pont</div>
+    </div>
+    <div class="altar-section">
+        <div class="altar-sec-title">🌈 Beáldozás</div>
+        <div class="altar-sub">Beáldozható névtelen T10-esek: <strong style="color:#d880ff">${rCount} db</strong><br>Minden darab <strong style="color:#d880ff">+1 pontot</strong> ér. Boss 👑 és elnevezett 🔒 garnélák nem áldozhatók be és a Prizma alkotáshoz sem számítanak.</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="altar-action-btn" id="altar-sac-one-btn" ${rCount<1?'disabled':''}>🌈 Beáldoz egyet (+1 pt)</button>
+            <button class="altar-action-btn" id="altar-sac-all-btn" ${rCount<1?'disabled':''}>💀 Mindet beáldoz (+${rCount} pt)</button>
+        </div>
+    </div>
+    <div class="altar-section">
+        <div class="altar-sec-title">✨ Prizma Alkotás</div>
+        <div class="altar-sub">10 Szivárvány garnélából egyedülálló <strong style="color:#e080ff">Prizma Garnéla</strong> alkotható — az akvárium örök, kivihetetlen lakója. Egyszerre csak 1 létezhet.<br><strong style="color:${rCount>=10?'#d880ff':'#5a4068'}">${rCount}/10 rendelkezésre áll</strong>${prismaExists?' — Prizma már az akváriumban él':''}</div>
+        <button class="altar-action-btn" id="altar-fuse-btn" ${canFuse?'':'disabled'}>🌈 Prizma Alkotás (10× T10)</button>
+    </div>`;
+
+    if(prismaExists){
+        html+=`
+    <div class="altar-section">
+        <div class="altar-sec-title">💀 Prizma Feláldozása</div>
+        <div class="altar-sub">A Prizma Garnéla feláldozható az Oltáron <strong style="color:#ffb0c8">+5 pontért</strong>. Ez eltávolítja az akváriumból, de a katalógusban felfedezettként marad.</div>
+        <button class="altar-action-btn altar-sacrifice-btn" id="altar-sac-prisma-btn">💀 Prizma Feláldozása (+5 pt)</button>
+    </div>`;
+    }
+
+    html+=`<div class="altar-sec-title" style="flex-shrink:0;padding:2px 0">🏛️ Permanens fejlesztések</div>
+    <div class="altar-upgrade-grid" id="altar-upg-grid">`;
+
+    ALTAR_UPGRADES.forEach(upg=>{
+        const owned=!!altarUpgrades[upg.id];
+        const reqMet=!upg.req||!!altarUpgrades[upg.req];
+        const affordable=altarPoints>=upg.cost;
+        let cls='altar-upg-card';
+        if(owned) cls+=' upg-owned';
+        else if(!reqMet) cls+=' upg-locked';
+        let costHtml;
+        if(owned) costHtml=`<div class="altar-upg-cost upg-done">✓ Megvan</div>`;
+        else if(!reqMet) costHtml=`<div class="altar-upg-cost too-poor">🔒 ${upg.cost} pt</div>`;
+        else costHtml=`<div class="altar-upg-cost ${affordable?'can-afford':'too-poor'}">${affordable?'':'⚠ '}${upg.cost} pt</div>`;
+        html+=`<div class="${cls}" data-upg="${upg.id}">
+            <div class="altar-upg-top"><span class="altar-upg-icon">${upg.icon}</span><span class="altar-upg-name">${upg.name}</span></div>
+            <div class="altar-upg-desc">${upg.desc}</div>
+            ${costHtml}
+        </div>`;
+    });
+    html+=`</div>`;
+
+    inner.innerHTML=html;
+
+    document.getElementById('altar-sac-one-btn')?.addEventListener('click', sacrificeOneRainbow);
+    document.getElementById('altar-sac-all-btn')?.addEventListener('click', sacrificeAllRainbows);
+    document.getElementById('altar-fuse-btn')?.addEventListener('click', fusePrisma);
+    document.getElementById('altar-sac-prisma-btn')?.addEventListener('click', sacrificePrisma);
+    document.querySelectorAll('#altar-upg-grid .altar-upg-card:not(.upg-owned):not(.upg-locked)').forEach(card=>{
+        card.addEventListener('click', ()=>buyAltarUpgrade(card.dataset.upg));
+    });
+}
+
+// ══════════════════════════════════════════════
+//  PRIZMA POPUP
+// ══════════════════════════════════════════════
+const PRISMA_COOLDOWN_MS = 24*3600*1000;
+const PRISMA_BUFF_DUR_S  = 120;
+
+function prismaCanActivate(){
+    return prismaExists && (Date.now()-prismaLastActivated >= PRISMA_COOLDOWN_MS);
+}
+
+function formatCountdown(ms){
+    if(ms<=0) return '';
+    const s=Math.ceil(ms/1000);
+    const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), sec=s%60;
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+let prismaCdInterval=null;
+let prismaRafId=null;
+function openPrismaPopup(){
+    const ov=document.getElementById('prisma-overlay');
+    ov.style.display='flex';
+    updatePrismaPopup();
+    // Animációs loop a canvas-hoz
+    function animLoop(){ prismaRafId=requestAnimationFrame(animLoop); drawPrismaPopupCanvas(); }
+    animLoop();
+    // Visszaszámláló szöveg 1 mp-enként
+    prismaCdInterval=setInterval(updatePrismaPopup,1000);
+}
+
+function updatePrismaPopup(){
+    const canAct=prismaCanActivate();
+    const btn=document.getElementById('prisma-activate-btn');
+    const cd=document.getElementById('prisma-popup-cd');
+    if(btn) btn.disabled=!canAct;
+    if(cd){
+        const rem=PRISMA_COOLDOWN_MS-(Date.now()-prismaLastActivated);
+        cd.textContent=rem>0?`⏳ Következő aktiválás: ${formatCountdown(rem)}`:'✅ Készen áll az aktiválásra';
+    }
+}
+
+function drawPrismaPopupCanvas(){
+    const cv=document.getElementById('prisma-popup-canvas');
+    if(!cv) return;
+    const ctx2=cv.getContext('2d');
+    const w=cv.width, h=cv.height;
+    ctx2.clearRect(0,0,w,h);
+    const t=Date.now()*0.001;
+    drawPrismaShrimp(ctx2, w/2-8, h/2+6, 1, t, 22);
+}
+
+function closePrismaPopup(){
+    clearInterval(prismaCdInterval);
+    if(prismaRafId){ cancelAnimationFrame(prismaRafId); prismaRafId=null; }
+    document.getElementById('prisma-overlay').style.display='none';
+}
+
+function activatePrismaEvent(){
+    if(!prismaCanActivate()) return;
+    const endTime=Date.now()+PRISMA_BUFF_DUR_S*1000;
+    BUFF_TYPES.forEach(buff=>{
+        activeBuffs=activeBuffs.filter(ab=>ab.buff.id!==buff.id);
+        activeBuffs.push({buff,endTime});
+    });
+    prismaLastActivated=Date.now();
+    saveGame(); renderBuffHUD();
+    closePrismaPopup();
+    showFloat('🌈 PRIZMA ESEMÉNY — 2 perc minden buff!',W/2);
+    setMsg('✨ Prizma Garnéla aktiválva! Minden buff aktív 2 percig!');
+}
+
+(function wirePrismaPopup(){
+    document.getElementById('prisma-activate-btn').addEventListener('click', activatePrismaEvent);
+    document.getElementById('prisma-close-btn').addEventListener('click', closePrismaPopup);
+    document.getElementById('prisma-overlay').addEventListener('click',(e)=>{
+        if(e.target===document.getElementById('prisma-overlay')) closePrismaPopup();
+    });
+    document.addEventListener('keydown',(e)=>{
+        if(e.key==='Escape'&&document.getElementById('prisma-overlay').style.display!=='none') closePrismaPopup();
+    });
+})();
 
 // ── Garnéla mozgatás ──────────────────────────
 function moveToAquarium(idx){
@@ -3082,8 +4256,9 @@ function openAqActionPopup(uid){
     aqActionUid=uid;
     const item=aquarium.find(s=>s.uid===uid);
     if(!item) return;
+    const _aqSp=(item.species||0)>0?SPECIES[item.species].shortName+' ':'';
     document.getElementById('aq-action-info').textContent=
-        `"${item.name}" — ${TIERS[item.tier].name} (T${item.tier+1})`;
+        `"${item.name}" — ${_aqSp}${TIERS[item.tier].name} (T${item.tier+1})`;
     const p=document.getElementById('aq-action-popup');
     p.style.animation='none'; requestAnimationFrame(()=>{ p.style.animation=''; });
     document.getElementById('aq-action-overlay').style.display='flex';
@@ -3113,6 +4288,11 @@ function handleAquariumTap(clientX, clientY){
     if(!aqC) return;
     const rect=aqC.getBoundingClientRect();
     const cx=clientX-rect.left, cy=clientY-rect.top;
+    // Prizma koppintás ellenőrzés (elsőbbség)
+    if(prismaExists&&prismaSwimData.init){
+        const dp=Math.sqrt((prismaSwimData.x-cx)**2+(prismaSwimData.y-cy)**2);
+        if(dp<62){ openPrismaPopup(); return; }
+    }
     let nearest=null, nearestDist=38;
     aquarium.forEach(item=>{
         const sd=aquariumSwimData[item.uid];
@@ -3239,12 +4419,12 @@ function renderAquariumCanvas(){
     // Buborékok
     drawAquariumBubbles(ac,W,H);
 
+    const sandTop=H-20;
+
     // Üres üzenet
     const emptyMsg=document.getElementById('aquarium-empty-msg');
-    if(aquarium.length===0){ emptyMsg.style.display='flex'; return; }
+    if(aquarium.length===0&&!prismaExists){ emptyMsg.style.display='flex'; return; }
     emptyMsg.style.display='none';
-
-    const sandTop=H-20;
 
     // Garnélák
     aquarium.forEach(item=>{
@@ -3271,7 +4451,7 @@ function renderAquariumCanvas(){
 
         const dir=sd.vx>0?1:-1;
         const sz=12+(item.tier/TIERS.length)*7;
-        drawShrimpCtx(ac,sd.x,sd.y,sz,item.tier,dir,sd.phase);
+        drawShrimpCtx(ac,sd.x,sd.y,sz,item.tier,item.species||0,dir,sd.phase);
 
         // Névcímke
         if(item.name){
@@ -3288,6 +4468,31 @@ function renderAquariumCanvas(){
             ac.restore();
         }
     });
+
+    // Prizma garnéla rajzolása (legfelső réteg — minden garnéla fölött)
+    if(prismaExists){
+        if(!prismaSwimData.init){
+            prismaSwimData.x=W*0.5; prismaSwimData.y=sandTop*0.38;
+            prismaSwimData.vx=0.22; prismaSwimData.vy=0; prismaSwimData.phase=0;
+            prismaSwimData.init=true;
+        }
+        const ps=prismaSwimData;
+        ps.x+=ps.vx; ps.y+=Math.sin(ps.phase*0.55)*0.14; ps.phase+=0.011;
+        if(ps.x<72){ps.vx=Math.abs(ps.vx);}
+        if(ps.x>W-72){ps.vx=-Math.abs(ps.vx);}
+        if(Math.random()<0.002) ps.vy=(Math.random()-0.5)*0.1;
+        ps.y+=ps.vy; ps.y=Math.max(32,Math.min(sandTop-28,ps.y));
+        const px=ps.x, py=ps.y, dir=ps.vx>0?1:-1;
+        const t2=Date.now()*0.001, hue=(t2*55)%360;
+        drawPrismaShrimp(ac,px,py,dir,ps.phase);
+        // Névfelirat a test fölé (koronaspinák teteje ~56*0.35 = 20px felett)
+        ac.save();
+        ac.font='bold 10px Segoe UI,Arial,sans-serif'; ac.textAlign='center';
+        const ly=py-56*0.38-10;
+        ac.fillStyle='rgba(0,0,0,0.75)'; ac.fillText('✨ Prizma Garnéla',px+1,ly+1);
+        ac.fillStyle=`hsl(${hue},100%,80%)`; ac.fillText('✨ Prizma Garnéla',px,ly);
+        ac.restore();
+    }
 }
 
 // ══════════════════════════════════════════════
@@ -3323,11 +4528,12 @@ function getNextBossName(){
 const ARROW_KEYS=['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'];
 const ARROW_CHAR={'ArrowLeft':'←','ArrowRight':'→','ArrowUp':'↑','ArrowDown':'↓'};
 
-let bossSequence=[], bossStep=0, bossTierVal=0;
+let bossSequence=[], bossStep=0, bossTierVal=0, bossSpeciesVal=0;
 let bossTimerRaf=null, bossStartTime=0, bossActive=false;
 
-function startBossMinigame(tier){
+function startBossMinigame(tier, speciesIdx=0){
     bossTierVal=tier;
+    bossSpeciesVal=speciesIdx;
     bossStep=0;
     bossActive=true;
     bossSequence=Array.from({length:5},()=>ARROW_KEYS[Math.floor(Math.random()*4)]);
@@ -3386,6 +4592,7 @@ function bossSuccess(){
     cancelAnimationFrame(bossTimerRaf);
     document.getElementById('boss-overlay').style.display='none';
     caughtTier=bossTierVal;
+    caughtSpeciesIdx=bossSpeciesVal;
     window._pendingBoss=true;
     fishState=FS.REELING;
     setMsg('🎉 ELFOGTAD! A főnök garnéla a zsákodban van!');
@@ -3473,7 +4680,7 @@ let dudukTipIdx = -1;
 let dudukBubbleHideTimer = null;
 
 function showDudukTip() {
-    if(currentTab==='quests' || currentTab==='shop') return;
+    if(currentTab==='quests' || currentTab==='shop' || currentTab==='catalog' || currentTab==='altar') return;
     const bubble = document.getElementById('duduk-bubble');
     const textEl = document.getElementById('duduk-tip-text');
     if(!bubble || !textEl) return;
@@ -3597,9 +4804,11 @@ function resolveTimingBar(timeout){
     if(result==='red')         { initAC(); SFX.merge(); }
     else if(result==='yellow') { initAC(); SFX.catch(); }
 
-    // Timing bónusz → tier meghatározás
+    // Timing bónusz → tier + species meghatározás
     window._timingBoost = result==='red' ? 8 : result==='yellow' ? 4 : 0;
-    caughtTier = pickTier();
+    const _pick = pickCatch();
+    caughtTier = _pick.tier;
+    caughtSpeciesIdx = _pick.speciesIdx;
     window._timingBoost = 0;
 
     // Lebegő találat szöveg
@@ -3625,9 +4834,9 @@ function resolveTimingBar(timeout){
     clearTimeout(nibbleTimer);
     fishState = FS.REELING;
     const msgs = {
-        red:    `🎯 TÖKÉLETES! ${TIERS[caughtTier].name} — jobb esély volt!`,
-        yellow: `⭐ Jó fogás! ${TIERS[caughtTier].name} — kis bónusszal!`,
-        grey:   `💪 Behúzás... ${TIERS[caughtTier].name} garnéla!`,
+        red:    `🎯 TÖKÉLETES! ${SPECIES[caughtSpeciesIdx].shortName} ${TIERS[caughtTier].name} — jobb esély volt!`,
+        yellow: `⭐ Jó fogás! ${SPECIES[caughtSpeciesIdx].shortName} ${TIERS[caughtTier].name} — kis bónusszal!`,
+        grey:   `💪 Behúzás... ${SPECIES[caughtSpeciesIdx].shortName} ${TIERS[caughtTier].name} garnéla!`,
     };
     setMsg(msgs[result]);
 }
@@ -3862,7 +5071,213 @@ function unlockDecoration(id){
 }
 
 // ── Tab kapcsolás kiterjesztve ─────────────────
-document.getElementById('tab-btn-quests').addEventListener('click', ()=>switchTab('quests'));
+document.getElementById('tab-btn-catalog').addEventListener('click', ()=>switchTab('catalog'));
+document.getElementById('tab-btn-quests').addEventListener('click',  ()=>switchTab('quests'));
+
+// ══════════════════════════════════════════════
+//  MAP SELECTOR
+// ══════════════════════════════════════════════
+function renderMapSelector(){
+    const el=document.getElementById('map-selector');
+    if(!el) return;
+    el.innerHTML='';
+    MAPS.forEach(map=>{
+        const locked=!unlockedMaps.includes(map.id);
+        const active=map.id===currentMapId;
+        const btn=document.createElement('button');
+        btn.className='map-btn'+(active?' active':'')+(locked?' locked':'');
+        btn.textContent=locked
+            ?`🔒 ${map.icon} ${map.name} (${map.unlockAt} fogás)`
+            :`${map.icon} ${map.name}`;
+        btn.title=locked?`Szükséges: ${map.unlockAt} fogás`:map.name;
+        if(!locked&&!active){
+            btn.addEventListener('click',()=>{
+                currentMapId=map.id;
+                saveGame();
+                renderMapSelector();
+                updateMapDock();
+                setMsg(`🗺️ Helyszín váltva: ${map.icon} ${map.name}`);
+            });
+        }
+        el.appendChild(btn);
+    });
+}
+
+function checkMapUnlocks(){
+    let anyNew=false;
+    MAPS.forEach(map=>{
+        if(map.unlockAt>0&&!unlockedMaps.includes(map.id)&&catches>=map.unlockAt){
+            unlockedMaps.push(map.id);
+            anyNew=true;
+            showFloat(`🗺️ ${map.icon} Feloldva!`,W/2);
+            setMsg(`🎉 Új helyszín feloldva: ${map.icon} ${map.name}!`);
+        }
+    });
+    if(anyNew){ renderMapSelector(); saveGame(); }
+}
+
+// ══════════════════════════════════════════════
+//  KATALÓGUS
+// ══════════════════════════════════════════════
+function drawShrimpSilhouette(sc,x,y,size){
+    sc.save();
+    sc.fillStyle='#1a2a3a';
+    sc.shadowColor='transparent'; sc.shadowBlur=0;
+    sc.beginPath(); sc.ellipse(x,y,size*0.7,size*0.32,0,0,Math.PI*2); sc.fill();
+    sc.beginPath();
+    sc.moveTo(x+size*0.62,y);
+    sc.lineTo(x+size*0.92,y-size*0.22);
+    sc.lineTo(x+size*0.92,y+size*0.22);
+    sc.closePath(); sc.fill();
+    sc.beginPath();
+    sc.moveTo(x-size*0.52,y);
+    sc.lineTo(x-size*0.82,y-size*0.08);
+    sc.lineTo(x-size*0.52,y+size*0.1);
+    sc.closePath(); sc.fill();
+    sc.restore();
+}
+
+function renderCatalog(){
+    const body=document.getElementById('catalog-body');
+    if(!body) return;
+    const total=SPECIES.length*TIERS.length+1; // +1 a Prizma
+    const found=Object.keys(discoveredShrimp).length+(prismaDiscovered?1:0);
+    const countEl=document.getElementById('catalog-count');
+    if(countEl) countEl.textContent=found+'/'+total;
+
+    body.innerHTML='';
+    MAPS.forEach(map=>{
+        const mapLocked=!unlockedMaps.includes(map.id);
+        const mapSpecies=SPECIES.map((sp,i)=>({sp,i})).filter(({sp})=>sp.mapId===map.id);
+
+        const section=document.createElement('div');
+        section.className='catalog-map-section';
+
+        const hdr=document.createElement('div');
+        hdr.className='catalog-map-header'+(mapLocked?' locked':'');
+        hdr.textContent=mapLocked
+            ?`🔒 ${map.icon} ${map.name} — ${map.unlockAt} fogás után nyílik`
+            :`${map.icon} ${map.name}`;
+        section.appendChild(hdr);
+
+        mapSpecies.forEach(({sp,i:spIdx})=>{
+            const spColor=sp.tint||'#3a8abe';
+            const block=document.createElement('div');
+            block.className='catalog-species-block';
+
+            const spName=document.createElement('div');
+            spName.className='catalog-species-name'+(mapLocked?' locked':'');
+            spName.style.color=spColor;
+            spName.textContent=`${sp.icon} ${sp.name}`;
+            block.appendChild(spName);
+
+            // 5×2 rács (repeat(5) → 2 sor automatikusan)
+            const tiersGrid=document.createElement('div');
+            tiersGrid.className='catalog-species-tiers';
+            tiersGrid.style.borderLeftColor=spColor;
+
+            for(let t=0;t<TIERS.length;t++){
+                const key=spIdx+'_'+t;
+                const isFound=discoveredShrimp[key]===true;
+
+                let slotCls='slot ';
+                if(mapLocked)     slotCls+='cat-locked';
+                else if(!isFound) slotCls+='cat-unknown';
+                else              slotCls+='cat-found';
+
+                const cell=document.createElement('div');
+                cell.className=slotCls;
+
+                const badge=document.createElement('div');
+                badge.className='stier';
+                badge.textContent='T'+(t+1);
+                cell.appendChild(badge);
+
+                const cv=document.createElement('canvas');
+                const dpr=window.devicePixelRatio||1;
+                cv.width=34*dpr; cv.height=34*dpr;
+                cv.style.width='34px'; cv.style.height='34px';
+                cv.className='slot-canvas';
+                if(t===9&&isFound&&!mapLocked) cv.dataset.rainbow='1';
+                const sc=cv.getContext('2d');
+                sc.scale(dpr,dpr);
+                if(isFound&&!mapLocked){
+                    drawShrimp(sc,17,19,13,t,spIdx,1,Date.now()*0.003+t);
+                } else {
+                    drawShrimpSilhouette(sc,17,14,10);
+                }
+                cell.appendChild(cv);
+
+                const nameEl=document.createElement('div');
+                nameEl.className='sname';
+                nameEl.textContent=(isFound&&!mapLocked)?TIERS[t].name:'???';
+                cell.appendChild(nameEl);
+
+                tiersGrid.appendChild(cell);
+            }
+            block.appendChild(tiersGrid);
+            section.appendChild(block);
+        });
+        body.appendChild(section);
+    });
+
+    // ── Prizma különleges sor ──
+    const prismaSection=document.createElement('div');
+    prismaSection.className='catalog-map-section';
+    prismaSection.style.borderRight='none';
+
+    const prismaHdr=document.createElement('div');
+    prismaHdr.className='catalog-map-header';
+    prismaHdr.style.cssText='color:#c070f0;border-left-color:#9030cc;';
+    prismaHdr.textContent='✨ Különleges';
+    prismaSection.appendChild(prismaHdr);
+
+    const prismaBlock=document.createElement('div');
+    prismaBlock.className='catalog-species-block';
+
+    const prismaNameEl=document.createElement('div');
+    prismaNameEl.className='catalog-species-name';
+    prismaNameEl.style.color=prismaDiscovered?'#e080ff':'#2a1a3a';
+    prismaNameEl.textContent=prismaDiscovered?'✨ Prizma Garnéla':'??? Ismeretlen';
+    prismaBlock.appendChild(prismaNameEl);
+
+    const prismaGrid=document.createElement('div');
+    prismaGrid.className='catalog-species-tiers';
+    prismaGrid.style.borderLeftColor='#9030cc';
+
+    const prismaCell=document.createElement('div');
+    prismaCell.className='slot '+(prismaDiscovered?'cat-found':'cat-unknown');
+    prismaCell.style.cssText='min-width:64px;height:64px;width:64px;';
+
+    const prismaBadge=document.createElement('div');
+    prismaBadge.className='stier';
+    prismaBadge.style.color=prismaDiscovered?'#d880ff':'';
+    prismaBadge.textContent='★';
+    prismaCell.appendChild(prismaBadge);
+
+    const prismaCv=document.createElement('canvas');
+    const dpr=window.devicePixelRatio||1;
+    prismaCv.width=44*dpr; prismaCv.height=44*dpr;
+    prismaCv.style.cssText='width:44px;height:44px;display:block;';
+    prismaCell.appendChild(prismaCv);
+    const psc=prismaCv.getContext('2d');
+    psc.scale(dpr,dpr);
+    if(prismaDiscovered){
+        drawPrismaShrimp(psc, 18, 26, 1, Date.now()*0.001, 14);
+    } else {
+        drawShrimpSilhouette(psc,22,22,13);
+    }
+
+    const prismaNameBadge=document.createElement('div');
+    prismaNameBadge.className='sname';
+    prismaNameBadge.textContent=prismaDiscovered?'Prizma':'???';
+    prismaCell.appendChild(prismaNameBadge);
+
+    prismaGrid.appendChild(prismaCell);
+    prismaBlock.appendChild(prismaGrid);
+    prismaSection.appendChild(prismaBlock);
+    body.appendChild(prismaSection);
+}
 
 // ── switchTab és quest tab ─────────────────────────────────────────────────────────────────────
 
@@ -3875,15 +5290,16 @@ document.getElementById('tab-btn-quests').addEventListener('click', ()=>switchTa
     if(!panel||!handle) return;
 
     function getMinH(){
-        const base = window.innerWidth<=640 ? 186 : 218;
+        const base = window.innerWidth<=640 ? 214 : 246;
         // Quest lista tényleges magasságából számolja a minimumot
         const ql = document.getElementById('quest-list');
         if(ql && ql.children.length>0){
             const handle  = document.getElementById('panel-drag-handle').offsetHeight;
+            const mapSel  = document.getElementById('map-selector').offsetHeight||0;
             const tabBar  = document.getElementById('tab-bar').offsetHeight;
             const tabPad  = 10; // #tab-quests padding top+bottom
             const buffer  = 10; // kért 10px üres tér az utolsó kártya alatt
-            const needed  = handle + tabBar + tabPad + ql.scrollHeight + buffer;
+            const needed  = handle + mapSel + tabBar + tabPad + ql.scrollHeight + buffer;
             return Math.max(base, needed);
         }
         return base;
@@ -4259,6 +5675,9 @@ updateGoldCoins();
 checkDailyReset();
 initQuests();
 renderBuffHUD();
+renderMapSelector();
+updateMapDock();
+checkMapUnlocks();
 </script>
 </body>
 </html>
