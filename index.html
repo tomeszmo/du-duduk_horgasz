@@ -43,6 +43,16 @@ body {
     top:11px; left:0; right:0; height:2px;
     background:rgba(255,200,120,0.28);
 }
+#sky-canvas {
+    position:absolute;
+    top:0; left:0;
+    pointer-events:none;
+    z-index:2;
+}
+.slot-canvas {
+    display:block;
+    flex-shrink:0;
+}
 
 #hud {
     position:absolute;
@@ -75,11 +85,11 @@ body {
 /* Fisherman head clip container */
 #fisherman-head-clip {
     position:absolute;
-    bottom:34px;
+    bottom:5px;
     left:50%;
     transform:translateX(-50%);
     width:160px;
-    height:160px;
+    height:186px;
     overflow:hidden;
     z-index:12;
     pointer-events:none;
@@ -89,24 +99,31 @@ body {
     /* 1024×1446 kép, height=460px → scale=0.318
        fej center: orig ~(358,289)px → rendered ~(114,92)px
        container 160×160 center=80px → offset: left=-(114-80)=-34, top=-(92-80)=-12 */
-    height:460px;
+    height:400px;
     width:auto;
-    top:-12px;
-    left:-34px;
-    filter:drop-shadow(2px 4px 14px rgba(0,0,0,0.9));
+    top: -18px;
+    left:-3px;
+    
 }
 /* Fisherman body (behind planks) */
 #fisherman-body-wrap {
     position:absolute;
-    bottom:34px;
+    bottom:5px;
     left:50%;
     transform:translateX(-50%);
-    z-index:4;
-    width:280px;
+    z-index:7;
+    width:380px;
     overflow:visible;
     pointer-events:none;
 }
-#fisherman-body-svg { width:100%; height:85px; overflow:visible; }
+#body-canvas { display:block; }
+#fisherman-rod-svg {
+    position:absolute;
+    left:334px;
+    top:170px;
+    overflow:visible;
+    pointer-events:none;
+}
 /* Forgáspont: talpak = az elem aljának közepe */
 #fisherman-body-wrap { transform-origin: center bottom !important; }
 #fisherman-head-clip { transform-origin: center bottom !important; }
@@ -116,7 +133,7 @@ body {
     65%     { transform:rotate(4deg); }
 }
 #rod-anim-group {
-    transform-origin:248px 70px;
+    transform-origin:0px 0px;
     animation:rodCast 4.5s ease-in-out infinite;
 }
 
@@ -126,6 +143,7 @@ body {
     display:block;
     cursor:crosshair;
     min-height:0;
+    z-index: 8;
 }
 
 /* ── BOTTOM PANEL (tabs) ── */
@@ -464,7 +482,7 @@ body {
 /* ── ANGER EFFECTS ── */
 #anger-wrap {
     position:absolute;
-    bottom:34px; left:50%;
+    bottom:5px; left:50%;
     transform:translateX(-50%);
     transform-origin:center bottom;
     width:160px; height:160px;
@@ -1168,22 +1186,17 @@ body {
     </div>
     <div id="status-msg">Kattints a vízre a horgászáshoz!</div>
     <div id="fisherman-body-wrap">
-        <svg id="fisherman-body-svg" viewBox="0 0 280 85" xmlns="http://www.w3.org/2000/svg">
-            <ellipse cx="140" cy="68" rx="80" ry="54" fill="#1a3a5c"/>
-            <ellipse cx="140" cy="55" rx="60" ry="38" fill="#1e4268"/>
-            <rect x="118" y="0" width="44" height="38" rx="14" fill="#1a3a5c"/>
-            <ellipse cx="55" cy="35" rx="28" ry="32" fill="#1a3a5c" transform="rotate(-12 55 35)"/>
-            <ellipse cx="30" cy="60" rx="14" ry="22" fill="#1a3a5c" transform="rotate(-20 30 60)"/>
-            <ellipse cx="225" cy="30" rx="28" ry="30" fill="#1a3a5c" transform="rotate(15 225 30)"/>
-            <ellipse cx="244" cy="58" rx="13" ry="22" fill="#1a3a5c" transform="rotate(30 244 58)"/>
-            <circle cx="252" cy="76" r="13" fill="#c8a070"/>
+        <!-- horgasz.png test, fehér háttér JS-sel eltávolítva -->
+        <canvas id="body-canvas"></canvas>
+        <!-- Horgászbot: az ököl pozíciójából indul (JS állítja be) -->
+        <svg id="fisherman-rod-svg">
             <g id="rod-anim-group">
-                <line x1="248" y1="70" x2="316" y2="-22"
+                <line x1="0" y1="0" x2="68" y2="-105"
                       stroke="#5a3200" stroke-width="7" stroke-linecap="round"/>
-                <line x1="248" y1="70" x2="316" y2="-22"
+                <line x1="0" y1="0" x2="68" y2="-105"
                       stroke="#c07830" stroke-width="3.5" stroke-linecap="round"/>
-                <circle cx="316" cy="-22" r="4.5" fill="#e8c050"/>
-                <line x1="316" y1="-22" x2="322" y2="-8"
+                <circle cx="68" cy="-105" r="4.5" fill="#e8c050"/>
+                <line x1="68" y1="-105" x2="74" y2="-90"
                       stroke="rgba(220,220,200,0.45)" stroke-width="1"/>
             </g>
         </svg>
@@ -1206,6 +1219,7 @@ body {
             <div class="puff"></div>
         </div>
     </div>
+    <canvas id="sky-canvas"></canvas>
     <div id="dock-planks"></div>
     <div id="equip-hint">⚙️</div>
 </div>
@@ -1597,28 +1611,24 @@ body {
 
     /* ── Horgász felsőtest ── */
     #fisherman-body-wrap {
-        bottom:26px;
-        width:190px;
+        bottom:5px;
+        width:250px;
     }
-    #fisherman-body-svg { height:58px; }
+    #fisherman-rod-svg { left:220px; top:112px; }
 
-    /* ── Fej ──
-       1024×1446 kép, height=310px → scale=0.214
-       face center: (358*0.214, 289*0.214) ≈ (77, 62)px
-       container 105×105, center=52.5
-       offset: left=-(77-53)=-24   top=-(62-53)=-9                */
+    /* ── Fej ── */
     #fisherman-head-clip {
-        bottom:26px;
+        bottom:5px;
         width:105px;
         height:105px;
     }
     #fisherman-head-img {
         height:310px;
-        top:-9px;
+        top:-48px;
         left:-24px;
     }
     #anger-wrap {
-        bottom:26px;
+        bottom:5px;
         width:105px;
         height:105px;
     }
@@ -1674,7 +1684,7 @@ const TIERS=[
     {name:'Zöld',       c:'#00e676', g:'#00bf58', pts:180,  funny:'Ninja garnéla a mélységből 🥷'},
     {name:'Kék',        c:'#29b6f6', g:'#0288d1', pts:450,  funny:'Óceán lelke maga 🌊'},
     {name:'Lila',       c:'#cc80ff', g:'#9c27b0', pts:1100, funny:'Kozmikus borzalom szépsége 🔮'},
-    {name:'Arany',      c:'#ffd700', g:'#ff8c00', pts:2800, funny:'Az élet értelme = arany rák 👑'},
+    {name:'Arany',      c:'#d4880a', g:'#ff5500', pts:2800, funny:'Az élet értelme = arany rák 👑'},
     {name:'Szivárvány', c:'rainbow', g:'rainbow', pts:8000, funny:'LEGENDA! A vízből maga az istenek adják! 🌈'},
 ];
 const WEIGHTS=[50,26,14,7,3.5,1.6,0.7,0.25,0.1,0.04];
@@ -2232,6 +2242,117 @@ let particles=[];
 let wt=0; // wave time
 
 // ══════════════════════════════════════════════
+//  SKY / CLOUDS
+// ══════════════════════════════════════════════
+let clouds=[];
+let skyCanvas=null, skyCtx=null;
+
+function drawCloudShape(sc,x,y,scale,alpha){
+    sc.save();
+    sc.globalAlpha=alpha;
+    sc.fillStyle='#fff';
+    sc.shadowColor='rgba(160,210,245,0.55)';
+    sc.shadowBlur=10;
+    sc.beginPath();
+    const puffs=[
+        [0,0,scale*0.38],
+        [scale*0.32,scale*0.07,scale*0.30],
+        [-scale*0.30,scale*0.09,scale*0.26],
+        [scale*0.62,scale*0.17,scale*0.20],
+        [-scale*0.55,scale*0.19,scale*0.17],
+    ];
+    for(const[dx,dy,r]of puffs){
+        sc.moveTo(x+dx+r,y+dy);
+        sc.arc(x+dx,y+dy,r,0,Math.PI*2);
+    }
+    sc.fill();
+    sc.restore();
+}
+
+function resizeSkyCanvas(){
+    const dock=document.getElementById('dock');
+    if(!skyCanvas||!dock)return;
+    skyCanvas.width=dock.offsetWidth;
+    skyCanvas.height=Math.max(10,dock.offsetHeight-34);
+}
+
+function initSkyCanvas(){
+    skyCanvas=document.getElementById('sky-canvas');
+    if(!skyCanvas)return;
+    skyCtx=skyCanvas.getContext('2d');
+    resizeSkyCanvas();
+    const W=skyCanvas.width, H=skyCanvas.height;
+    clouds=[
+        {x:W*0.12, y:H*0.22, scale:52, speed:0.18, alpha:0.70},
+        {x:W*0.45, y:H*0.42, scale:38, speed:0.11, alpha:0.55},
+        {x:W*0.72, y:H*0.16, scale:65, speed:0.20, alpha:0.63},
+        {x:W*1.10, y:H*0.50, scale:32, speed:0.14, alpha:0.48},
+    ];
+}
+
+function drawSkyClouds(){
+    if(!skyCtx||!skyCanvas)return;
+    const W=skyCanvas.width, H=skyCanvas.height;
+    skyCtx.clearRect(0,0,W,H);
+    for(const c of clouds){
+        c.x-=c.speed;
+        if(c.x < -c.scale*1.8) c.x=W+c.scale*1.8;
+        drawCloudShape(skyCtx,c.x,c.y,c.scale,c.alpha);
+    }
+}
+
+window.addEventListener('resize',resizeSkyCanvas);
+initSkyCanvas();
+
+// ══════════════════════════════════════════════
+//  HORGÁSZ TEST KÉP (horgasz.png, fehér bg törölve)
+// ══════════════════════════════════════════════
+(function initBodyCanvas(){
+    const canvas = document.getElementById('body-canvas');
+    const rodSvg = document.getElementById('fisherman-rod-svg');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.onload = function(){
+        // A kép felső 50%-át mutatjuk (fej+törzs+kitartott kar, fehér alap nélkül)
+        const CROP = 0.50;
+        const DST_W = 380;
+        const srcW = img.naturalWidth;
+        const srcCropH = img.naturalHeight * CROP;
+        const dstH = Math.round(srcCropH / srcW * DST_W);
+
+        canvas.width  = DST_W;
+        canvas.height = dstH;
+        canvas.style.width  = DST_W + 'px';
+        canvas.style.height = dstH + 'px';
+
+        // Rajzolás (csak a felső CROP rész)
+        ctx.drawImage(img, 0, 0, srcW, srcCropH, 0, 0, DST_W, dstH);
+
+        // Fehér háttér eltávolítása
+        const id = ctx.getImageData(0, 0, DST_W, dstH);
+        const d  = id.data;
+        for(let i=0; i<d.length; i+=4){
+            const r=d[i], g=d[i+1], b=d[i+2];
+            const brightness = (r+g+b)/3;
+            const max = Math.max(r,g,b), min = Math.min(r,g,b);
+            const sat = max===0 ? 0 : (max-min)/max;
+            if(brightness > 225 && sat < 0.12) d[i+3] = 0;
+        }
+        ctx.putImageData(id, 0, 0);
+
+        // Bot pozicionálása: jobb ököl ~88% x, ~86% y a crop-olt képen belül
+        if(rodSvg){
+            const rx = Math.round(0.88 * DST_W);
+            const ry = Math.round(0.86 * dstH);
+            rodSvg.style.left = rx + 'px';
+            rodSvg.style.top  = ry + 'px';
+        }
+    };
+    img.src = 'horgasz.png';
+})();
+
+// ══════════════════════════════════════════════
 //  OCEAN SHRIMP
 // ══════════════════════════════════════════════
 function mkShrimp(){
@@ -2620,6 +2741,13 @@ function loop(){
     updateFisherRotation();
     updateLineSVG();
     if(currentTab==='aquarium') renderAquariumCanvas();
+    drawSkyClouds();
+    // Animate rainbow slot canvases
+    document.querySelectorAll('.slot-canvas[data-rainbow]').forEach(cv=>{
+        const sc=cv.getContext('2d');
+        sc.clearRect(0,0,34,34);
+        drawShrimp(sc,17,19,13,9,1,Date.now()*0.01);
+    });
     requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
@@ -2751,18 +2879,17 @@ function renderInv(){
             div.appendChild(lockEl);
         }
 
-        // Shrimp circle
-        const circle=document.createElement('div');
-        circle.className='scircle';
-        if(t.c==='rainbow'){
-            circle.style.background='conic-gradient(red,yellow,green,cyan,blue,magenta,red)';
-            circle.style.boxShadow='0 0 10px white';
-        } else {
-            circle.style.background=t.c;
-            circle.style.boxShadow=`0 0 7px ${t.g}`;
-        }
-        circle.textContent='🦐';
-        div.appendChild(circle);
+        // Shrimp mini-canvas
+        const cv=document.createElement('canvas');
+        const dpr=window.devicePixelRatio||1;
+        cv.width=34*dpr; cv.height=34*dpr;
+        cv.style.width='34px'; cv.style.height='34px';
+        cv.className='slot-canvas';
+        if(item.tier===9) cv.dataset.rainbow='1';
+        const sc=cv.getContext('2d');
+        sc.scale(dpr,dpr);
+        drawShrimp(sc,17,19,13,item.tier,1,Math.random()*Math.PI*2);
+        div.appendChild(cv);
 
         // Name label: custom name in gold, or tier name in grey
         const nameEl=document.createElement('div');
@@ -3315,6 +3442,31 @@ const DUDUK_TIPS = [
     "💡 Az akvárium fénye ne legyen túl erős — a garnélák a félhomályt kedvelik!",
     "🎨 A szín a tartási körülményektől is függ — jobb víz = élénkebb garnéla!",
     "🍀 A vörös cseresznyegarnéla az egyik legnépszerűbb kezdőfaj — és okkal!",
+    "🔴 A garnélák rendkívül érzékenyek a rézre — még a csövekből kimosódó mikrogramm réz is végzetes lehet!",
+    "🧬 A vörös cseresznyegarnéla a természetben NEM létezik — teljesen emberi tenyésztés eredménye Tajvanon!",
+    "😴 A garnélák valóban alszanak — éjszaka lelassulnak, szinte mozdulatlanok. Ne ijedj meg!",
+    "🥚 Egy nőstény garnéla 20–30 petét hord a hasán, és folyamatosan szellőzteti őket a lábával!",
+    "👻 Az üveg garnéla (ghost shrimp) annyira átlátszó, hogy szabad szemmel látod ahogy megemészti az ételét.",
+    "⚠️ A vedlés után a régi páncélt NE vedd ki az akváriumból — visszarágják, tele van kalciummal!",
+    "🧹 A garnélák természetes akvárium-takarítók — algát, maradék ételt és elhalt növényrészeket esznek.",
+    "🌊 A Bamboo shrimp szűrőként táplálkozik a vízáramlásból — nem eszik a fenékről, áramlásra van szüksége!",
+    "💎 A Crystal Red Shrimp legmagasabb minőségű példányai akár 1000 dollárt is érhetnek darabonként!",
+    "👁️ A garnélák közel 360 fokos látással rendelkeznek — a szemük szárán forog!",
+    "🌋 A Sulawesi-tavi garnélák 30 millió éves tavakból származnak — más állat szinte nem is él ott velük!",
+    "🏊 Vedlés előtt a hímek órákon át úszkálnak a feromon-nyomot keresve — ezt 'swimming frenzy'-nek hívják!",
+    "🌱 Egy beérett akvárium biofilmje (felületeken nőtt mikrobák) fontosabb tápanyagforrás mint bármilyen bolti eledel.",
+    "🔬 A Caridina garnélák lényegesen érzékenyebbek mint a Neocaridina fajok — speciális lágy savas vizet igényelnek.",
+    "🌙 A vörös fény nem zavarja a garnélák alvását — éjszakai megfigyeléshez ideális!",
+    "📦 Szállításkor figyelj a hidegre — a garnéla már néhány fok közelében is megdermedhet a csomagban!",
+    "🎨 A garnélákat 'color grading' rendszerrel értékelik — minél egységesebb a szín, annál értékesebb az egyed.",
+    "👶 A garnéla nem ikraként, hanem teljesen kész miniatűr garnélaként születik — nincs lárva stádium!",
+    "🔢 Egy 60 literes akváriumban akár 200 garnéla is elférhet — sokkal több mint ugyanannyi halból!",
+    "🌿 A vízi mohák (Riccia, Christmas moss, Flame moss) tökéletesek garnélásba — rengeteg búvóhely és biofilm.",
+    "🧪 A KH (karbonátkeménység) stabilizálja a pH-t — túl alacsony KH esetén veszélyes pH-ingadozások léphetnek fel!",
+    "🐌 A csigák és garnélák remekül megférnek egymással — a csigák extra takarítást végeznek, nem bántják a garnélát.",
+    "💊 Soha ne adj garnélás akváriumba bolti gyógyszert ellenőrzés nélkül — sok tartalmaz garnélaölő anyagot!",
+    "🌡️ A hőmérséklet hirtelen változása (akár 2–3 fok is) sokkal veszélyesebb mint az alacsony hőmérséklet önmagában.",
+    "🍂 Az őszilevél (különösen a mándulafa-levél) természetes antibakteriális hatású és a garnélák imádják rágcsálni!",
 ];
 
 let dudukTipIdx = -1;
