@@ -169,6 +169,8 @@ body {
     flex-shrink:0;
     display:flex;
     flex-direction:column;
+    position:relative;
+    z-index:15;
 }
 /* Drag handle */
 #panel-drag-handle {
@@ -994,8 +996,8 @@ body {
 #equip-hint {
     position:absolute; top:50%; left:50%;
     transform:translate(-50%,-50%);
-    font-size:13px; opacity:0.55; pointer-events:none;
-    z-index:15; animation:hintPulse 2.8s ease-in-out infinite;
+    font-size:13px; opacity:0; pointer-events:none;
+    z-index:15;
 }
 @keyframes hintPulse {
     0%,100% { opacity:0.3; transform:translate(-50%,-50%) scale(1); }
@@ -1447,6 +1449,31 @@ body {
         </svg>
         <!-- horgasz.png — a kéz a bot elé rajzolódik -->
         <canvas id="body-canvas"></canvas>
+        <!-- Kalóz csónak (Kalóz Sziget) -->
+        <canvas id="boat-canvas" style="display:none; position:absolute; bottom:0; left:0; z-index:3;"></canvas>
+        <!-- Tengeralattjáró (Abisszális Zóna) -->
+        <canvas id="sub-canvas" style="display:none; position:absolute; bottom:0; left:0;"></canvas>
+        <svg id="sub-arm-svg" style="display:none; position:absolute; left:258px; top:128px; overflow:visible; pointer-events:none;">
+            <g id="sub-arm-group">
+                <!-- Felső kar -->
+                <line x1="0" y1="0" x2="22" y2="22" stroke="#2a3a3a" stroke-width="11" stroke-linecap="round"/>
+                <line x1="0" y1="0" x2="22" y2="22" stroke="#4a6060" stroke-width="5" stroke-linecap="round"/>
+                <!-- Ízület -->
+                <circle cx="22" cy="22" r="7" fill="#3a5050" stroke="#5a7070" stroke-width="1.5"/>
+                <!-- Alsó kar -->
+                <line x1="22" y1="22" x2="50" y2="52" stroke="#2a3a3a" stroke-width="9" stroke-linecap="round"/>
+                <line x1="22" y1="22" x2="50" y2="52" stroke="#4a6060" stroke-width="4" stroke-linecap="round"/>
+                <!-- Ízület 2 -->
+                <circle cx="50" cy="52" r="6" fill="#3a5050" stroke="#5a7070" stroke-width="1.5"/>
+                <!-- Karmok (3 ujj) -->
+                <line x1="50" y1="52" x2="40" y2="72" stroke="#607080" stroke-width="4" stroke-linecap="round"/>
+                <line x1="50" y1="52" x2="53" y2="74" stroke="#607080" stroke-width="4" stroke-linecap="round"/>
+                <line x1="50" y1="52" x2="64" y2="66" stroke="#607080" stroke-width="4" stroke-linecap="round"/>
+                <!-- Zöld glow pontok az ízületeken -->
+                <circle cx="22" cy="22" r="3" fill="rgba(0,220,160,0.7)"/>
+                <circle cx="50" cy="52" r="3" fill="rgba(0,220,160,0.7)"/>
+            </g>
+        </svg>
         <div id="equip-hint">⚙️</div>
     </div>
     <div id="fisherman-head-clip">
@@ -2054,6 +2081,10 @@ const SPECIES=[
      tint:'#ff5500', tintStr:0.5,  desc:'Élénk narancsvörös. Trópusi korallzátonyokon él.'},
     {id:'arany_sarkany',name:'Lagúna Garnéla',         shortName:'Lagúna',   icon:'🐠', mapId:'melyseg',
      tint:'#00ccaa', tintStr:0.42, desc:'Smaragdzöld csillogás. Sekély lagúnák kincse.'},
+    {id:'kristaly_larva', name:'Kristálylárva Garnéla', shortName:'Kristály', icon:'🔮', mapId:'abissz',
+     tint:null, tintStr:0, desc:'Teljesen átlátszó, tierszínnel pulzáló biolumineszcens lény.'},
+    {id:'melyseg_szellemje', name:'Mélység Szellemje',  shortName:'Szellem',  icon:'🌑', mapId:'abissz',
+     tint:null, tintStr:0, desc:'Koromfekete test, glowing tierszínű szemek és lábak.'},
 ];
 
 const MAPS=[
@@ -2065,6 +2096,8 @@ const MAPS=[
      bgTop:'#00c8e0', bgMid:'#009ab8', bgBot:'#2a8870'},
     {id:'kaloz',   name:'Kalóz Sziget',        icon:'🏴‍☠️', unlockAt:600,
      bgTop:'#1a0e2e', bgMid:'#0f0820', bgBot:'#06040f'},
+    {id:'abissz',  name:'Abisszális Zóna',     icon:'🌑',   unlockAt:1000,
+     bgTop:'#030108', bgMid:'#020106', bgBot:'#010004'},
 ];
 
 // ── Kalóz Sziget: kincses ládák ─────────────────
@@ -2509,9 +2542,11 @@ let devMode=false;
 let devSnapshot=null;
 let nibbleTimer=null;
 let nibbled=false;
+let abisszGreyMiss=false;
 // Timing bar
 let tbActive=false, tbPos=0, tbDir=1, tbSpeed=0.5, tbBounceCount=0;
 let tbYX=0, tbYW=0, tbRX=0, tbRW=0;
+let tbTremble=0; // Abisszális Zóna: zóna-rezgés eltolás (0.0–1.0 arányban)
 let tbRaf=null, tbLastT=0;
 
 // Fisher cursor-follow
@@ -2935,7 +2970,97 @@ function tierColor(tier){
     return{fill:t.c,glow:t.g};
 }
 
+function drawCrystalShrimp(actx,x,y,size,tier,dir,phase){
+    const{fill,glow}=tierColor(tier);
+    const pulse=0.45+Math.sin(phase*2.2)*0.35;
+    actx.save();
+    actx.translate(x,y);
+    if(dir<0)actx.scale(-1,1);
+    actx.rotate(Math.sin(phase)*0.13);
+    // Aura
+    actx.shadowColor=glow; actx.shadowBlur=18+pulse*14;
+    actx.globalAlpha=0.1+pulse*0.12;
+    actx.fillStyle=fill;
+    actx.beginPath(); actx.ellipse(0,0,size*0.85,size*0.38,0,0,Math.PI*2); actx.fill();
+    // Átlátszó test
+    actx.globalAlpha=0.12+pulse*0.18; actx.shadowBlur=0;
+    actx.fillStyle=fill;
+    for(let i=0;i<5;i++){
+        const sx=-size*0.32+i*size*0.22;
+        actx.beginPath(); actx.ellipse(sx,0,size*0.15,size*0.24,0,0,Math.PI*2); actx.fill();
+    }
+    // Farok
+    actx.globalAlpha=0.2+pulse*0.2; actx.strokeStyle=fill; actx.lineWidth=1.2;
+    for(let i=-2;i<=2;i++){
+        actx.beginPath(); actx.moveTo(size*0.5,0);
+        actx.lineTo(size*0.88+Math.abs(i)*0.06*size, i*size*0.18); actx.stroke();
+    }
+    // Szem
+    actx.globalAlpha=0.75+pulse*0.25; actx.shadowColor=glow; actx.shadowBlur=10;
+    actx.fillStyle=fill;
+    actx.beginPath(); actx.arc(-size*0.6,-size*0.08,size*0.1,0,Math.PI*2); actx.fill();
+    actx.fillStyle='#ffffff'; actx.globalAlpha=0.9;
+    actx.beginPath(); actx.arc(-size*0.61,-size*0.09,size*0.05,0,Math.PI*2); actx.fill();
+    // Csápok
+    actx.globalAlpha=0.3+pulse*0.2; actx.strokeStyle=fill; actx.lineWidth=0.7; actx.shadowBlur=5;
+    actx.beginPath(); actx.moveTo(-size*0.65,-size*0.1);
+    actx.bezierCurveTo(-size*0.9,-size*0.42,-size*0.65,-size*0.52,-size*0.45,-size*0.36); actx.stroke();
+    // Lábak
+    actx.lineWidth=0.7; actx.shadowBlur=0;
+    for(let i=0;i<5;i++){
+        const lx=-size*0.28+i*size*0.2; actx.globalAlpha=0.18+pulse*0.15;
+        actx.beginPath(); actx.moveTo(lx,size*0.1); actx.lineTo(lx-size*0.12,size*0.42); actx.stroke();
+    }
+    actx.restore();
+}
+function drawGhostShrimp(actx,x,y,size,tier,dir,phase){
+    const{fill,glow}=tierColor(tier);
+    const pulse=0.5+Math.sin(phase*1.8)*0.5;
+    actx.save();
+    actx.translate(x,y);
+    if(dir<0)actx.scale(-1,1);
+    actx.rotate(Math.sin(phase)*0.13);
+    // Tier-színű aura
+    actx.shadowColor=glow; actx.shadowBlur=14+pulse*12;
+    actx.globalAlpha=0.06+pulse*0.06; actx.fillStyle=fill;
+    actx.beginPath(); actx.ellipse(0,0,size*0.8,size*0.36,0,0,Math.PI*2); actx.fill();
+    // Fekete test szegmensek
+    actx.shadowBlur=0; actx.globalAlpha=0.96; actx.fillStyle='#07070e';
+    actx.beginPath(); actx.ellipse(0,0,size*0.62,size*0.26,0,0,Math.PI*2); actx.fill();
+    for(let i=0;i<5;i++){
+        const sx=-size*0.3+i*size*0.22;
+        actx.beginPath(); actx.ellipse(sx,0,size*0.13,size*0.22,0,0,Math.PI*2); actx.fill();
+    }
+    // Farok — fekete
+    for(let i=-2;i<=2;i++){
+        actx.beginPath(); actx.moveTo(size*0.5,0);
+        actx.lineTo(size*0.84+Math.abs(i)*0.07*size,i*size*0.19);
+        actx.lineTo(size*0.5+Math.abs(i)*0.04*size,i*size*0.09);
+        actx.fill();
+    }
+    // Izzó tier-színű szem
+    actx.shadowColor=glow; actx.shadowBlur=18+pulse*14;
+    actx.fillStyle=fill; actx.globalAlpha=0.8+pulse*0.2;
+    actx.beginPath(); actx.arc(-size*0.57,-size*0.07,size*0.13,0,Math.PI*2); actx.fill();
+    actx.fillStyle=glow; actx.globalAlpha=1; actx.shadowBlur=8;
+    actx.beginPath(); actx.arc(-size*0.57,-size*0.07,size*0.07,0,Math.PI*2); actx.fill();
+    // Tier-színű lábak
+    actx.strokeStyle=fill; actx.lineWidth=0.9; actx.shadowBlur=6;
+    for(let i=0;i<5;i++){
+        const lx=-size*0.28+i*size*0.2; actx.globalAlpha=0.45+pulse*0.3;
+        actx.beginPath(); actx.moveTo(lx,size*0.1); actx.lineTo(lx-size*0.13,size*0.43); actx.stroke();
+    }
+    // Csápok — tier-szín
+    actx.globalAlpha=0.5+pulse*0.25; actx.lineWidth=0.8;
+    actx.beginPath(); actx.moveTo(-size*0.64,-size*0.1);
+    actx.bezierCurveTo(-size*0.88,-size*0.42,-size*0.62,-size*0.52,-size*0.42,-size*0.36); actx.stroke();
+    actx.beginPath(); actx.moveTo(-size*0.64,-size*0.04);
+    actx.bezierCurveTo(-size*1.0,-size*0.28,-size*0.78,-size*0.38,-size*0.58,-size*0.28); actx.stroke();
+    actx.restore();
+}
 function drawShrimp(actx,x,y,size,tier,speciesIdx,dir,phase){
+    if(speciesIdx===6){ drawCrystalShrimp(actx,x,y,size,tier,dir,phase); return; }
+    if(speciesIdx===7){ drawGhostShrimp(actx,x,y,size,tier,dir,phase); return; }
     const si=speciesIdx||0;
     const{fill,glow}=tierColorForSpecies(tier,si);
     actx.save();
@@ -3152,7 +3277,7 @@ function drawSeabedSilhouettes(){
                 }
             }
         }
-    } else {
+    } else if(currentMapId==='melyseg'){
         // Trópusi tengerpart – homokos alap + korallok
         // Homok gradient
         const sand=ctx.createLinearGradient(0,H*0.75,0,H);
@@ -3205,7 +3330,34 @@ function drawSeabedSilhouettes(){
             ctx.fill();
         }
     }
-    if(currentMapId==='kaloz'){
+    if(currentMapId==='abissz'){
+        // Abisszális Zóna – hidrotermális kürtők + biolumineszcens aljzat
+        const vent=[0.14,0.38,0.62,0.85];
+        vent.forEach((rx,i)=>{
+            const vx=rx*W;
+            // Kürtő kő
+            ctx.fillStyle='#0a0810'; ctx.globalAlpha=0.9;
+            ctx.beginPath();
+            ctx.moveTo(vx-10,H); ctx.lineTo(vx-4,H-28-i*8); ctx.lineTo(vx+4,H-28-i*8); ctx.lineTo(vx+10,H);
+            ctx.fill();
+            // Glow a csúcsnál
+            const g=ctx.createRadialGradient(vx,H-28-i*8,0,vx,H-28-i*8,18);
+            g.addColorStop(0,'rgba(80,0,160,0.55)');
+            g.addColorStop(1,'rgba(40,0,80,0)');
+            ctx.fillStyle=g; ctx.globalAlpha=0.7+Math.sin(wt*1.4+i)*0.3;
+            ctx.beginPath(); ctx.arc(vx,H-28-i*8,18,0,Math.PI*2); ctx.fill();
+        });
+        // Biolumineszcens aljzat foltok
+        for(let f=0;f<12;f++){
+            const seed=f*317.5;
+            const fx=((seed*0.41)%(W-40))+20;
+            const pulse=0.3+Math.sin(wt*0.8+seed)*0.4;
+            const colors=['rgba(0,200,160,','rgba(120,0,255,','rgba(0,120,255,'];
+            ctx.fillStyle=colors[f%3]+(0.08+pulse*0.1)+')';
+            ctx.globalAlpha=1;
+            ctx.beginPath(); ctx.ellipse(fx,H-3,6+pulse*4,2.5,0,0,Math.PI*2); ctx.fill();
+        }
+    } else if(currentMapId==='kaloz'){
         // Kalóz Sziget – roncs gerendák az aljzaton
         const beamSeeds=[0.05,0.18,0.32,0.47,0.61,0.75,0.88];
         beamSeeds.forEach((rx,i)=>{
@@ -3268,6 +3420,30 @@ function drawAmbientParticles(){
             ctx.beginPath(); ctx.arc(bx,by,r,0,Math.PI*2); ctx.stroke();
         }
     } else {
+        // Abisszális Zóna: lassan úszó biolumineszcens orbok
+        if(currentMapId==='abissz'){
+            const at=now*0.001;
+            const abColors=['rgba(0,220,180,','rgba(140,0,255,','rgba(0,100,255,','rgba(80,255,200,'];
+            for(let p=0;p<22;p++){
+                const seed=p*193.7+11;
+                const cycle=6000+(seed%2000)*2;
+                const prog=(now+seed*150)%cycle/cycle;
+                const px=((seed*0.33)%(W-50))+25+Math.sin(at*0.3+seed)*18;
+                const py=H*0.05+H*0.9*(1-prog);
+                const pulse=0.4+Math.sin(at*1.5+seed)*0.4;
+                ctx.globalAlpha=(0.15+pulse*0.35)*(1-prog*0.25);
+                const c=abColors[p%4];
+                if(p%5===0){
+                    ctx.fillStyle=c+'0.9)'; ctx.shadowColor=c+'1)'; ctx.shadowBlur=10;
+                    ctx.beginPath(); ctx.arc(px,py,2.5+pulse*2,0,Math.PI*2); ctx.fill();
+                    ctx.shadowBlur=0;
+                } else {
+                    ctx.strokeStyle=c+'0.8)'; ctx.lineWidth=1;
+                    ctx.beginPath(); ctx.arc(px,py,1.5+pulse*1.2,0,Math.PI*2); ctx.stroke();
+                }
+            }
+            ctx.restore(); return;
+        }
         // Kalóz Sziget: arany érme-csillogások a mélységből
         if(currentMapId==='kaloz'){
             const kt=now*0.001;
@@ -3318,18 +3494,196 @@ function drawAmbientParticles(){
     ctx.restore();
 }
 
+function _drawSubRoundRect(ctx,x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y);
+    ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+    ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+    ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+    ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
+    ctx.closePath();
+}
+let _subCanvasReady=false;
+function initSubCanvas(){
+    if(_subCanvasReady) return;
+    const cv=document.getElementById('sub-canvas'); if(!cv) return;
+    const cx=cv.getContext('2d');
+    const CW=380,CH=200;
+    cv.width=CW; cv.height=CH;
+    cv.style.width=CW+'px'; cv.style.height=CH+'px';
+    // Hull
+    const hullG=cx.createLinearGradient(20,88,20,178);
+    hullG.addColorStop(0,'#3a4e4e'); hullG.addColorStop(0.5,'#263838'); hullG.addColorStop(1,'#162828');
+    cx.shadowColor='rgba(0,220,160,0.5)'; cx.shadowBlur=18;
+    cx.fillStyle=hullG; _drawSubRoundRect(cx,18,88,308,90,44); cx.fill();
+    cx.shadowBlur=0;
+    // Hull highlight
+    cx.strokeStyle='rgba(80,160,130,0.35)'; cx.lineWidth=2;
+    cx.beginPath(); cx.moveTo(55,94); cx.lineTo(310,94); cx.stroke();
+    // Rivetek
+    cx.fillStyle='#4a6060';
+    for(let rx=60;rx<310;rx+=38){
+        cx.beginPath();cx.arc(rx,100,2.5,0,Math.PI*2);cx.fill();
+        cx.beginPath();cx.arc(rx,168,2.5,0,Math.PI*2);cx.fill();
+    }
+    // Portholes (3)
+    [82,162,242].forEach(px=>{
+        cx.strokeStyle='#4a6060'; cx.lineWidth=3;
+        cx.beginPath(); cx.arc(px,133,15,0,Math.PI*2); cx.stroke();
+        const pg=cx.createRadialGradient(px-4,127,2,px,133,15);
+        pg.addColorStop(0,'rgba(0,200,150,0.38)'); pg.addColorStop(1,'rgba(0,80,60,0.1)');
+        cx.fillStyle=pg; cx.beginPath(); cx.arc(px,133,13,0,Math.PI*2); cx.fill();
+        cx.fillStyle='rgba(180,255,220,0.22)';
+        cx.beginPath(); cx.ellipse(px-4,127,5,3,-0.4,0,Math.PI*2); cx.fill();
+        // Porthole glow dot
+        cx.fillStyle='rgba(0,220,160,0.5)';
+        cx.beginPath(); cx.arc(px+10,142,3,0,Math.PI*2); cx.fill();
+    });
+    // Conning tower
+    const tG=cx.createLinearGradient(148,18,234,18);
+    tG.addColorStop(0,'#263838'); tG.addColorStop(0.5,'#3a5050'); tG.addColorStop(1,'#263838');
+    cx.shadowColor='rgba(0,200,140,0.4)'; cx.shadowBlur=12;
+    cx.fillStyle=tG; _drawSubRoundRect(cx,148,18,86,73,9); cx.fill();
+    cx.shadowBlur=0;
+    cx.strokeStyle='rgba(80,160,130,0.3)'; cx.lineWidth=1.5;
+    cx.beginPath(); cx.moveTo(153,23); cx.lineTo(230,23); cx.stroke();
+    // Tower periscope
+    cx.strokeStyle='#3a5050'; cx.lineWidth=5;
+    cx.beginPath(); cx.moveTo(198,18); cx.lineTo(198,8); cx.stroke();
+    cx.fillStyle='#4a6060'; cx.beginPath(); cx.arc(198,7,5,0,Math.PI*2); cx.fill();
+    // Tower windows (2)
+    [167,209].forEach(wx=>{
+        cx.strokeStyle='#4a6060'; cx.lineWidth=2;
+        cx.beginPath(); cx.arc(wx,53,8,0,Math.PI*2); cx.stroke();
+        const wg=cx.createRadialGradient(wx-2,50,1,wx,53,8);
+        wg.addColorStop(0,'rgba(0,220,160,0.42)'); wg.addColorStop(1,'rgba(0,100,80,0.08)');
+        cx.fillStyle=wg; cx.beginPath(); cx.arc(wx,53,7,0,Math.PI*2); cx.fill();
+    });
+    // Propeller (bal)
+    cx.strokeStyle='#3a5858'; cx.lineWidth=3;
+    for(let a=0;a<3;a++){
+        const ang=(a/3)*Math.PI*2;
+        cx.beginPath(); cx.moveTo(20,133);
+        cx.lineTo(20+Math.cos(ang)*18,133+Math.sin(ang)*12); cx.stroke();
+    }
+    cx.fillStyle='#324848'; cx.beginPath(); cx.arc(20,133,5,0,Math.PI*2); cx.fill();
+    // Kar aljzat
+    cx.fillStyle='#3a5050'; cx.shadowColor='rgba(0,220,160,0.6)'; cx.shadowBlur=8;
+    cx.beginPath(); cx.arc(268,140,9,0,Math.PI*2); cx.fill();
+    cx.strokeStyle='rgba(0,220,160,0.7)'; cx.lineWidth=1.5;
+    cx.beginPath(); cx.arc(268,140,9,0,Math.PI*2); cx.stroke();
+    cx.shadowBlur=0;
+    _subCanvasReady=true;
+}
+let _boatCanvasReady=false;
+function initBoatCanvas(){
+    if(_boatCanvasReady)return;
+    const cv=document.getElementById('boat-canvas'); if(!cv)return;
+    const cx=cv.getContext('2d');
+    const CW=380,CH=90;
+    cv.width=CW; cv.height=CH;
+    cv.style.width=CW+'px'; cv.style.height=CH+'px';
+    // y=0..24 átlátszó — a horgász teste itt látszik át
+    // y=25..CH a tényleges csónak
+    const T=25; // deck teteje
+    // Hull forma: széleken kissé felkanyarodó hajótest
+    cx.beginPath();
+    cx.moveTo(8,CH);
+    cx.lineTo(5,CH-18); cx.quadraticCurveTo(4,CH-28,18,T+6);
+    cx.lineTo(22,T);
+    cx.lineTo(CW-22,T);
+    cx.lineTo(CW-18,T+6); cx.quadraticCurveTo(CW-4,CH-28,CW-5,CH-18);
+    cx.lineTo(CW-8,CH);
+    cx.closePath();
+    const hG=cx.createLinearGradient(0,T,0,CH);
+    hG.addColorStop(0,'#6b3a14'); hG.addColorStop(0.3,'#4a2208'); hG.addColorStop(0.75,'#2e1205'); hG.addColorStop(1,'#1a0a02');
+    cx.fillStyle=hG;
+    cx.shadowColor='rgba(0,0,0,0.75)'; cx.shadowBlur=18; cx.fill(); cx.shadowBlur=0;
+    cx.strokeStyle='#100602'; cx.lineWidth=2; cx.stroke();
+    // Deszka vonalak
+    for(let i=0;i<5;i++){
+        const y=T+10+i*12;
+        cx.strokeStyle='rgba(20,8,2,0.55)'; cx.lineWidth=1.5;
+        cx.beginPath(); cx.moveTo(22,y); cx.lineTo(CW-22,y); cx.stroke();
+        cx.strokeStyle='rgba(130,70,22,0.18)'; cx.lineWidth=0.8;
+        cx.beginPath(); cx.moveTo(23,y-1); cx.lineTo(CW-23,y-1); cx.stroke();
+    }
+    // Szurokcsíkok (kátrány)
+    cx.fillStyle='rgba(8,3,0,0.52)';
+    cx.fillRect(20,T+28,CW-40,5);
+    cx.fillRect(20,T+52,CW-40,4);
+    // Fedélzet korlát
+    const rG=cx.createLinearGradient(0,T-2,0,T+8);
+    rG.addColorStop(0,'#9b6828'); rG.addColorStop(1,'#5c3610');
+    cx.fillStyle=rG; cx.fillRect(18,T-2,CW-36,10);
+    cx.strokeStyle='#2e1206'; cx.lineWidth=1; cx.strokeRect(18,T-2,CW-36,10);
+    // Korlát oszlopok
+    cx.fillStyle='#7a4e18';
+    for(let x=40;x<CW-30;x+=35){ cx.fillRect(x-2,T-4,4,12); }
+    // Ágyúnyílások (3 db)
+    [95,190,285].forEach(hx=>{
+        cx.fillStyle='#060202';
+        cx.beginPath(); cx.ellipse(hx,T+36,13,10,0,0,Math.PI*2); cx.fill();
+        cx.strokeStyle='#3a1a06'; cx.lineWidth=2; cx.stroke();
+        // Ágyúcső
+        const bG=cx.createLinearGradient(hx-5,0,hx+5,0);
+        bG.addColorStop(0,'#2a1408'); bG.addColorStop(0.5,'#4a2c12'); bG.addColorStop(1,'#1e0e04');
+        cx.fillStyle=bG;
+        cx.beginPath(); cx.rect(hx-5,T+32,10,8); cx.fill();
+    });
+    // Koponya és keresztcsontok (középen)
+    const sx=190,sy=T+64;
+    cx.fillStyle='rgba(210,165,75,0.30)';
+    cx.beginPath(); cx.arc(sx,sy-6,10,0,Math.PI*2); cx.fill();
+    cx.fillStyle='rgba(12,5,1,0.5)';
+    cx.beginPath(); cx.arc(sx-3.5,sy-9,2.8,0,Math.PI*2); cx.fill();
+    cx.beginPath(); cx.arc(sx+3.5,sy-9,2.8,0,Math.PI*2); cx.fill();
+    cx.strokeStyle='rgba(210,165,75,0.24)'; cx.lineWidth=3.5; cx.lineCap='round';
+    cx.beginPath(); cx.moveTo(sx-15,sy+2); cx.lineTo(sx+15,sy+2); cx.stroke();
+    cx.beginPath(); cx.moveTo(sx,sy-18); cx.lineTo(sx,sy+4); cx.stroke();
+    // Vízszint ragyogás
+    cx.strokeStyle='rgba(80,50,10,0.4)'; cx.lineWidth=2.5;
+    cx.beginPath(); cx.moveTo(8,CH-3); cx.lineTo(CW-8,CH-3); cx.stroke();
+    _boatCanvasReady=true;
+}
+function updateFisherVisuals(){
+    const isAb=currentMapId==='abissz';
+    const isKaloz=currentMapId==='kaloz';
+    const bodyC=document.getElementById('body-canvas');
+    const rodSvg=document.getElementById('fisherman-rod-svg');
+    const subC=document.getElementById('sub-canvas');
+    const subArm=document.getElementById('sub-arm-svg');
+    const boatC=document.getElementById('boat-canvas');
+    const headClip=document.getElementById('fisherman-head-clip');
+    const angerWrap=document.getElementById('anger-wrap');
+    if(bodyC) bodyC.style.display=isAb?'none':'block';
+    if(rodSvg) rodSvg.style.display=isAb?'none':'';
+    if(subC){ subC.style.display=isAb?'block':'none'; if(isAb) initSubCanvas(); }
+    if(isAb&&subC){ subC.style.bottom='auto'; subC.style.top='-83px'; subC.style.left='0'; }
+    if(subArm) subArm.style.display=isAb?'':'none';
+    if(isAb&&subArm){ subArm.style.left='268px'; subArm.style.top='57px'; }
+    if(boatC){ boatC.style.display=isKaloz?'block':'none'; if(isKaloz) initBoatCanvas(); }
+    if(headClip) headClip.style.display=isAb?'none':'';
+    if(angerWrap) angerWrap.style.display=isAb?'none':'';
+    const dockPlanks=document.getElementById('dock-planks');
+    if(dockPlanks) dockPlanks.style.display=(isAb||isKaloz)?'none':'';
+}
 function updateMapDock(){
     const dock=document.getElementById('dock');
     if(!dock) return;
+    dock.style.zIndex=(currentMapId==='abissz'||currentMapId==='kaloz')?'9':'1';
     if(currentMapId==='melyseg'){
         dock.style.background='linear-gradient(180deg,#87ceeb 0%,#4ab8d4 60%,#1a9ab8 100%)';
     } else if(currentMapId==='tenger'){
         dock.style.background='linear-gradient(180deg,#4a7a9a 0%,#2a5a7a 60%,#1a4060 100%)';
     } else if(currentMapId==='kaloz'){
         dock.style.background='linear-gradient(180deg,#2a1a0e 0%,#1a0e06 60%,#0e0804 100%)';
+    } else if(currentMapId==='abissz'){
+        dock.style.background='linear-gradient(180deg,#080010 0%,#040008 60%,#020004 100%)';
     } else {
         dock.style.background='';
     }
+    updateFisherVisuals();
 }
 
 function drawWater(){
@@ -3344,55 +3698,51 @@ function drawWater(){
     ctx.fillStyle=grd;
     ctx.fillRect(0,0,W,H);
 
-    // Caustic fénysugarak – map-specifikus
-    ctx.save();
-    const rayT=Date.now()*0.0007;
-    const rayN =mid==='tenger'?11:mid==='melyseg'?14:8;
-    const rayA =mid==='tenger'?0.042:mid==='melyseg'?0.055:0.028;
-    const rayC =mid==='tenger'?'#88ccff':mid==='melyseg'?'#ffe088':'#88ddaa';
-    ctx.globalAlpha=rayA;
-    ctx.fillStyle=rayC;
-    for(let i=0;i<rayN;i++){
-        const rx=W*(0.03+i*(0.94/rayN))+Math.sin(rayT+i*1.4)*22;
+    if(mid!=='abissz'){
+        // Caustic fénysugarak
+        ctx.save();
+        const rayT=Date.now()*0.0007;
+        const rayN=mid==='tenger'?11:mid==='melyseg'?14:8;
+        const rayA=mid==='tenger'?0.042:mid==='melyseg'?0.055:0.028;
+        const rayC=mid==='tenger'?'#88ccff':mid==='melyseg'?'#ffe088':'#88ddaa';
+        ctx.globalAlpha=rayA; ctx.fillStyle=rayC;
+        for(let i=0;i<rayN;i++){
+            const rx=W*(0.03+i*(0.94/rayN))+Math.sin(rayT+i*1.4)*22;
+            ctx.beginPath(); ctx.moveTo(rx,0); ctx.lineTo(rx+55,H); ctx.lineTo(rx-14,H); ctx.closePath(); ctx.fill();
+        }
+        ctx.restore();
+        // Vízfelszín hullám
+        ctx.save();
+        const amp=mid==='tenger'?7:mid==='melyseg'?4:5;
+        ctx.globalAlpha=mid==='tenger'?0.5:mid==='melyseg'?0.55:0.35;
+        ctx.strokeStyle=mid==='tenger'?'#aaddff':mid==='melyseg'?'#66eeff':'#88ccff';
+        ctx.lineWidth=mid==='tenger'?2.5:mid==='melyseg'?2.5:2;
         ctx.beginPath();
-        ctx.moveTo(rx,0); ctx.lineTo(rx+55,H); ctx.lineTo(rx-14,H); ctx.closePath();
-        ctx.fill();
-    }
-    ctx.restore();
-
-    // Vízfelszín
-    ctx.save();
-    const amp=mid==='tenger'?7:mid==='melyseg'?4:5;
-    ctx.globalAlpha=mid==='tenger'?0.5:mid==='melyseg'?0.55:0.35;
-    ctx.strokeStyle=mid==='tenger'?'#aaddff':mid==='melyseg'?'#66eeff':'#88ccff';
-    ctx.lineWidth=mid==='tenger'?2.5:mid==='melyseg'?2.5:2;
-    ctx.beginPath();
-    for(let x=0;x<=W;x+=4){
-        const y=8+Math.sin(x*0.045+wt)*amp+Math.sin(x*0.028-wt*0.7)*(amp*0.6);
-        x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
-    }
-    ctx.stroke();
-    // Tengeri hab
-    if(mid==='tenger'){
-        ctx.globalAlpha=0.22; ctx.strokeStyle='#ffffff'; ctx.lineWidth=1.5;
-        ctx.beginPath();
-        for(let x=0;x<=W;x+=8){
-            const sv=Math.sin(x*0.045+wt);
-            if(sv>0.45){ const y=6+sv*7+Math.sin(x*0.028-wt*0.7)*4.2; ctx.moveTo(x,y); ctx.lineTo(x+5,y-1); }
+        for(let x=0;x<=W;x+=4){
+            const y=8+Math.sin(x*0.045+wt)*amp+Math.sin(x*0.028-wt*0.7)*(amp*0.6);
+            x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
         }
         ctx.stroke();
-    }
-    // Trópusi csillogó felszín
-    if(mid==='melyseg'){
-        ctx.globalAlpha=0.3; ctx.strokeStyle='#ffffff'; ctx.lineWidth=1;
-        ctx.beginPath();
-        for(let x=0;x<=W;x+=6){
-            const sv=Math.sin(x*0.055+wt*1.3);
-            if(sv>0.55){ const y=7+sv*4; ctx.moveTo(x,y); ctx.lineTo(x+4,y-1); }
+        if(mid==='tenger'){
+            ctx.globalAlpha=0.22; ctx.strokeStyle='#ffffff'; ctx.lineWidth=1.5;
+            ctx.beginPath();
+            for(let x=0;x<=W;x+=8){
+                const sv=Math.sin(x*0.045+wt);
+                if(sv>0.45){const y=6+sv*7+Math.sin(x*0.028-wt*0.7)*4.2;ctx.moveTo(x,y);ctx.lineTo(x+5,y-1);}
+            }
+            ctx.stroke();
         }
-        ctx.stroke();
+        if(mid==='melyseg'){
+            ctx.globalAlpha=0.3; ctx.strokeStyle='#ffffff'; ctx.lineWidth=1;
+            ctx.beginPath();
+            for(let x=0;x<=W;x+=6){
+                const sv=Math.sin(x*0.055+wt*1.3);
+                if(sv>0.55){const y=7+sv*4;ctx.moveTo(x,y);ctx.lineTo(x+4,y-1);}
+            }
+            ctx.stroke();
+        }
+        ctx.restore();
     }
-    ctx.restore();
 
     // Mélységi vonalak
     ctx.save();
@@ -3448,8 +3798,57 @@ function drawLine(){
     ctx.restore();
 }
 
+// ── TENGERALATTJÁRÓ KAR FRISSÍTÉS ──────────────────────────────────────────
+function updateSubArmSVG(){
+    if(currentMapId!=='abissz')return;
+    const subArm=document.getElementById('sub-arm-svg');
+    if(!subArm||subArm.style.display==='none')return;
+    subArm.style.left='268px'; subArm.style.top='57px';
+
+    const subC=document.getElementById('sub-canvas');
+    if(!subC||subC.style.display==='none')return;
+    const sr=subC.getBoundingClientRect();
+    const armSX=sr.left+268, armSY=sr.top+140;
+    const dock=document.getElementById('dock');
+    const dockH=dock?dock.offsetHeight:175;
+    const hookSX=hookX, hookSY=dockH+hookY;
+    const dx=hookSX-armSX, dy=hookSY-armSY;
+    const len=Math.sqrt(dx*dx+dy*dy);
+    if(len<1)return;
+    const nx=dx/len, ny=dy/len;
+    const px=-ny, py=nx;
+    const j1=Math.min(40,len*0.38);
+    const j1x=(nx*j1)|0, j1y=(ny*j1)|0;
+    const j2=Math.min(78,len*0.72);
+    const j2x=(nx*j2)|0, j2y=(ny*j2)|0;
+    const ex=dx|0, ey=dy|0;
+    subArm.innerHTML=`<g>
+        <line x1="0" y1="0" x2="${j1x}" y2="${j1y}" stroke="#2a3a3a" stroke-width="11" stroke-linecap="round"/>
+        <line x1="0" y1="0" x2="${j1x}" y2="${j1y}" stroke="#4a6060" stroke-width="5" stroke-linecap="round"/>
+        <circle cx="${j1x}" cy="${j1y}" r="7" fill="#3a5050" stroke="#5a7070" stroke-width="1.5"/>
+        <circle cx="${j1x}" cy="${j1y}" r="3" fill="rgba(0,220,160,0.7)"/>
+        <line x1="${j1x}" y1="${j1y}" x2="${j2x}" y2="${j2y}" stroke="#2a3a3a" stroke-width="9" stroke-linecap="round"/>
+        <line x1="${j1x}" y1="${j1y}" x2="${j2x}" y2="${j2y}" stroke="#4a6060" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="${j2x}" cy="${j2y}" r="6" fill="#3a5050" stroke="#5a7070" stroke-width="1.5"/>
+        <circle cx="${j2x}" cy="${j2y}" r="3" fill="rgba(0,220,160,0.7)"/>
+        <line x1="${j2x}" y1="${j2y}" x2="${(j2x+(px*10)|0)}" y2="${(j2y+(py*10)|0)}" stroke="#607080" stroke-width="4" stroke-linecap="round"/>
+        <line x1="${j2x}" y1="${j2y}" x2="${(j2x+(nx*12)|0)}" y2="${(j2y+(ny*12)|0)}" stroke="#607080" stroke-width="4" stroke-linecap="round"/>
+        <line x1="${j2x}" y1="${j2y}" x2="${(j2x-(px*10)|0)}" y2="${(j2y-(py*10)|0)}" stroke="#607080" stroke-width="4" stroke-linecap="round"/>
+    </g>`;
+}
+
 // ── SVG ZSINÓR OVERLAY ──────────────────────────────────────────────────────
 function getRodTipScreen(){
+    // Abisszális Zóna: a horgászkar aljzatából indul a zsinór
+    if(currentMapId==='abissz'){
+        const subC=document.getElementById('sub-canvas');
+        if(subC&&subC.style.display!=='none'){
+            const r=subC.getBoundingClientRect();
+            return { x: r.left+268, y: r.top+140 };
+        }
+        const bw=document.getElementById('fisherman-body-wrap');
+        if(bw){ const r=bw.getBoundingClientRect(); return { x: r.left+268, y: r.top+57 }; }
+    }
     // A sárga karika tényleges képernyő-pozíciója — figyelembe veszi
     // a fisherAngle forgást ÉS a rodCast CSS animációt is.
     const tipCircle=document.querySelector('#rod-anim-group circle');
@@ -3469,6 +3868,7 @@ function getRodTipScreen(){
 function updateLineSVG(){
     const svg=document.getElementById('line-svg');
     if(!svg)return;
+    if(currentMapId==='abissz'){ svg.innerHTML=''; return; }
     const rt=getRodTipScreen();
 
     if(fishState===FS.IDLE){
@@ -3633,9 +4033,13 @@ function loop(){
                 caughtTier=null;
                 } // end else (nem kaloz)
             } else {
-                // Semmi sem harapott → mérges animáció
-                triggerAnger();
-                setMsg('😤 SEMMI SEM HARAPOTT! Mérges a horgász!');
+                if(abisszGreyMiss){
+                    abisszGreyMiss=false;
+                    setMsg('💨 A horgászkar üres maradt. Próbálj pontosabban kattintani!');
+                } else {
+                    triggerAnger();
+                    setMsg('😤 SEMMI SEM HARAPOTT! Mérges a horgász!');
+                }
             }
         }
     }
@@ -3643,8 +4047,13 @@ function loop(){
     drawLine();
     updateFisherRotation();
     updateLineSVG();
+    updateSubArmSVG();
     if(currentTab==='aquarium') renderAquariumCanvas();
-    drawSkyClouds();
+    if(currentMapId!=='abissz'){
+        drawSkyClouds();
+    } else if(skyCtx&&skyCanvas){
+        skyCtx.clearRect(0,0,skyCanvas.width,skyCanvas.height);
+    }
     // Animate rainbow slot canvases
     document.querySelectorAll('.slot-canvas[data-rainbow]').forEach(cv=>{
         const sc=cv.getContext('2d');
@@ -4655,12 +5064,12 @@ function getNextBossName(){
     const pool=BOSS_NAMES.filter(n=>!usedBossNames.includes(n));
     if(pool.length===0){
         // Mind megvan — rematch, nem számít új fogásnak
-        return BOSS_NAMES[Math.floor(Math.random()*BOSS_NAMES.length)];
+        return '👑 Don '+BOSS_NAMES[Math.floor(Math.random()*BOSS_NAMES.length)];
     }
     const name=pool[Math.floor(Math.random()*pool.length)];
     usedBossNames.push(name);           // permanensen jegyezzük
     bossCount=usedBossNames.length;     // egyedi boss count
-    return name;
+    return '👑 Don '+name;
 }
 
 const ARROW_KEYS=['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'];
@@ -5005,7 +5414,20 @@ function animateTimingBar(ts){
     }
     const cursor = document.getElementById('timing-bar-cursor');
     const track  = document.getElementById('timing-bar-track');
-    if(cursor && track) cursor.style.left = (tbPos * track.offsetWidth) + 'px';
+    if(cursor && track){
+        if(currentMapId==='abissz'){
+            // Mélységi Rezgés: a zónák rezegnek — minden frame-ben frissül az eltolásuk
+            tbTremble = Math.sin(Date.now()*0.0062)*0.13 + Math.sin(Date.now()*0.0031)*0.05;
+            const trackW=track.offsetWidth;
+            const yEl=document.getElementById('timing-bar-yellow');
+            const rEl=document.getElementById('timing-bar-red');
+            if(yEl) yEl.style.left=Math.max(0,(tbYX+tbTremble)*trackW)+'px';
+            if(rEl) rEl.style.left=Math.max(0,(tbRX+tbTremble)*trackW)+'px';
+        } else {
+            tbTremble=0;
+        }
+        cursor.style.left = (tbPos * track.offsetWidth) + 'px';
+    }
     tbRaf = requestAnimationFrame(animateTimingBar);
 }
 
@@ -5017,8 +5439,9 @@ function resolveTimingBar(timeout){
     // Melyik zónában van a mutató?
     let result = 'grey';
     if(!timeout){
-        if(tbPos >= tbRX && tbPos <= tbRX + tbRW)       result = 'red';
-        else if(tbPos >= tbYX && tbPos <= tbYX + tbYW)  result = 'yellow';
+        const _effRX=tbRX+tbTremble, _effYX=tbYX+tbTremble;
+        if(tbPos >= _effRX && tbPos <= _effRX + tbRW)       result = 'red';
+        else if(tbPos >= _effYX && tbPos <= _effYX + tbYW)  result = 'yellow';
     }
 
     // Háttér dim levétele
@@ -5047,7 +5470,13 @@ function resolveTimingBar(timeout){
     window._timingBoost = result==='red' ? 8 : result==='yellow' ? 4 : 0;
     if(currentMapId==='kaloz'){
         caughtTier = pickChestTier();
+        abisszGreyMiss = false;
+    } else if(currentMapId==='abissz' && result==='grey' && Math.random()<0.25){
+        caughtTier = null;
+        caughtSpeciesIdx = 0;
+        abisszGreyMiss = true;
     } else {
+        abisszGreyMiss = false;
         const _pick = pickCatch();
         caughtTier = _pick.tier;
         caughtSpeciesIdx = _pick.speciesIdx;
@@ -5079,7 +5508,7 @@ function resolveTimingBar(timeout){
     const msgs = {
         red:    `🎯 TÖKÉLETES! ${SPECIES[caughtSpeciesIdx].shortName} ${TIERS[caughtTier].name} — jobb esély volt!`,
         yellow: `⭐ Jó fogás! ${SPECIES[caughtSpeciesIdx].shortName} ${TIERS[caughtTier].name} — kis bónusszal!`,
-        grey:   `💪 Behúzás... ${SPECIES[caughtSpeciesIdx].shortName} ${TIERS[caughtTier].name} garnéla!`,
+        grey:   abisszGreyMiss ? `💨 A kar üres... Az abisszban semmi sem akadt!` : `💪 Behúzás... ${SPECIES[caughtSpeciesIdx].shortName} ${TIERS[caughtTier].name} garnéla!`,
     };
     setMsg(msgs[result]);
 }
@@ -5186,12 +5615,20 @@ function updateQuestProgress(stat, val, tierIdx){
 }
 
 function completeDailyQuest(q){
-    const reward=3;
-    cannonballs+=reward;
-    updateCannonballs();
-    saveGame();
-    showFloat(`💣 +${reward} Ágyúgolyó!`, W/2);
-    setMsg(`🌟 Napi küldetés teljesítve! +${reward} 💣 Ágyúgolyó a Kalóz Szigethez!`);
+    if(unlockedMaps.includes('kaloz')){
+        const reward=3;
+        cannonballs+=reward;
+        updateCannonballs();
+        saveGame();
+        showFloat(`💣 +${reward} Ágyúgolyó!`, W/2);
+        setMsg(`🌟 Napi küldetés teljesítve! +${reward} 💣 Ágyúgolyó a Kalóz Szigethez!`);
+    } else {
+        goldCoins+=q.coins;
+        updateGoldCoins();
+        saveGame();
+        showFloat(`🪙 +${q.coins} Gold Coin!`, W/2);
+        setMsg(`🌟 Napi küldetés teljesítve! +${q.coins} 🪙 Gold Coin`);
+    }
     SFX.max();
 }
 
@@ -5342,6 +5779,8 @@ function renderMapSelector(){
         if(!locked&&!active){
             btn.addEventListener('click',()=>{
                 currentMapId=map.id;
+                oShrimp=[];
+                for(let i=0;i<16;i++){const s=mkShrimp();s.x=Math.random()*W;oShrimp.push(s);}
                 saveGame();
                 renderMapSelector();
                 updateMapDock();
@@ -5389,13 +5828,14 @@ function drawShrimpSilhouette(sc,x,y,size){
 function renderCatalog(){
     const body=document.getElementById('catalog-body');
     if(!body) return;
-    const total=SPECIES.length*TIERS.length+1+CHEST_TIERS.length; // +1 Prizma, +5 ládák
+    const total=SPECIES.length*TIERS.length+1+CHEST_TIERS.length; // +1 Prizma, +5 ládák (8×10+1+5=86)
     const found=Object.keys(discoveredShrimp).length+(prismaDiscovered?1:0)+Object.keys(discoveredChests).length;
     const countEl=document.getElementById('catalog-count');
     if(countEl) countEl.textContent=found+'/'+total;
 
     body.innerHTML='';
     MAPS.forEach(map=>{
+        if(map.id==='kaloz'||map.id==='abissz') return; // külön szekciók kezelik
         const mapLocked=!unlockedMaps.includes(map.id);
         const mapSpecies=SPECIES.map((sp,i)=>({sp,i})).filter(({sp})=>sp.mapId===map.id);
 
@@ -5525,7 +5965,7 @@ function renderCatalog(){
     prismaGrid.appendChild(prismaCell);
     prismaBlock.appendChild(prismaGrid);
     prismaSection.appendChild(prismaBlock);
-    body.appendChild(prismaSection);
+    // Prizma a legvégén kerül hozzá — ld. lent
 
     // ── Kalóz Kincsek szekció ─────────────────────
     const kalozLocked=!unlockedMaps.includes('kaloz');
@@ -5581,6 +6021,64 @@ function renderCatalog(){
     chestBlock.appendChild(chestGrid);
     chestSection.appendChild(chestBlock);
     body.appendChild(chestSection);
+
+    // ── Abisszális Zóna szekció ───────────────────
+    const abMap=MAPS.find(m=>m.id==='abissz');
+    if(abMap){
+        const abLocked=!unlockedMaps.includes('abissz');
+        const abSpecies=SPECIES.map((sp,i)=>({sp,i})).filter(({sp})=>sp.mapId==='abissz');
+        const abSection=document.createElement('div');
+        abSection.className='catalog-map-section';
+        const abHdr=document.createElement('div');
+        abHdr.className='catalog-map-header'+(abLocked?' locked':'');
+        abHdr.textContent=abLocked
+            ?`🔒 ${abMap.icon} ${abMap.name} — ${abMap.unlockAt} fogás után nyílik`
+            :`${abMap.icon} ${abMap.name}`;
+        abSection.appendChild(abHdr);
+        abSpecies.forEach(({sp,i:spIdx})=>{
+            const spColor=sp.tint||'#8060cc';
+            const block=document.createElement('div');
+            block.className='catalog-species-block';
+            const spName=document.createElement('div');
+            spName.className='catalog-species-name'+(abLocked?' locked':'');
+            spName.style.color=spColor;
+            spName.textContent=`${sp.icon} ${sp.name}`;
+            block.appendChild(spName);
+            const tiersGrid=document.createElement('div');
+            tiersGrid.className='catalog-species-tiers';
+            tiersGrid.style.borderLeftColor=spColor;
+            for(let t=0;t<TIERS.length;t++){
+                const key=spIdx+'_'+t;
+                const isFound=discoveredShrimp[key]===true;
+                const cell=document.createElement('div');
+                cell.className='slot '+(abLocked?'cat-locked':isFound?'cat-found':'cat-unknown');
+                const badge=document.createElement('div');
+                badge.className='stier'; badge.textContent='T'+(t+1);
+                cell.appendChild(badge);
+                const cv=document.createElement('canvas');
+                const dpr=window.devicePixelRatio||1;
+                cv.width=34*dpr; cv.height=34*dpr;
+                cv.style.width='34px'; cv.style.height='34px';
+                cv.className='slot-canvas';
+                if(t===9&&isFound&&!abLocked) cv.dataset.rainbow='1';
+                const sc=cv.getContext('2d'); sc.scale(dpr,dpr);
+                if(isFound&&!abLocked) drawShrimp(sc,17,19,13,t,spIdx,1,Date.now()*0.003+t);
+                else drawShrimpSilhouette(sc,17,14,10);
+                cell.appendChild(cv);
+                const nameEl=document.createElement('div');
+                nameEl.className='sname';
+                nameEl.textContent=(isFound&&!abLocked)?TIERS[t].name:'???';
+                cell.appendChild(nameEl);
+                tiersGrid.appendChild(cell);
+            }
+            block.appendChild(tiersGrid);
+            abSection.appendChild(block);
+        });
+        body.appendChild(abSection);
+    }
+
+    // ── Prizma mindig a legvégén ──────────────────
+    body.appendChild(prismaSection);
 }
 
 // ── switchTab és quest tab ─────────────────────────────────────────────────────────────────────
@@ -5976,6 +6474,7 @@ loadGame();
 renderInv();
 updateHUD();
 updateGoldCoins();
+updateCannonballs();
 checkDailyReset();
 initQuests();
 renderBuffHUD();
