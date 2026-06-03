@@ -626,10 +626,10 @@ body {
 /* ── ANGER EFFECTS ── */
 #anger-wrap {
     position:absolute;
-    bottom:5px; left:50%;
+    bottom:84px; left:50%;
     transform:translateX(-50%);
     transform-origin:center bottom;
-    width:160px; height:160px;
+    width:90px; height:90px;
     z-index:13;
     pointer-events:none;
     opacity:0;
@@ -804,7 +804,8 @@ body {
 }
 
 /* ── GOLD COIN HUD ── */
-#coin-display { color:#ffd700; border-color:rgba(255,200,0,0.35) !important; background:rgba(60,40,0,0.52) !important; }
+#coin-display  { color:#ffd700; border-color:rgba(255,200,0,0.35) !important; background:rgba(60,40,0,0.52) !important; }
+#cannon-display{ color:#ff8844; border-color:rgba(255,120,40,0.35) !important; background:rgba(40,20,0,0.52) !important; }
 
 /* ── BOLT TAB ── */
 #tab-shop { background:rgba(30,18,0,0.92); }
@@ -991,14 +992,14 @@ body {
 #fisherman-head-clip:hover #fisherman-head-img { filter:drop-shadow(2px 4px 14px rgba(0,0,0,0.9)) brightness(1.12); }
 /* Kis ⚙️ jelzés hogy kattintható */
 #equip-hint {
-    position:absolute; bottom:38px; left:50%;
-    transform:translateX(-50%);
+    position:absolute; top:50%; left:50%;
+    transform:translate(-50%,-50%);
     font-size:13px; opacity:0.55; pointer-events:none;
     z-index:15; animation:hintPulse 2.8s ease-in-out infinite;
 }
 @keyframes hintPulse {
-    0%,100% { opacity:0.3; transform:translateX(-50%) scale(1); }
-    50%      { opacity:0.7; transform:translateX(-50%) scale(1.15); }
+    0%,100% { opacity:0.3; transform:translate(-50%,-50%) scale(1); }
+    50%      { opacity:0.7; transform:translate(-50%,-50%) scale(1.15); }
 }
 @media (max-width:640px) {
     .trinket-btn { width:64px; padding:7px 4px 6px; }
@@ -1418,6 +1419,7 @@ body {
     <div id="hud">
         <div id="hud-row1">
             <div class="hud-box" id="coin-display">🪙 <span id="gc">0</span></div>
+            <div class="hud-box" id="cannon-display" style="display:none">💣 <span id="cb">0</span></div>
             <div class="hud-box">🎣 EXP: <span id="sv">0</span></div>
             <div class="hud-box">🦐 KIFOGVA: <span id="cc">0</span></div>
         </div>
@@ -1431,9 +1433,7 @@ body {
     </div>
     <div id="status-msg">Kattints a vízre a horgászáshoz!</div>
     <div id="fisherman-body-wrap">
-        <!-- horgasz.png test, fehér háttér JS-sel eltávolítva -->
-        <canvas id="body-canvas"></canvas>
-        <!-- Horgászbot: az ököl pozíciójából indul (JS állítja be) -->
+        <!-- Horgászbot: canvas ELŐTT van, hogy a kéz eltakarja a markolatot -->
         <svg id="fisherman-rod-svg">
             <g id="rod-anim-group">
                 <line x1="0" y1="0" x2="68" y2="-105"
@@ -1445,6 +1445,9 @@ body {
                       stroke="rgba(220,220,200,0.45)" stroke-width="1"/>
             </g>
         </svg>
+        <!-- horgasz.png — a kéz a bot elé rajzolódik -->
+        <canvas id="body-canvas"></canvas>
+        <div id="equip-hint">⚙️</div>
     </div>
     <div id="fisherman-head-clip">
         <img id="fisherman-head-img" src="fisherman_head.png"
@@ -1466,7 +1469,6 @@ body {
     </div>
     <canvas id="sky-canvas"></canvas>
     <div id="dock-planks"></div>
-    <div id="equip-hint">⚙️</div>
 </div>
 
 <canvas id="ocean"></canvas>
@@ -1617,6 +1619,30 @@ body {
         <div id="equip-active-bonuses"></div>
         <div id="equip-content"></div>
         <div id="equip-tooltip">Vidd rá az egeret egy tárgyra a részletekért!</div>
+    </div>
+</div>
+
+<!-- ── KALÓZ LÁDA POPUP ── -->
+<div id="chest-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.82); z-index:210; backdrop-filter:blur(4px); flex-direction:column; align-items:center; justify-content:center;">
+    <div id="chest-popup">
+        <div id="chest-title">🏴‍☠️ Kincs előkerült!</div>
+        <div id="chest-big-icon"></div>
+        <div id="chest-name-text"></div>
+        <div id="chest-desc-text"></div>
+        <div id="chest-coins-line">+<span id="chest-coins-val">0</span> <span style="color:#f0c040">🪙 Arany</span></div>
+        <div id="chest-round-line" style="display:none">🎲 <span id="chest-round-num">1</span>× duplázva</div>
+        <div id="chest-wheel-wrap" style="display:none">
+            <div id="chest-wheel-pointer">▼</div>
+            <div id="chest-wheel">
+                <div id="wheel-win">💰 DUPLA!</div>
+                <div id="wheel-lose">VESZÍT 💀</div>
+            </div>
+        </div>
+        <div id="chest-result-text"></div>
+        <div id="chest-btn-wrap">
+            <button id="chest-keep-btn" onclick="keepChest()">Megtartom<br><small>+<span id="chest-keep-val">0</span> 🪙</small></button>
+            <button id="chest-double-btn" onclick="doubleChest()">Duplázom! 🎲<br><small>50/50 → <span id="chest-double-val">0</span> 🪙</small></button>
+        </div>
     </div>
 </div>
 
@@ -1951,9 +1977,9 @@ body {
         left:-24px;
     }
     #anger-wrap {
-        bottom:5px;
-        width:105px;
-        height:105px;
+        bottom:62px;
+        width:65px;
+        height:65px;
     }
 
     /* ── HUD ── */
@@ -2037,6 +2063,17 @@ const MAPS=[
      bgTop:'#1a78c0', bgMid:'#0e5490', bgBot:'#083868'},
     {id:'melyseg', name:'Trópusi Tengerpart', icon:'🏖️', unlockAt:300,
      bgTop:'#00c8e0', bgMid:'#009ab8', bgBot:'#2a8870'},
+    {id:'kaloz',   name:'Kalóz Sziget',        icon:'🏴‍☠️', unlockAt:600,
+     bgTop:'#1a0e2e', bgMid:'#0f0820', bgBot:'#06040f'},
+];
+
+// ── Kalóz Sziget: kincses ládák ─────────────────
+const CHEST_TIERS=[
+    {name:'Rozsdás Láda',  icon:'⚙️',  minC:2,   maxC:6,   weight:38, clr:'#7a5c2a', desc:'Ócska tengeri roncs'},
+    {name:'Fa Láda',       icon:'📦',  minC:6,   maxC:15,  weight:28, clr:'#a0622d', desc:'Viharvert tengerész-láda'},
+    {name:'Ezüst Láda',    icon:'🪙',  minC:15,  maxC:35,  weight:18, clr:'#8a9bb5', desc:'Régi kereskedőhajó kincse'},
+    {name:'Arany Láda',    icon:'💰',  minC:35,  maxC:75,  weight:12, clr:'#d4a820', desc:'Kalóz kapitány zsákmánya'},
+    {name:'Legendás Láda', icon:'💎',  minC:75,  maxC:150, weight:4,  clr:'#9050c0', desc:'Az elveszett flotta titka'},
 ];
 
 function getCurrentMap(){ return MAPS.find(m=>m.id===currentMapId)||MAPS[0]; }
@@ -2063,6 +2100,20 @@ function pickCatch(){
     const pool=SPECIES.map((sp,i)=>sp.mapId===currentMapId?i:-1).filter(i=>i>=0);
     const speciesIdx=pool.length?pool[Math.floor(Math.random()*pool.length)]:0;
     return{tier,speciesIdx};
+}
+function pickChestTier(){
+    const tb=window._timingBoost||0;
+    const base=CHEST_TIERS.map((c,i)=>{
+        // Red (+8) és Yellow (+4) boost a jobb ládák felé
+        return c.weight + (i>=3?tb*0.9:i>=2?tb*0.3:-tb*0.2);
+    });
+    const total=base.reduce((s,w)=>s+Math.max(0.5,w),0);
+    let r=Math.random()*total;
+    for(let i=0;i<CHEST_TIERS.length;i++){
+        r-=Math.max(0.5,base[i]);
+        if(r<=0) return i;
+    }
+    return 0;
 }
 
 // ══════════════════════════════════════════════
@@ -2223,18 +2274,21 @@ function initAC(){
 }
 function tone(freq,type,dur,vol=0.15,delay=0){
     if(!AC)return;
+    const scaledVol = vol * (typeof globalSFXVolume !== 'undefined' ? globalSFXVolume : 1);
+    if(scaledVol <= 0) return;
     const o=AC.createOscillator(),g=AC.createGain();
     o.connect(g);g.connect(AC.destination);
     o.type=type;o.frequency.value=freq;
     const t=AC.currentTime+delay;
     g.gain.setValueAtTime(0,t);
-    g.gain.linearRampToValueAtTime(vol,t+0.01);
+    g.gain.linearRampToValueAtTime(scaledVol,t+0.01);
     g.gain.exponentialRampToValueAtTime(0.001,t+dur);
     o.start(t);o.stop(t+dur+0.01);
 }
 
 // Custom MP3 fájl betöltése a hiba- és üres rántás hangokhoz
 const missSound = new Audio('miss.mp3');
+const mergeFailSound = new Audio('merge_fail.mp3');
 
 // Good catch hang — fetch→ArrayBuffer→AudioBufferSource + GainNode
 // Ez megkerüli a HTML audio 1.0-s volume-korlátját, gain 1.0 fölé mehet
@@ -2250,18 +2304,21 @@ function _preloadGoodCatch(){
 function playGoodCatch(){
     initAC();
     _preloadGoodCatch();
+    const sfxVol = typeof globalSFXVolume !== 'undefined' ? globalSFXVolume : 1;
+    if(sfxVol <= 0) return;
     if(_gcBuffer && AC){
         // Web Audio lejátszás erősítéssel
         const src  = AC.createBufferSource();
         src.buffer = _gcBuffer;
         const gain = AC.createGain();
-        gain.gain.value = 3.2;   // 3.2× — hangos, de nem torzít
+        gain.gain.value = 3.2 * sfxVol;
         src.connect(gain);
         gain.connect(AC.destination);
         src.start(0);
     } else {
         // Fallback: buffer még tölt (első alkalom) → normál HTML audio
         const gc = document.getElementById('snd-good-catch');
+        gc.volume = sfxVol;
         gc.currentTime = 0; gc.play().catch(()=>{});
     }
 }
@@ -2273,7 +2330,8 @@ const SFX={
     merge: ()=>{[523,659,784,1046].forEach((f,i)=>tone(f,'sine',0.18,0.18,i*0.09));},
     
     // Az eddigi szintetizált hang helyett a miss.mp3-at játssza le
-    fail:  ()=>{ missSound.currentTime = 0; missSound.play().catch(e => {}); },
+    fail:  ()=>{ const v = typeof globalSFXVolume !== 'undefined' ? globalSFXVolume : 1; if(v<=0)return; missSound.volume=v; missSound.currentTime = 0; missSound.play().catch(e => {}); },
+    mergeFail: ()=>{ const v = typeof globalSFXVolume !== 'undefined' ? globalSFXVolume : 1; if(v<=0)return; mergeFailSound.volume=v; mergeFailSound.currentTime=0; mergeFailSound.play().catch(e=>{}); },
     
     splash:()=>{tone(280,'sine',0.12,0.18);tone(140,'sine',0.22,0.12,0.08);},
     max:   ()=>{[523,659,784,1046,1318].forEach((f,i)=>tone(f,'triangle',0.25,0.2,i*0.07));},
@@ -2324,6 +2382,13 @@ let altarUpgrades={};      // {upgradeId: true}
 let prismaExists=false;
 let prismaLastActivated=0; // Date.now() timestamp
 let prismaDiscovered=false;
+// Kalóz Sziget
+let discoveredChests={};   // {chestTierIdx: true}
+let cannonballs=0;         // 💣 ágyúgolyók - napi questből szerezhetők
+let _chestCoins=0;
+let _chestTierIdx=0;
+let _chestRound=0;
+let _chestFlipping=false;
 let prismaSwimData={x:0,y:0,vx:0.22,vy:0,phase:0,init:false};
 
 // ══════════════════════════════════════════════
@@ -2346,7 +2411,9 @@ function saveGame(){
             currentMapId, unlockedMaps,
             discoveredShrimp: Object.keys(discoveredShrimp),
             altarPoints, altarUpgrades,
-            prismaExists, prismaLastActivated, prismaDiscovered
+            prismaExists, prismaLastActivated, prismaDiscovered,
+            discoveredChests: Object.keys(discoveredChests),
+            cannonballs
         }));
     }catch(e){ console.warn('Mentés sikertelen:',e); }
 }
@@ -2399,6 +2466,9 @@ function loadGame(){
         prismaLastActivated  = d.prismaLastActivated  ?? 0;
         prismaDiscovered     = d.prismaDiscovered     ?? false;
         prismaSwimData       = {x:0,y:0,vx:0.22,vy:0,phase:0,init:false};
+        discoveredChests     = {};
+        (d.discoveredChests  ?? []).forEach(k=>{ discoveredChests[k]=true; });
+        cannonballs          = d.cannonballs ?? 0;
     }catch(e){ console.warn('Betöltés sikertelen:',e); }
 }
 
@@ -2557,7 +2627,6 @@ document.addEventListener('DOMContentLoaded',()=>{}, false); // no-op guard
         const idx=namePopupIdx;
         closeNamePopup();
         moveToAquarium(idx);
-        switchTab('aquarium');
     });
 
     document.getElementById('name-cancel-btn').addEventListener('click',closeNamePopup);
@@ -2590,11 +2659,14 @@ function toggleDevMode(){
             currentMapId,
             prismaExists,
             prismaDiscovered,
+            discoveredChests: Object.assign({},discoveredChests),
         };
         unlockedMaps=MAPS.map(m=>m.id);
         const allD={};
         SPECIES.forEach((_,si)=>TIERS.forEach((_,ti)=>{ allD[si+'_'+ti]=true; }));
         discoveredShrimp=allD;
+        const allC={}; CHEST_TIERS.forEach((_,i)=>{ allC[i]=true; }); discoveredChests=allC;
+        devSnapshot.cannonballs=cannonballs; cannonballs=99;
         unlockedTrinkets=Object.values(TRINKETS).flat().map(t=>t.id);
         prismaExists=true;
         prismaDiscovered=true;
@@ -2607,6 +2679,8 @@ function toggleDevMode(){
         currentMapId     =devSnapshot.currentMapId;
         prismaExists     =devSnapshot.prismaExists;
         prismaDiscovered =devSnapshot.prismaDiscovered;
+        discoveredChests =devSnapshot.discoveredChests||{};
+        cannonballs      =devSnapshot.cannonballs??0;
         prismaSwimData   ={x:0,y:0,vx:0.22,vy:0,phase:0,init:false};
         devSnapshot=null;
         devMode=false;
@@ -2681,16 +2755,12 @@ function toggleDevMode(){
 
 function triggerAnger(){
     const aw=document.getElementById('anger-wrap');
-    const ms=document.getElementById('snd-miss');
     if(!aw)return;
     aw.classList.add('active');
     clearTimeout(angerTimeout);
-    // Leáll amikor a hang véget ér
-    if(ms){
-        ms.onended=()=>{ aw.classList.remove('active'); ms.onended=null; };
-    }
-    // Fallback: max 4 másodperc
-    angerTimeout=setTimeout(()=>aw.classList.remove('active'), 4000);
+    const sfxOff = typeof globalSFXVolume !== 'undefined' && globalSFXVolume <= 0;
+    if(!sfxOff){ initAC(); SFX.fail(); }
+    angerTimeout=setTimeout(()=>aw.classList.remove('active'), sfxOff ? 1500 : 4000);
 }
 
 let oShrimp=[];
@@ -3135,6 +3205,37 @@ function drawSeabedSilhouettes(){
             ctx.fill();
         }
     }
+    if(currentMapId==='kaloz'){
+        // Kalóz Sziget – roncs gerendák az aljzaton
+        const beamSeeds=[0.05,0.18,0.32,0.47,0.61,0.75,0.88];
+        beamSeeds.forEach((rx,i)=>{
+            const bx=rx*W; const angle=(i%2===0?0.18:-0.14)*(1+(i%3)*0.1);
+            const len=30+(i%4)*18;
+            ctx.save();
+            ctx.translate(bx,H-4); ctx.rotate(angle);
+            ctx.strokeStyle=i%3===0?'#3a2010':'#4a2e14'; ctx.lineWidth=7+(i%3)*3;
+            ctx.globalAlpha=0.7;
+            ctx.beginPath(); ctx.moveTo(-len/2,0); ctx.lineTo(len/2,0); ctx.stroke();
+            ctx.restore();
+        });
+        // Szétszórt aranyérmék az aljzaton
+        for(let c=0;c<18;c++){
+            const seed=c*413.7;
+            const cx=((seed*0.27)%(W-30))+15;
+            const cy=H-3-(c%4)*2;
+            const pulse=0.5+Math.sin(wt*1.2+seed)*0.5;
+            ctx.globalAlpha=0.25+pulse*0.3;
+            ctx.fillStyle=c%3===0?'#d4a820':'#e8c040';
+            ctx.beginPath(); ctx.ellipse(cx,cy,4,2.5,0,0,Math.PI*2); ctx.fill();
+        }
+        // Horgony körvonal jobbra
+        ctx.globalAlpha=0.18;
+        ctx.strokeStyle='#5a4a2a'; ctx.lineWidth=3;
+        const ax=W*0.82, ay=H-18;
+        ctx.beginPath(); ctx.arc(ax,ay-8,8,0,Math.PI*2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(ax,ay-16); ctx.lineTo(ax,ay+8); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(ax-8,ay+5); ctx.quadraticCurveTo(ax,ay+14,ax+8,ay+5); ctx.stroke();
+    }
     ctx.restore();
 }
 
@@ -3167,6 +3268,28 @@ function drawAmbientParticles(){
             ctx.beginPath(); ctx.arc(bx,by,r,0,Math.PI*2); ctx.stroke();
         }
     } else {
+        // Kalóz Sziget: arany érme-csillogások a mélységből
+        if(currentMapId==='kaloz'){
+            const kt=now*0.001;
+            for(let p=0;p<20;p++){
+                const seed=p*278.4+7;
+                const cycle=3500+(seed%1400)*2;
+                const prog=(now+seed*130)%cycle/cycle;
+                const px=((seed*0.38)%(W-40))+20+Math.sin(kt*0.4+seed)*8;
+                const py=H*0.1+H*0.85*(1-prog);
+                const pulse=0.5+Math.sin(kt*4+seed)*0.5;
+                ctx.globalAlpha=(0.25+pulse*0.5)*(1-prog*0.4);
+                if(p%4===0){
+                    ctx.fillStyle='#ffe066'; ctx.shadowColor='#ffdd00'; ctx.shadowBlur=6;
+                    ctx.beginPath(); ctx.arc(px,py,2+pulse*1.5,0,Math.PI*2); ctx.fill();
+                    ctx.shadowBlur=0;
+                } else {
+                    ctx.strokeStyle='rgba(220,180,40,0.9)'; ctx.lineWidth=1.2;
+                    ctx.beginPath(); ctx.ellipse(px,py,2.5+pulse,1.5,kt*0.5+seed,0,Math.PI*2); ctx.stroke();
+                }
+            }
+            ctx.restore(); return;
+        }
         // Trópusi: arany napfény-csillanások + meleg buborékok
         const t=now*0.001;
         for(let p=0;p<28;p++){
@@ -3202,6 +3325,8 @@ function updateMapDock(){
         dock.style.background='linear-gradient(180deg,#87ceeb 0%,#4ab8d4 60%,#1a9ab8 100%)';
     } else if(currentMapId==='tenger'){
         dock.style.background='linear-gradient(180deg,#4a7a9a 0%,#2a5a7a 60%,#1a4060 100%)';
+    } else if(currentMapId==='kaloz'){
+        dock.style.background='linear-gradient(180deg,#2a1a0e 0%,#1a0e06 60%,#0e0804 100%)';
     } else {
         dock.style.background='';
     }
@@ -3448,8 +3573,8 @@ function loop(){
             const _b=getActiveBonuses();
             const delay=(900+Math.random()*2200)*Math.max(0.25,1-_b.nibbleSpeed/100);
             nibbleTimer=setTimeout(()=>{
-                // Boss esély (alap 2% + trinket bónusz)
-                if(Math.random()<0.02+_b.bossChance/100){
+                // Boss esély (alap 2% + trinket bónusz) — Kalóz Szigeten nincs boss
+                if(currentMapId!=='kaloz'&&Math.random()<0.02+_b.bossChance/100){
                     const bRoll=Math.random();
                     const bTier=bRoll<0.40?5:bRoll<0.70?6:bRoll<0.90?7:bRoll<0.98?8:9;
                     const bPool=SPECIES.map((sp,i)=>sp.mapId===currentMapId?i:-1).filter(i=>i>=0);
@@ -3470,6 +3595,11 @@ function loop(){
             hookY=0;
             fishState=FS.IDLE;
             if(caughtTier!==null){
+                // ── Kalóz Sziget: láda popup ──────────────────────
+                if(currentMapId==='kaloz'){
+                    openChestPopup(caughtTier);
+                    caughtTier=null;
+                } else {
                 const t=caughtTier;
                 const sp=caughtSpeciesIdx||0;
                 const isBoss=window._pendingBoss||false;
@@ -3494,19 +3624,16 @@ function loop(){
                 updateQuestProgress('scoreGain', Math.round(TIERS[t].pts*(isBoss?5:1)*(1+getActiveBonuses().catchMult/100)));
                 addToInventory(t,sp,isBoss,bossName);
                 showFloat(isBoss?`👑 ${bossName}!`:`+${TIERS[t].pts} 🦐 ${TIERS[t].name}`,hookX);
-                // Tier 3+ → good catch hang (erősítve)
-                if(t>=2||isBoss){
+                // Tier 5+ → good catch hang (erősítve)
+                if(t>=4||isBoss){
                     playGoodCatch();
-                } else {
-                    SFX.catch();
                 }
                 setMsg(isBoss?`👑 FŐNÖK GARNÉLA ELFOGVA: "${bossName}"! ${TIERS[t].name} – ${TIERS[t].pts*5} pont!`
                              :`🎉 Kifogva! ${TIERS[t].funny}`);
                 caughtTier=null;
+                } // end else (nem kaloz)
             } else {
-                // Semmi sem harapott → miss hang + mérges animáció
-                const ms=document.getElementById('snd-miss');
-                ms.currentTime=0; ms.play().catch(()=>{});
+                // Semmi sem harapott → mérges animáció
                 triggerAnger();
                 setMsg('😤 SEMMI SEM HARAPOTT! Mérges a horgász!');
             }
@@ -3538,12 +3665,22 @@ function doFishAction(clientX, clientY){
     const cy=clientY-rect.top;
 
     if(fishState===FS.IDLE){
+        if(currentMapId==='kaloz'){
+            if(cannonballs<=0){
+                setMsg('💣 Nincs több ágyúgolyód! Teljesíts napi küldetést a Küldetések fülön!');
+                SFX.fail();
+                return;
+            }
+            cannonballs--;
+            updateCannonballs();
+            saveGame();
+        }
         hookX=cx; hookY=0;
         hookTargetY=Math.max(50,Math.min(cy,H*0.88));
         fishState=FS.CASTING;
         caughtTier=null;
         SFX.cast();
-        setMsg('🎣 Horgász a vízbe...');
+        setMsg(currentMapId==='kaloz'?`💣 Ágyúgolyó kilőve! (${cannonballs} db maradt)`:'🎣 Horgász a vízbe...');
     } else if(fishState===FS.WAITING){
         if(tbActive){
             resolveTimingBar(false); // kattintás = manuális befejezés
@@ -3579,6 +3716,7 @@ function setMsg(t){document.getElementById('status-msg').textContent=t;}
 function updateHUD(){
     document.getElementById('sv').textContent=score.toLocaleString();
     document.getElementById('cc').textContent=catches;
+    updateCannonballs();
 }
 
 // Float label
@@ -3770,13 +3908,13 @@ function onSlotClick(i){
 
     if((a.species||0)!==(b.species||0)){
         setMsg(`❌ Csak azonos fajú garnéla vonható össze! (${SPECIES[a.species||0].shortName} ≠ ${SPECIES[b.species||0].shortName})`);
-        SFX.fail();
+        SFX.mergeFail();
         selIdx=null; renderInv(); return;
     }
 
     if(a.tier!==b.tier){
         setMsg(`❌ Csak azonos szintű garnéla vonható össze! (${TIERS[a.tier].name} ≠ ${TIERS[b.tier].name})`);
-        SFX.fail();
+        SFX.mergeFail();
         selIdx=null;
         renderInv();
         return;
@@ -3784,7 +3922,7 @@ function onSlotClick(i){
 
     if(a.tier>=TIERS.length-1){
         setMsg('🌈 Ez már a VÉGSŐ SZINTŰ garnéla! Gyűjts belőle sokat!');
-        SFX.fail();
+        SFX.mergeFail();
         selIdx=null;
         renderInv();
         return;
@@ -4611,6 +4749,107 @@ function bossFail(){
     triggerAnger();
 }
 
+// ══════════════════════════════════════════════
+//  KALÓZ LÁDA POPUP
+// ══════════════════════════════════════════════
+function openChestPopup(tierIdx){
+    const chest=CHEST_TIERS[tierIdx];
+    _chestTierIdx=tierIdx;
+    _chestCoins=chest.minC+Math.floor(Math.random()*(chest.maxC-chest.minC+1));
+    _chestRound=0;
+    _chestFlipping=false;
+    // Felfedezés
+    if(!discoveredChests[tierIdx]){ discoveredChests[tierIdx]=true; renderCatalog(); }
+    fishState='chest';
+    _renderChestPopup();
+    const ov=document.getElementById('chest-overlay');
+    ov.style.display='flex';
+    SFX.max();
+    showFloat(`${chest.icon} ${chest.name}!`, hookX);
+}
+function _renderChestPopup(){
+    const chest=CHEST_TIERS[_chestTierIdx];
+    document.getElementById('chest-big-icon').textContent=chest.icon;
+    document.getElementById('chest-name-text').textContent=chest.name;
+    document.getElementById('chest-name-text').style.color=chest.clr;
+    document.getElementById('chest-desc-text').textContent=chest.desc;
+    document.getElementById('chest-coins-val').textContent=_chestCoins;
+    document.getElementById('chest-keep-val').textContent=_chestCoins;
+    document.getElementById('chest-double-val').textContent=_chestCoins*2;
+    const roundLine=document.getElementById('chest-round-line');
+    if(_chestRound>0){ roundLine.style.display=''; document.getElementById('chest-round-num').textContent=_chestRound; }
+    else roundLine.style.display='none';
+    document.getElementById('chest-result-text').textContent='';
+    document.getElementById('chest-result-text').style.display='none';
+    document.getElementById('chest-wheel-wrap').style.display='none';
+    document.getElementById('chest-btn-wrap').style.display='flex';
+    document.getElementById('chest-keep-btn').disabled=false;
+    document.getElementById('chest-double-btn').disabled=false;
+}
+function _closeChestPopup(){
+    document.getElementById('chest-overlay').style.display='none';
+    fishState=FS.IDLE;
+}
+function keepChest(){
+    if(_chestFlipping) return;
+    goldCoins+=_chestCoins;
+    updateHUD(); saveGame();
+    showFloat(`+${_chestCoins} 🪙`,W/2);
+    updateQuestProgress('scoreGain', _chestCoins);
+    catches++;
+    updateHUD(); saveGame();
+    _closeChestPopup();
+}
+function doubleChest(){
+    if(_chestFlipping) return;
+    _chestFlipping=true;
+    document.getElementById('chest-keep-btn').disabled=true;
+    document.getElementById('chest-double-btn').disabled=true;
+    document.getElementById('chest-btn-wrap').style.display='none';
+
+    const win=Math.random()<0.5;
+    const wheelWrap=document.getElementById('chest-wheel-wrap');
+    const wheel=document.getElementById('chest-wheel');
+    const resultEl=document.getElementById('chest-result-text');
+
+    // Reset kerék pozíció animáció nélkül
+    wheel.style.transition='none';
+    wheel.style.transform='rotate(0deg)';
+    wheelWrap.style.display='flex';
+    resultEl.style.display='none';
+
+    // Kényszeres reflow, majd pörgetés
+    wheel.getBoundingClientRect();
+    const spins=5*360;
+    // Win=zöld fent (0°), Lose=piros fent (180°) + kis véletlen eltérés a közepén belül
+    const resultDeg=win ? 0 : 180;
+    const variance=(Math.random()-0.5)*50;
+    const totalDeg=spins+resultDeg+variance;
+
+    wheel.style.transition='transform 2.6s cubic-bezier(0.17,0.67,0.12,0.99)';
+    wheel.style.transform=`rotate(${totalDeg}deg)`;
+
+    setTimeout(()=>{
+        wheelWrap.style.display='none';
+        resultEl.style.display='block';
+        if(win){
+            _chestCoins*=2;
+            _chestRound++;
+            resultEl.style.color='#44ff88';
+            resultEl.textContent=`🎉 NYERTÉL! Mostantól: ${_chestCoins} 🪙`;
+            SFX.merge();
+            setTimeout(()=>{ _chestFlipping=false; _renderChestPopup(); },1100);
+        } else {
+            resultEl.style.color='#ff4444';
+            resultEl.textContent=`💀 Elvesztetted! Az aranyak elúsztak...`;
+            catches++;
+            updateHUD(); saveGame();
+            SFX.fail();
+            setTimeout(()=>{ _closeChestPopup(); showFloat('💀 Oda az arany!',W/2); },1800);
+        }
+    },2800);
+}
+
 // Billentyűzet figyelő
 window.addEventListener('keydown',e=>{
     if(fishState===FS.BOSS_GAME) bossInput(e.key);
@@ -4806,9 +5045,13 @@ function resolveTimingBar(timeout){
 
     // Timing bónusz → tier + species meghatározás
     window._timingBoost = result==='red' ? 8 : result==='yellow' ? 4 : 0;
-    const _pick = pickCatch();
-    caughtTier = _pick.tier;
-    caughtSpeciesIdx = _pick.speciesIdx;
+    if(currentMapId==='kaloz'){
+        caughtTier = pickChestTier();
+    } else {
+        const _pick = pickCatch();
+        caughtTier = _pick.tier;
+        caughtSpeciesIdx = _pick.speciesIdx;
+    }
     window._timingBoost = 0;
 
     // Lebegő találat szöveg
@@ -4890,6 +5133,11 @@ function updateGoldCoins(){
     const el=document.getElementById('gc');   if(el) el.textContent=val;
     const el2=document.getElementById('gc2'); if(el2) el2.textContent=val;
 }
+function updateCannonballs(){
+    const el=document.getElementById('cb'); if(el) el.textContent=cannonballs;
+    const disp=document.getElementById('cannon-display');
+    if(disp) disp.style.display=(cannonballs>0||currentMapId==='kaloz')?'':'none';
+}
 
 // Éjfélkor és percenként ellenőrzés
 setInterval(checkDailyReset, 60000);
@@ -4938,11 +5186,12 @@ function updateQuestProgress(stat, val, tierIdx){
 }
 
 function completeDailyQuest(q){
-    goldCoins += q.coins;
-    updateGoldCoins();
+    const reward=3;
+    cannonballs+=reward;
+    updateCannonballs();
     saveGame();
-    showFloat(`🪙 +${q.coins} Gold Coin!`, W/2);
-    setMsg(`🌟 Napi küldetés teljesítve! +${q.coins} 🪙 Gold Coin`);
+    showFloat(`💣 +${reward} Ágyúgolyó!`, W/2);
+    setMsg(`🌟 Napi küldetés teljesítve! +${reward} 💣 Ágyúgolyó a Kalóz Szigethez!`);
     SFX.max();
 }
 
@@ -5113,7 +5362,7 @@ function checkMapUnlocks(){
             setMsg(`🎉 Új helyszín feloldva: ${map.icon} ${map.name}!`);
         }
     });
-    if(anyNew){ renderMapSelector(); saveGame(); }
+    if(anyNew){ renderMapSelector(); renderCatalog(); saveGame(); }
 }
 
 // ══════════════════════════════════════════════
@@ -5140,8 +5389,8 @@ function drawShrimpSilhouette(sc,x,y,size){
 function renderCatalog(){
     const body=document.getElementById('catalog-body');
     if(!body) return;
-    const total=SPECIES.length*TIERS.length+1; // +1 a Prizma
-    const found=Object.keys(discoveredShrimp).length+(prismaDiscovered?1:0);
+    const total=SPECIES.length*TIERS.length+1+CHEST_TIERS.length; // +1 Prizma, +5 ládák
+    const found=Object.keys(discoveredShrimp).length+(prismaDiscovered?1:0)+Object.keys(discoveredChests).length;
     const countEl=document.getElementById('catalog-count');
     if(countEl) countEl.textContent=found+'/'+total;
 
@@ -5277,6 +5526,61 @@ function renderCatalog(){
     prismaBlock.appendChild(prismaGrid);
     prismaSection.appendChild(prismaBlock);
     body.appendChild(prismaSection);
+
+    // ── Kalóz Kincsek szekció ─────────────────────
+    const kalozLocked=!unlockedMaps.includes('kaloz');
+    const chestSection=document.createElement('div');
+    chestSection.className='catalog-map-section';
+    chestSection.style.borderRight='none';
+
+    const chestHdr=document.createElement('div');
+    chestHdr.className='catalog-map-header'+(kalozLocked?' locked':'');
+    chestHdr.style.cssText='color:#d4a820;border-left-color:#8b6914;';
+    chestHdr.textContent=kalozLocked
+        ?`🔒 🏴‍☠️ Kalóz Sziget — 600 fogás után nyílik`
+        :`🏴‍☠️ Kalóz Kincsek`;
+    chestSection.appendChild(chestHdr);
+
+    const chestBlock=document.createElement('div');
+    chestBlock.className='catalog-species-block';
+
+    const chestNameEl=document.createElement('div');
+    chestNameEl.className='catalog-species-name'+(kalozLocked?' locked':'');
+    chestNameEl.style.color=kalozLocked?'#3a2a0a':'#d4a820';
+    chestNameEl.textContent='⚓ Kincses Ládák';
+    chestBlock.appendChild(chestNameEl);
+
+    const chestGrid=document.createElement('div');
+    chestGrid.className='catalog-species-tiers';
+    chestGrid.style.borderLeftColor='#8b6914';
+
+    CHEST_TIERS.forEach((ct,i)=>{
+        const found=discoveredChests[i]===true;
+        const cell=document.createElement('div');
+        cell.className='slot '+(kalozLocked?'cat-locked':found?'cat-found':'cat-unknown');
+
+        const badge=document.createElement('div');
+        badge.className='stier';
+        badge.textContent='T'+(i+1);
+        cell.appendChild(badge);
+
+        const iconEl=document.createElement('div');
+        iconEl.style.cssText='font-size:22px;line-height:1;margin:4px 0 2px;';
+        iconEl.textContent=(found&&!kalozLocked)?ct.icon:'❓';
+        cell.appendChild(iconEl);
+
+        const nameEl=document.createElement('div');
+        nameEl.className='sname';
+        nameEl.textContent=(found&&!kalozLocked)?ct.name:'???';
+        if(found&&!kalozLocked) nameEl.style.color=ct.clr;
+        cell.appendChild(nameEl);
+
+        chestGrid.appendChild(cell);
+    });
+
+    chestBlock.appendChild(chestGrid);
+    chestSection.appendChild(chestBlock);
+    body.appendChild(chestSection);
 }
 
 // ── switchTab és quest tab ─────────────────────────────────────────────────────────────────────
@@ -5732,6 +6036,71 @@ checkMapUnlocks();
     transform: scale(1.06);
     box-shadow: 0 0 12px rgba(74, 176, 232, 0.4);
 }
+
+/* ── KALÓZ LÁDA POPUP ── */
+#chest-popup {
+    background:linear-gradient(160deg,#1a0e06,#0d0804);
+    border:2px solid #8b6914;
+    border-radius:18px;
+    padding:22px 28px 20px;
+    min-width:270px; max-width:340px; width:88%;
+    box-shadow:0 0 48px rgba(200,150,0,0.35),0 8px 36px rgba(0,0,0,0.8);
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+    animation:popupIn 0.25s cubic-bezier(.36,1.56,.64,1);
+    text-align:center; color:#f0d888; font-family:inherit;
+}
+#chest-title { font-size:17px; font-weight:bold; color:#f0c040; letter-spacing:1px; }
+#chest-big-icon { font-size:54px; line-height:1; filter:drop-shadow(0 0 12px rgba(255,200,0,0.7)); }
+#chest-name-text { font-size:16px; font-weight:bold; color:#e8b840; }
+#chest-desc-text { font-size:11px; color:#a08040; margin-top:-4px; }
+#chest-coins-line { font-size:22px; font-weight:bold; color:#f0d060; }
+#chest-round-line { font-size:12px; color:#c09030; background:rgba(255,200,0,0.1); padding:3px 10px; border-radius:8px; }
+#chest-wheel-wrap {
+    position:relative; display:none;
+    flex-direction:column; align-items:center; gap:4px;
+}
+#chest-wheel-pointer {
+    font-size:20px; color:#f0c040; line-height:1;
+    text-shadow:0 0 8px rgba(255,200,0,0.8);
+    position:relative; z-index:2;
+}
+#chest-wheel {
+    width:130px; height:130px; border-radius:50%;
+    border:3px solid #f0c040;
+    overflow:hidden; position:relative;
+    box-shadow:0 0 22px rgba(255,200,0,0.4);
+    will-change:transform;
+}
+#wheel-win, #wheel-lose {
+    position:absolute; width:100%; height:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:13px; font-weight:bold; letter-spacing:0.5px;
+}
+#wheel-win  { top:0; background:linear-gradient(135deg,#0f5a20,#1a8a30); color:#88ff99;
+              border-radius:65px 65px 0 0; padding-top:6px; }
+#wheel-lose { bottom:0; background:linear-gradient(135deg,#5a0f0f,#8a1a1a); color:#ff8888;
+              border-radius:0 0 65px 65px; padding-bottom:6px; }
+#chest-result-text { font-size:15px; font-weight:bold; min-height:22px; }
+#chest-btn-wrap {
+    display:flex; gap:10px; width:100%; margin-top:4px;
+}
+#chest-keep-btn, #chest-double-btn {
+    flex:1; padding:10px 8px; border-radius:12px; border:none;
+    font-size:13px; font-family:inherit; font-weight:bold;
+    cursor:pointer; transition:transform 0.12s, box-shadow 0.12s;
+    line-height:1.5;
+}
+#chest-keep-btn {
+    background:linear-gradient(135deg,#2a5a1a,#1a3a0e);
+    border:1.5px solid #4a9a20; color:#aae060;
+}
+#chest-keep-btn:hover { transform:scale(1.04); box-shadow:0 0 10px rgba(80,180,30,0.4); }
+#chest-double-btn {
+    background:linear-gradient(135deg,#7a3a00,#4a2000);
+    border:1.5px solid #d08020; color:#f0c040;
+}
+#chest-double-btn:hover { transform:scale(1.04); box-shadow:0 0 10px rgba(220,140,0,0.5); }
+#chest-double-btn:disabled, #chest-keep-btn:disabled { opacity:0.4; cursor:default; transform:none; }
 </style>
 
 <div id="audio-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0, 10, 22, 0.78); z-index: 220; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
@@ -5761,9 +6130,9 @@ checkMapUnlocks();
 </div>
 
 <script>
-// Globálisan elérhető hangerő szorzók (hogy a játék többi része is lássa)
-let globalBGMVolume = parseFloat(localStorage.getItem('fishing_vol_bgm') ?? '0.55');
-let globalSFXVolume = parseFloat(localStorage.getItem('fishing_vol_sfx') ?? '1.0');
+// Globálisan elérhető hangerő szorzók — var kell, hogy a másik script blokkból is látszódjon
+var globalBGMVolume = parseFloat(localStorage.getItem('fishing_vol_bgm') ?? '0.55');
+var globalSFXVolume = parseFloat(localStorage.getItem('fishing_vol_sfx') ?? '1.0');
 
 (function wireAudioSettings(){
     const bgm = document.getElementById('snd-bgm');
